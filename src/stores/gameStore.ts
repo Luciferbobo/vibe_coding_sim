@@ -48,6 +48,81 @@ export interface TokenBatch {
   avgPrice: number;    // 买入价（元/M；赠送批次为0）
 }
 
+export type PortfolioEventType =
+  | 'start'
+  | 'day'
+  | 'trade'
+  | 'income'
+  | 'expense'
+  | 'rent'
+  | 'event'
+  | 'retire';
+
+export interface PortfolioHistoryPoint {
+  id: number;
+  day: number;
+  cash: number;
+  tokenValue: number;
+  totalValue: number;
+  nextRentDay: number;
+  rentAmount: number;
+  eventType: PortfolioEventType;
+  label: string;
+}
+
+const PORTFOLIO_HISTORY_LIMIT = 64;
+
+function calculatePortfolioTokenValue(inventory: TokenBatch[], prices: number[]): number {
+  return inventory.reduce(
+    (sum, it) => sum + it.count * (prices[it.tokenId] || 0),
+    0
+  );
+}
+
+function appendPortfolioHistory(
+  history: PortfolioHistoryPoint[],
+  snapshot: {
+    day: number;
+    cash: number;
+    inventory: TokenBatch[];
+    currentPrices: number[];
+    nextRentDay: number;
+    rentAmount: number;
+  },
+  eventType: PortfolioEventType,
+  label: string
+): PortfolioHistoryPoint[] {
+  const tokenValue = calculatePortfolioTokenValue(
+    snapshot.inventory,
+    snapshot.currentPrices
+  );
+  const last = history[history.length - 1];
+  const point: PortfolioHistoryPoint = {
+    id: (last?.id ?? 0) + 1,
+    day: snapshot.day,
+    cash: snapshot.cash,
+    tokenValue,
+    totalValue: snapshot.cash + tokenValue,
+    nextRentDay: snapshot.nextRentDay,
+    rentAmount: snapshot.rentAmount,
+    eventType,
+    label,
+  };
+
+  const isSameSnapshot =
+    last &&
+    last.day === point.day &&
+    Math.abs(last.cash - point.cash) < 0.01 &&
+    Math.abs(last.tokenValue - point.tokenValue) < 0.01 &&
+    last.nextRentDay === point.nextRentDay &&
+    last.rentAmount === point.rentAmount &&
+    last.eventType === point.eventType;
+
+  if (isSameSnapshot) return history;
+
+  return [...history, point].slice(-PORTFOLIO_HISTORY_LIMIT);
+}
+
 // 兼容旧名（部分外部模块或类型推断使用）
 export type InventoryItem = TokenBatch;
 
@@ -264,6 +339,7 @@ interface GameState {
 
   // 库存（多批次，7天保质期）
   inventory: TokenBatch[];
+  portfolioHistory: PortfolioHistoryPoint[];
 
   // 市场
   currentSiteId: number;
@@ -379,6 +455,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   reputation: INITIAL_REPUTATION,
   day: 1,
   inventory: [],
+  portfolioHistory: [],
   currentSiteId: 0,
   currentPrices: generateInitialPrices(),
   xianYuPrices: generateXianYuPrices(generateInitialPrices()),
@@ -433,6 +510,19 @@ export const useGameStore = create<GameState>((set, get) => ({
       reputation: INITIAL_REPUTATION,
       day: 1,
       inventory: [],
+      portfolioHistory: appendPortfolioHistory(
+        [],
+        {
+          day: 1,
+          cash: INITIAL_CASH,
+          inventory: [],
+          currentPrices: initPrices,
+          nextRentDay: RENT_CYCLE,
+          rentAmount: RENT_BASE,
+        },
+        'start',
+        '开局'
+      ),
       currentSiteId: 0,
       currentPrices: initPrices,
       xianYuPrices: generateXianYuPrices(initPrices),
@@ -526,6 +616,19 @@ export const useGameStore = create<GameState>((set, get) => ({
         todayBoughtIds: [],
         todayResoldOnce: [],
         todayBuyTrades: [],
+        portfolioHistory: appendPortfolioHistory(
+          state.portfolioHistory,
+          {
+            day: newDay,
+            cash: state.cash,
+            inventory: state.inventory,
+            currentPrices: newPrices,
+            nextRentDay: state.nextRentDay,
+            rentAmount: state.rentAmount,
+          },
+          'day',
+          newRestDays === 0 ? '休息结束' : '强制休息'
+        ),
         twitterFeed: twitterRefresh.feed,
         twitterNextId: twitterRefresh.nextId,
         twitterDeck: twitterRefresh.deck,
@@ -696,6 +799,19 @@ export const useGameStore = create<GameState>((set, get) => ({
         reputation: newReputation,
         currentPrices: newPrices,
         inventory: inventoryCopy.filter(i => i.count > 0),
+        portfolioHistory: appendPortfolioHistory(
+          state.portfolioHistory,
+          {
+            day: newDay,
+            cash: newCash,
+            inventory: inventoryCopy.filter(i => i.count > 0),
+            currentPrices: newPrices,
+            nextRentDay: newRentDay,
+            rentAmount: newRentAmount,
+          },
+          'rent',
+          '房租逾期'
+        ),
         pendingMessages: [...messages, `🔑 你已经欠了 ¥${state.rentAmount} 房租超过宽限期，房东换了锁，你被赶出了北京...`],
       });
       return;
@@ -711,6 +827,19 @@ export const useGameStore = create<GameState>((set, get) => ({
         reputation: newReputation,
         currentPrices: newPrices,
         inventory: inventoryCopy.filter(i => i.count > 0),
+        portfolioHistory: appendPortfolioHistory(
+          state.portfolioHistory,
+          {
+            day: newDay,
+            cash: newCash,
+            inventory: inventoryCopy.filter(i => i.count > 0),
+            currentPrices: newPrices,
+            nextRentDay: newRentDay,
+            rentAmount: newRentAmount,
+          },
+          'event',
+          '破产'
+        ),
         pendingMessages: [...messages, '💸 你破产了...连一杯咖啡都买不起了。'],
       });
       return;
@@ -736,6 +865,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
     // 13. 刷新 Twitter 资讯流（追加 2-5 条新推文）
     const twitterRefresh = refreshTwitterFeed(state.twitterFeed, state.twitterDeck, newDay, state.twitterNextId);
+    const finalInventory = inventoryCopy.filter(i => i.count > 0);
 
     set({
       day: newDay,
@@ -746,7 +876,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       xianYuPrices: generateXianYuPrices(newPrices),
       githubOutOfStock: generateOutOfStock(),
       xianYuOutOfStock: generateOutOfStock(),
-      inventory: inventoryCopy.filter(i => i.count > 0),
+      inventory: finalInventory,
       availableTasks: { niuke: newNiukeTasks, boss: newBossTasks },
       tasksCompletedToday: 0,
       pendingMessages: messages,
@@ -763,6 +893,19 @@ export const useGameStore = create<GameState>((set, get) => ({
       todayBoughtIds: [],
       todayResoldOnce: [],
       todayBuyTrades: [],
+      portfolioHistory: appendPortfolioHistory(
+        state.portfolioHistory,
+        {
+          day: newDay,
+          cash: newCash,
+          inventory: finalInventory,
+          currentPrices: newPrices,
+          nextRentDay: newRentDay,
+          rentAmount: newRentAmount,
+        },
+        'day',
+        events.length > 0 ? '进入下一天·事件' : '进入下一天'
+      ),
       twitterFeed: twitterRefresh.feed,
       twitterNextId: twitterRefresh.nextId,
       twitterDeck: twitterRefresh.deck,
@@ -777,8 +920,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       get().unlockAchievement('zhihu_10days');
     }
     // 检查Token大户成就（事件可能赠送token）
-    const finalInventory = get().inventory;
-    if (TOKENS.some(t => getTotalTokenCount(finalInventory, t.id) >= 10000)) {
+    const inventoryAfterAdvance = get().inventory;
+    if (TOKENS.some(t => getTotalTokenCount(inventoryAfterAdvance, t.id) >= 10000)) {
       get().unlockAchievement('token_10b');
     }
   },
@@ -842,6 +985,19 @@ export const useGameStore = create<GameState>((set, get) => ({
       inventory: inventoryCopy,
       todayBoughtIds: newTodayBought,
       todayBuyTrades: newTrades,
+      portfolioHistory: appendPortfolioHistory(
+        state.portfolioHistory,
+        {
+          day: state.day,
+          cash: state.cash - totalCost,
+          inventory: inventoryCopy,
+          currentPrices: state.currentPrices,
+          nextRentDay: state.nextRentDay,
+          rentAmount: state.rentAmount,
+        },
+        'trade',
+        `买入${TOKENS[tokenId].name}`
+      ),
     });
 
     // 检查Token大户成就
@@ -960,6 +1116,19 @@ export const useGameStore = create<GameState>((set, get) => ({
       todayResoldOnce: newResoldOnce,
       arbitrageCount: newArbitrageCount,
       arbitrageTipShown: newArbitrageTipShown,
+      portfolioHistory: appendPortfolioHistory(
+        state.portfolioHistory,
+        {
+          day: state.day,
+          cash: newCash,
+          inventory: newInventory,
+          currentPrices: state.currentPrices,
+          nextRentDay: state.nextRentDay,
+          rentAmount: state.rentAmount,
+        },
+        'trade',
+        `卖出${TOKENS[tokenId].name}`
+      ),
     });
   
     // 解锁“第一次倒卖”成就
@@ -1012,6 +1181,19 @@ export const useGameStore = create<GameState>((set, get) => ({
           boss: state.availableTasks.boss.filter(t => t.id !== task.id),
         },
         pendingMessages: messages,
+        portfolioHistory: appendPortfolioHistory(
+          state.portfolioHistory,
+          {
+            day: state.day,
+            cash: newCash,
+            inventory: state.inventory,
+            currentPrices: state.currentPrices,
+            nextRentDay: state.nextRentDay,
+            rentAmount: state.rentAmount,
+          },
+          'income',
+          '手写项目'
+        ),
       });
       get().checkMoneyMilestones(newCash);
       // 检查手动完成项目成就
@@ -1052,6 +1234,19 @@ export const useGameStore = create<GameState>((set, get) => ({
         boss: state.availableTasks.boss.filter(t => t.id !== task.id),
       },
       pendingMessages: messages,
+      portfolioHistory: appendPortfolioHistory(
+        state.portfolioHistory,
+        {
+          day: state.day,
+          cash: newCash,
+          inventory: newInventory,
+          currentPrices: state.currentPrices,
+          nextRentDay: state.nextRentDay,
+          rentAmount: state.rentAmount,
+        },
+        'income',
+        result.reward > 0 ? '完成需求' : '需求失败'
+      ),
     });
     if (result.reward > 0) {
       get().checkMoneyMilestones(newCash);
@@ -1078,6 +1273,19 @@ export const useGameStore = create<GameState>((set, get) => ({
       spirit: newSpirit,
       coffeeUsedToday: true,
       pendingMessages: messages,
+      portfolioHistory: appendPortfolioHistory(
+        state.portfolioHistory,
+        {
+          day: state.day,
+          cash: state.cash - COFFEE_COST,
+          inventory: state.inventory,
+          currentPrices: state.currentPrices,
+          nextRentDay: state.nextRentDay,
+          rentAmount: state.rentAmount,
+        },
+        'expense',
+        '喝咖啡'
+      ),
     });
   },
 
@@ -1089,6 +1297,19 @@ export const useGameStore = create<GameState>((set, get) => ({
       set({
         phase: 'gameover',
         cash: state.cash,
+        portfolioHistory: appendPortfolioHistory(
+          state.portfolioHistory,
+          {
+            day: state.day,
+            cash: state.cash,
+            inventory: state.inventory,
+            currentPrices: state.currentPrices,
+            nextRentDay: state.nextRentDay,
+            rentAmount: state.rentAmount,
+          },
+          'rent',
+          '交租失败'
+        ),
         pendingMessages: [...state.pendingMessages, '🔑 房东换了锁，你被赶出去了...'],
       });
       return;
@@ -1136,6 +1357,19 @@ export const useGameStore = create<GameState>((set, get) => ({
       earlyRentTipsUnlocked: newEarlyTipsUnlocked,
       unlockedAchievements: newUnlockedAchievements,
       pendingMessages: messages,
+      portfolioHistory: appendPortfolioHistory(
+        state.portfolioHistory,
+        {
+          day: state.day,
+          cash: state.cash - state.rentAmount,
+          inventory: state.inventory,
+          currentPrices: state.currentPrices,
+          nextRentDay: state.nextRentDay + RENT_CYCLE,
+          rentAmount: state.rentAmount + RENT_INCREASE,
+        },
+        'rent',
+        isEarly ? '提前交租' : '缴房租'
+      ),
     });
   },
 
@@ -1200,6 +1434,19 @@ export const useGameStore = create<GameState>((set, get) => ({
         rentPerWeek: rent,
         startDay: state.day,
       },
+      portfolioHistory: appendPortfolioHistory(
+        state.portfolioHistory,
+        {
+          day: state.day,
+          cash: totalCash,
+          inventory: [],
+          currentPrices: state.currentPrices,
+          nextRentDay: state.nextRentDay,
+          rentAmount: state.rentAmount,
+        },
+        'retire',
+        '一键退休'
+      ),
       pendingMessages: [...state.pendingMessages, `🏖️ 你按下了退休按钮。带着¥${totalCash.toLocaleString()}坚持了${weeksAlive}周。`],
     });
   },

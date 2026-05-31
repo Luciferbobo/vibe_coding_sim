@@ -1,5 +1,6 @@
 // 右侧状态面板 - 干净的数据展示
 import { useGameStore, TokenBatch } from '../../stores/gameStore';
+import type { PortfolioHistoryPoint } from '../../stores/gameStore';
 import { TOKENS } from '../../data/tokens';
 import { formatMoney, formatToken } from '../../utils/format';
 
@@ -34,6 +35,184 @@ function StatBar({ label, value, max, barColor, textColor, hint }: BarProps) {
   );
 }
 
+const OPERATION_TYPES: PortfolioHistoryPoint['eventType'][] = [
+  'trade',
+  'income',
+  'expense',
+  'rent',
+  'retire',
+];
+
+function formatCompactMoney(amount: number): string {
+  const abs = Math.abs(amount);
+  if (abs >= 100000000) return `¥${(amount / 100000000).toFixed(1)}亿`;
+  if (abs >= 10000) return `¥${(amount / 10000).toFixed(1)}万`;
+  return formatMoney(amount);
+}
+
+function PortfolioCurve({
+  history,
+  currentTotal,
+  daysToRent,
+}: {
+  history: PortfolioHistoryPoint[];
+  currentTotal: number;
+  daysToRent: number;
+}) {
+  const safeHistory: PortfolioHistoryPoint[] =
+    history.length > 0
+      ? history
+      : [
+          {
+            id: 0,
+            day: 1,
+            cash: currentTotal,
+            tokenValue: 0,
+            totalValue: currentTotal,
+            nextRentDay: 1 + daysToRent,
+            rentAmount: 0,
+            eventType: 'start',
+            label: '当前',
+          },
+        ];
+  const drawableHistory =
+    safeHistory.length > 1
+      ? safeHistory
+      : [{ ...safeHistory[0], id: -1 }, safeHistory[0]];
+
+  const width = 260;
+  const height = 70;
+  const padX = 8;
+  const padY = 8;
+  const values = drawableHistory.map((p) => p.totalValue);
+  const minValue = Math.min(...values);
+  const maxValue = Math.max(...values);
+  const fallbackRange = Math.max(1000, Math.abs(currentTotal) * 0.12);
+  const low = minValue === maxValue ? minValue - fallbackRange / 2 : minValue;
+  const high = minValue === maxValue ? maxValue + fallbackRange / 2 : maxValue;
+  const range = Math.max(1, high - low);
+  const xStep = (width - padX * 2) / (drawableHistory.length - 1);
+  const coords = drawableHistory.map((point, index) => ({
+    point,
+    x: padX + index * xStep,
+    y: height - padY - ((point.totalValue - low) / range) * (height - padY * 2),
+  }));
+  const linePath = coords
+    .map((coord, index) => `${index === 0 ? 'M' : 'L'} ${coord.x.toFixed(1)} ${coord.y.toFixed(1)}`)
+    .join(' ');
+  const areaPath = `${linePath} L ${coords[coords.length - 1].x.toFixed(1)} ${height - padY} L ${coords[0].x.toFixed(1)} ${height - padY} Z`;
+  const rentMarkers = coords.filter((coord, index, all) => {
+    if (coord.point.nextRentDay - coord.point.day > 1 && coord.point.eventType !== 'rent') {
+      return false;
+    }
+    const previous = all[index - 1];
+    return !previous || coord.x - previous.x > 12 || previous.point.nextRentDay !== coord.point.nextRentDay;
+  });
+  const operationMarkers = coords.filter((coord) =>
+    OPERATION_TYPES.includes(coord.point.eventType)
+  );
+  const first = safeHistory[0];
+  const latest = safeHistory[safeHistory.length - 1];
+  const delta = latest.totalValue - first.totalValue;
+  const deltaText = `${delta >= 0 ? '+' : '-'}${formatCompactMoney(Math.abs(delta))}`;
+  const deltaClass =
+    delta > 0 ? 'text-emerald-400' : delta < 0 ? 'text-red-400' : 'text-gray-500';
+
+  return (
+    <div className="rounded-xl bg-gray-800/60 border border-gray-700/60 p-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs text-gray-400">Portfolio 资产曲线</p>
+          <p className="mt-0.5 font-mono text-lg font-bold tabular text-red-300">
+            {formatCompactMoney(currentTotal)}
+          </p>
+        </div>
+        <div className="shrink-0 text-right">
+          <p className="text-[10px] text-gray-500">本局变化</p>
+          <p className={`font-mono text-xs font-semibold tabular ${deltaClass}`}>
+            {deltaText}
+          </p>
+        </div>
+      </div>
+
+      <svg
+        className="mt-2 h-[72px] w-full overflow-visible"
+        viewBox={`0 0 ${width} ${height}`}
+        role="img"
+        aria-label="Portfolio 变化曲线"
+      >
+        <defs>
+          <linearGradient id="portfolioArea" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor="#f87171" stopOpacity="0.28" />
+            <stop offset="100%" stopColor="#f87171" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <line
+          x1={padX}
+          y1={height - padY}
+          x2={width - padX}
+          y2={height - padY}
+          stroke="rgba(148, 163, 184, 0.2)"
+          strokeWidth="1"
+        />
+        {rentMarkers.map((coord) => (
+          <line
+            key={`rent-${coord.point.id}-${coord.x}`}
+            x1={coord.x}
+            y1={padY}
+            x2={coord.x}
+            y2={height - padY}
+            stroke="#34d399"
+            strokeLinecap="round"
+            strokeWidth="2"
+            opacity="0.85"
+          />
+        ))}
+        <path d={areaPath} fill="url(#portfolioArea)" />
+        <path
+          d={linePath}
+          fill="none"
+          stroke="#f87171"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="3"
+        />
+        {operationMarkers.map((coord) => (
+          <circle
+            key={`op-${coord.point.id}`}
+            cx={coord.x}
+            cy={coord.y}
+            r="2.7"
+            fill="#38bdf8"
+            stroke="#0f172a"
+            strokeWidth="1.3"
+          >
+            <title>{coord.point.label}</title>
+          </circle>
+        ))}
+      </svg>
+
+      <div className="mt-1 flex items-center justify-between gap-2 text-[10px] text-gray-500">
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1">
+            <span className="h-1.5 w-3 rounded-full bg-red-400" />
+            资产
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <span className="h-3 w-0.5 rounded-full bg-emerald-400" />
+            房租
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <span className="h-1.5 w-1.5 rounded-full bg-sky-400" />
+            操作
+          </span>
+        </div>
+        <span className="font-mono tabular">T-{daysToRent}d</span>
+      </div>
+    </div>
+  );
+}
+
 export function StatusPanel() {
   const cash = useGameStore((s) => s.cash);
   const spirit = useGameStore((s) => s.spirit);
@@ -43,6 +222,7 @@ export function StatusPanel() {
   const rentAmount = useGameStore((s) => s.rentAmount);
   const inventory = useGameStore((s) => s.inventory);
   const currentPrices = useGameStore((s) => s.currentPrices);
+  const portfolioHistory = useGameStore((s) => s.portfolioHistory);
 
   const daysToRent = Math.max(0, nextRentDay - day);
   const rentRedFlag = cash < rentAmount && daysToRent <= 5;
@@ -78,6 +258,12 @@ export function StatusPanel() {
 
   return (
     <aside className="flex h-full w-full flex-col gap-3 overflow-y-auto bg-gray-900 p-4">
+      <PortfolioCurve
+        history={portfolioHistory}
+        currentTotal={cash + tokenValue}
+        daysToRent={daysToRent}
+      />
+
       {/* 现金 */}
       <div className="rounded-xl bg-gray-800/60 border border-gray-700/60 p-4">
         <p className="text-xs text-gray-400">现金余额</p>
