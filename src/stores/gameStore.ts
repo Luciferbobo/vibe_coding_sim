@@ -742,10 +742,12 @@ export const useGameStore = create<GameState>((set, get) => ({
     let newRentOverdueDays = state.rentOverdueDays;
     let rentGameOver = false;
     let newConsecutiveEarlyRents = state.consecutiveEarlyRents;
+    let paidRentThisAdvance = false;
     if (newDay >= state.nextRentDay) {
       if (newCash >= state.rentAmount) {
         // 自动扣款（到期才交，不算提前）
         newCash -= state.rentAmount;
+        paidRentThisAdvance = true;
         messages.push(`🏠 ${randomChoice(RENT_MESSAGES)} 房租¥${state.rentAmount}已自动扣除。`);
         newRentDay = state.nextRentDay + RENT_CYCLE;
         newRentAmount = state.rentAmount + RENT_INCREASE;
@@ -866,6 +868,18 @@ export const useGameStore = create<GameState>((set, get) => ({
     // 13. 刷新 Twitter 资讯流（追加 2-5 条新推文）
     const twitterRefresh = refreshTwitterFeed(state.twitterFeed, state.twitterDeck, newDay, state.twitterNextId);
     const finalInventory = inventoryCopy.filter(i => i.count > 0);
+    const portfolioEventType: PortfolioEventType = paidRentThisAdvance
+      ? 'rent'
+      : events.length > 0
+      ? 'event'
+      : 'day';
+    const portfolioEventLabel = paidRentThisAdvance
+      ? events.length > 0
+        ? '自动扣租·事件'
+        : '自动扣租'
+      : events.length > 0
+      ? '进入下一天·事件'
+      : '进入下一天';
 
     set({
       day: newDay,
@@ -903,8 +917,8 @@ export const useGameStore = create<GameState>((set, get) => ({
           nextRentDay: newRentDay,
           rentAmount: newRentAmount,
         },
-        'day',
-        events.length > 0 ? '进入下一天·事件' : '进入下一天'
+        portfolioEventType,
+        portfolioEventLabel
       ),
       twitterFeed: twitterRefresh.feed,
       twitterNextId: twitterRefresh.nextId,

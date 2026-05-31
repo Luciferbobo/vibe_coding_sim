@@ -22,10 +22,10 @@ export function CoffeeShop() {
   const isFull = spirit >= 100;
 
   return (
-    <div className="flex h-full items-center justify-center px-6 py-6">
+    <div className="flex h-full items-center justify-center overflow-y-auto px-4 py-4 md:px-6 md:py-6">
       <div className="w-full max-w-2xl">
         <div className="mb-6">
-          <h2 className="text-2xl font-semibold text-gray-100">
+          <h2 className="text-xl font-semibold text-gray-100 md:text-2xl">
             ☕ 星巴克 · 国贸店
           </h2>
           <p className="mt-1 text-sm italic text-gray-400">{vibe}</p>
@@ -33,7 +33,7 @@ export function CoffeeShop() {
 
         <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-4">
           {/* 菜单 */}
-          <div className="rounded-xl bg-gray-800/60 border border-gray-700/60 p-5">
+          <div className="rounded-xl bg-gray-800/60 border border-gray-700/60 p-4 md:p-5">
             <p className="text-xs text-gray-500">今日菜单</p>
             <div className="mt-3 flex items-end justify-between border-b border-gray-700/50 pb-4">
               <div>
@@ -71,7 +71,7 @@ export function CoffeeShop() {
                 audioManager.play('drink-coffee');
               }}
               disabled={!canBuy || isFull || coffeeUsedToday}
-              className="mt-4 w-full px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-emerald-600"
+              className="mt-4 h-11 w-full rounded-lg bg-emerald-600 px-4 font-medium text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-emerald-600"
             >
               {coffeeUsedToday ? '今日已饮用' : '来一杯'}
             </button>

@@ -24,14 +24,14 @@ export function StartScreen() {
         <span className="text-xs text-gray-500">Made by bobo</span>
       </header>
 
-      <main className="flex-1 flex items-center justify-center px-6 sm:px-10 py-12">
+      <main className="flex-1 flex items-center justify-center px-5 py-8 sm:px-10 sm:py-12">
         <div className="w-full max-w-3xl">
           {/* 标题 */}
           <div className="text-center">
             <p className="text-xs font-medium tracking-[0.25em] text-emerald-400 uppercase">
               Vibe Coding Simulator
             </p>
-            <h1 className="mt-4 text-5xl sm:text-6xl font-bold tracking-tight text-gray-50">
+            <h1 className="mt-4 text-4xl sm:text-6xl font-bold tracking-tight text-gray-50">
               在 AI 取代一切的时代
               <br />
               <span className="text-emerald-400">你还能活多久？</span>
@@ -42,7 +42,7 @@ export function StartScreen() {
           </div>
 
           {/* 规则卡片 */}
-          <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          <div className="mt-8 grid grid-cols-1 gap-3 sm:mt-12 sm:grid-cols-2 lg:grid-cols-5">
             {RULES.map((r) => (
               <div
                 key={r.title}
@@ -62,7 +62,7 @@ export function StartScreen() {
           <div className="mt-12 flex flex-col items-center gap-3">
             <button
               onClick={startNewGame}
-              className="px-10 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-base font-medium shadow-lg shadow-emerald-900/30 transition-colors"
+              className="w-full max-w-xs rounded-lg bg-emerald-600 px-10 py-3.5 text-base font-medium text-white shadow-lg shadow-emerald-900/30 transition-colors hover:bg-emerald-500"
             >
               开始游戏
             </button>

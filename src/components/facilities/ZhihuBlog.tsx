@@ -11,14 +11,14 @@ export function ZhihuBlog() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b border-gray-800 px-6 py-5">
-        <h2 className="text-xl font-semibold text-gray-100">✍️ 知乎 · 技术博客</h2>
-        <p className="mt-1 text-sm text-gray-400">
+      <div className="border-b border-gray-800 px-4 py-3 md:px-6 md:py-5">
+        <h2 className="text-lg font-semibold text-gray-100 md:text-xl">✍️ 知乎 · 技术博客</h2>
+        <p className="mt-1 text-xs text-gray-400 md:text-sm">
           写一篇技术博客，恢复你在业界的信誉
         </p>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <div className="flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-6">
         <div className="max-w-lg mx-auto">
           {/* 当前信誉 */}
           <div className="rounded-xl bg-gray-800/60 border border-gray-700/60 p-5 mb-6">
@@ -41,7 +41,7 @@ export function ZhihuBlog() {
               audioManager.play('write-blog');
             }}
             disabled={disabled}
-            className={`w-full px-6 py-4 rounded-xl text-lg font-bold transition-all ${
+            className={`min-h-14 w-full rounded-xl px-6 py-4 text-lg font-bold transition-all ${
               disabled
                 ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
                 : 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white shadow-lg shadow-blue-900/30 hover:shadow-blue-800/40'

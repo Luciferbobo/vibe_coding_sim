@@ -2,7 +2,7 @@
 import { useGameStore, TokenBatch } from '../../stores/gameStore';
 import type { PortfolioHistoryPoint } from '../../stores/gameStore';
 import { TOKENS } from '../../data/tokens';
-import { formatMoney, formatToken } from '../../utils/format';
+import { formatDay, formatMoney, formatToken } from '../../utils/format';
 
 interface BarProps {
   label: string;
@@ -39,15 +39,86 @@ const OPERATION_TYPES: PortfolioHistoryPoint['eventType'][] = [
   'trade',
   'income',
   'expense',
-  'rent',
   'retire',
 ];
+
+type ChartCoord = {
+  point: PortfolioHistoryPoint;
+  x: number;
+  y: number;
+  delta: number;
+};
+
+type MarkerKind = 'operation' | 'rent' | 'market' | 'event';
 
 function formatCompactMoney(amount: number): string {
   const abs = Math.abs(amount);
   if (abs >= 100000000) return `¥${(amount / 100000000).toFixed(1)}亿`;
   if (abs >= 10000) return `¥${(amount / 10000).toFixed(1)}万`;
   return formatMoney(amount);
+}
+
+function formatCompactDelta(amount: number): string {
+  if (Math.abs(amount) < 1) return '无变化';
+  return `${amount > 0 ? '+' : '-'}${formatCompactMoney(Math.abs(amount))}`;
+}
+
+function getMarkerKindLabel(kind: MarkerKind): string {
+  switch (kind) {
+    case 'operation':
+      return '操作/收支';
+    case 'rent':
+      return '房租';
+    case 'event':
+      return '随机事件';
+    case 'market':
+    default:
+      return '市场波动';
+  }
+}
+
+function getMarkerTone(kind: MarkerKind): {
+  dot: string;
+  text: string;
+  border: string;
+} {
+  switch (kind) {
+    case 'operation':
+      return {
+        dot: 'bg-sky-400',
+        text: 'text-sky-200',
+        border: 'border-sky-400/35',
+      };
+    case 'rent':
+      return {
+        dot: 'bg-emerald-400',
+        text: 'text-emerald-200',
+        border: 'border-emerald-400/35',
+      };
+    case 'event':
+      return {
+        dot: 'bg-amber-300',
+        text: 'text-amber-200',
+        border: 'border-amber-300/35',
+      };
+    case 'market':
+    default:
+      return {
+        dot: 'bg-slate-400',
+        text: 'text-slate-200',
+        border: 'border-slate-400/35',
+      };
+  }
+}
+
+function getMarkerDescription(coord: ChartCoord, kind: MarkerKind): string {
+  return [
+    getMarkerKindLabel(kind),
+    formatDay(coord.point.day),
+    coord.point.label,
+    `资产 ${formatCompactMoney(coord.point.totalValue)}`,
+    `变化 ${formatCompactDelta(coord.delta)}`,
+  ].join('，');
 }
 
 function PortfolioCurve({
@@ -92,25 +163,37 @@ function PortfolioCurve({
   const high = minValue === maxValue ? maxValue + fallbackRange / 2 : maxValue;
   const range = Math.max(1, high - low);
   const xStep = (width - padX * 2) / (drawableHistory.length - 1);
-  const coords = drawableHistory.map((point, index) => ({
-    point,
-    x: padX + index * xStep,
-    y: height - padY - ((point.totalValue - low) / range) * (height - padY * 2),
-  }));
+  const coords: ChartCoord[] = drawableHistory.map((point, index) => {
+    const previous = drawableHistory[index - 1];
+    return {
+      point,
+      x: padX + index * xStep,
+      y: height - padY - ((point.totalValue - low) / range) * (height - padY * 2),
+      delta: previous ? point.totalValue - previous.totalValue : 0,
+    };
+  });
   const linePath = coords
     .map((coord, index) => `${index === 0 ? 'M' : 'L'} ${coord.x.toFixed(1)} ${coord.y.toFixed(1)}`)
     .join(' ');
   const areaPath = `${linePath} L ${coords[coords.length - 1].x.toFixed(1)} ${height - padY} L ${coords[0].x.toFixed(1)} ${height - padY} Z`;
-  const rentMarkers = coords.filter((coord, index, all) => {
-    if (coord.point.nextRentDay - coord.point.day > 1 && coord.point.eventType !== 'rent') {
-      return false;
-    }
-    const previous = all[index - 1];
-    return !previous || coord.x - previous.x > 12 || previous.point.nextRentDay !== coord.point.nextRentDay;
-  });
+  const rentMarkers = coords.filter((coord) => coord.point.eventType === 'rent');
   const operationMarkers = coords.filter((coord) =>
     OPERATION_TYPES.includes(coord.point.eventType)
   );
+  const passiveMarkers = coords.filter(
+    (coord, index) =>
+      index > 0 &&
+      Math.abs(coord.delta) >= 1 &&
+      (coord.point.eventType === 'day' || coord.point.eventType === 'event')
+  );
+  const markerOverlays = [
+    ...passiveMarkers.map((coord) => ({
+      coord,
+      kind: (coord.point.eventType === 'event' ? 'event' : 'market') as MarkerKind,
+    })),
+    ...rentMarkers.map((coord) => ({ coord, kind: 'rent' as MarkerKind })),
+    ...operationMarkers.map((coord) => ({ coord, kind: 'operation' as MarkerKind })),
+  ];
   const first = safeHistory[0];
   const latest = safeHistory[safeHistory.length - 1];
   const delta = latest.totalValue - first.totalValue;
@@ -135,79 +218,143 @@ function PortfolioCurve({
         </div>
       </div>
 
-      <svg
-        className="mt-2 h-[72px] w-full overflow-visible"
-        viewBox={`0 0 ${width} ${height}`}
-        role="img"
-        aria-label="Portfolio 变化曲线"
-      >
-        <defs>
-          <linearGradient id="portfolioArea" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor="#f87171" stopOpacity="0.28" />
-            <stop offset="100%" stopColor="#f87171" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        <line
-          x1={padX}
-          y1={height - padY}
-          x2={width - padX}
-          y2={height - padY}
-          stroke="rgba(148, 163, 184, 0.2)"
-          strokeWidth="1"
-        />
-        {rentMarkers.map((coord) => (
+      <div className="relative mt-2 h-[78px]">
+        <svg
+          className="absolute inset-x-0 top-0 h-[72px] w-full overflow-visible"
+          viewBox={`0 0 ${width} ${height}`}
+          role="img"
+          aria-label="Portfolio 变化曲线"
+        >
+          <defs>
+            <linearGradient id="portfolioArea" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stopColor="#f87171" stopOpacity="0.28" />
+              <stop offset="100%" stopColor="#f87171" stopOpacity="0" />
+            </linearGradient>
+          </defs>
           <line
-            key={`rent-${coord.point.id}-${coord.x}`}
-            x1={coord.x}
-            y1={padY}
-            x2={coord.x}
+            x1={padX}
+            y1={height - padY}
+            x2={width - padX}
             y2={height - padY}
-            stroke="#34d399"
-            strokeLinecap="round"
-            strokeWidth="2"
-            opacity="0.85"
+            stroke="rgba(148, 163, 184, 0.2)"
+            strokeWidth="1"
           />
-        ))}
-        <path d={areaPath} fill="url(#portfolioArea)" />
-        <path
-          d={linePath}
-          fill="none"
-          stroke="#f87171"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="3"
-        />
-        {operationMarkers.map((coord) => (
-          <circle
-            key={`op-${coord.point.id}`}
-            cx={coord.x}
-            cy={coord.y}
-            r="2.7"
-            fill="#38bdf8"
-            stroke="#0f172a"
-            strokeWidth="1.3"
-          >
-            <title>{coord.point.label}</title>
-          </circle>
-        ))}
-      </svg>
+          {rentMarkers.map((coord) => (
+            <line
+              key={`rent-line-${coord.point.id}`}
+              x1={coord.x}
+              y1={padY}
+              x2={coord.x}
+              y2={height - padY}
+              stroke="#34d399"
+              strokeDasharray="3 3"
+              strokeLinecap="round"
+              strokeWidth="2"
+              opacity="0.9"
+            />
+          ))}
+          <path d={areaPath} fill="url(#portfolioArea)" />
+          <path
+            d={linePath}
+            fill="none"
+            stroke="#f87171"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="3"
+          />
+          {passiveMarkers.map((coord) => (
+            <circle
+              key={`passive-${coord.point.id}`}
+              cx={coord.x}
+              cy={coord.y}
+              r="1.9"
+              fill={coord.point.eventType === 'event' ? '#fbbf24' : '#94a3b8'}
+              opacity="0.9"
+            />
+          ))}
+          {rentMarkers.map((coord) => (
+            <circle
+              key={`rent-dot-${coord.point.id}`}
+              cx={coord.x}
+              cy={coord.y}
+              r="3.2"
+              fill="#34d399"
+              stroke="#0f172a"
+              strokeWidth="1.3"
+            />
+          ))}
+          {operationMarkers.map((coord) => (
+            <circle
+              key={`op-${coord.point.id}`}
+              cx={coord.x}
+              cy={coord.y}
+              r="2.9"
+              fill="#38bdf8"
+              stroke="#0f172a"
+              strokeWidth="1.3"
+            />
+          ))}
+        </svg>
 
-      <div className="mt-1 flex items-center justify-between gap-2 text-[10px] text-gray-500">
-        <div className="flex items-center gap-2">
+        {markerOverlays.map(({ coord, kind }) => {
+          const tone = getMarkerTone(kind);
+          const alignRight = coord.x > width * 0.62;
+          const deltaClass =
+            coord.delta > 0 ? 'text-emerald-300' : coord.delta < 0 ? 'text-red-300' : 'text-gray-400';
+          return (
+            <button
+              key={`marker-hit-${kind}-${coord.point.id}`}
+              type="button"
+              className="group absolute z-10 flex h-5 w-5 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
+              style={{
+                left: `${(coord.x / width) * 100}%`,
+                top: `${(coord.y / height) * 72}px`,
+              }}
+              aria-label={getMarkerDescription(coord, kind)}
+            >
+              <span className="sr-only">{getMarkerDescription(coord, kind)}</span>
+              <span
+                className={`pointer-events-none absolute bottom-5 z-20 min-w-[138px] max-w-[180px] rounded-md border ${tone.border} bg-gray-950/95 p-2 text-left shadow-xl opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 ${
+                  alignRight ? 'right-1/2 mr-1' : 'left-1/2 ml-1'
+                }`}
+              >
+                <span className={`block text-[10px] font-semibold leading-tight ${tone.text}`}>
+                  <span className={`mr-1 inline-block h-1.5 w-1.5 rounded-full ${tone.dot}`} />
+                  {getMarkerKindLabel(kind)} · {formatDay(coord.point.day)}
+                </span>
+                <span className="mt-0.5 block text-[11px] leading-snug text-gray-100">
+                  {coord.point.label}
+                </span>
+                <span className="mt-1 flex items-center justify-between gap-3 font-mono text-[10px] tabular text-gray-400">
+                  <span>{formatCompactMoney(coord.point.totalValue)}</span>
+                  <span className={deltaClass}>{formatCompactDelta(coord.delta)}</span>
+                </span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="mt-1 flex items-start justify-between gap-2 text-[10px] text-gray-500">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <span className="inline-flex items-center gap-1">
             <span className="h-1.5 w-3 rounded-full bg-red-400" />
             资产
           </span>
           <span className="inline-flex items-center gap-1">
-            <span className="h-3 w-0.5 rounded-full bg-emerald-400" />
-            房租
+            <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
+            市场
           </span>
           <span className="inline-flex items-center gap-1">
             <span className="h-1.5 w-1.5 rounded-full bg-sky-400" />
             操作
           </span>
+          <span className="inline-flex items-center gap-1">
+            <span className="h-3 w-0.5 rounded-full bg-emerald-400" />
+            房租
+          </span>
         </div>
-        <span className="font-mono tabular">T-{daysToRent}d</span>
+        <span className="shrink-0 font-mono tabular">T-{daysToRent}d</span>
       </div>
     </div>
   );

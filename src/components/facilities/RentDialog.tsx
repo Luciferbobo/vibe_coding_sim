@@ -16,9 +16,9 @@ export function RentDialog() {
   const cantPay = cash < rentAmount;
 
   return (
-    <div className="flex h-full items-center justify-center px-6 py-6">
+    <div className="flex h-full items-center justify-center overflow-y-auto px-4 py-4 md:px-6 md:py-6">
       <div className="w-full max-w-2xl">
-        <h2 className="text-2xl font-semibold text-gray-100">
+        <h2 className="text-xl font-semibold text-gray-100 md:text-2xl">
           🏠 公寓 · 你的 10 平米
         </h2>
         <p className="mt-1 text-sm italic text-gray-400">
@@ -26,7 +26,7 @@ export function RentDialog() {
         </p>
 
         <div
-          className={`mt-6 rounded-xl border p-6 ${
+          className={`mt-4 rounded-xl border p-4 md:mt-6 md:p-6 ${
             isDue
               ? 'bg-red-500/5 border-red-500/40'
               : 'bg-gray-800/60 border-gray-700/60'
@@ -51,7 +51,7 @@ export function RentDialog() {
             {formatMoney(rentAmount)}<span className="text-lg text-gray-500">/周</span>
           </p>
 
-          <div className="mt-5 grid grid-cols-2 gap-2">
+          <div className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-2">
             <div className="rounded-lg bg-gray-900/60 border border-gray-700/50 px-3 py-2">
               <p className="text-xs text-gray-500">下次交租日</p>
               <p className="mt-0.5 font-mono text-sm font-semibold text-gray-200 tabular">
@@ -85,7 +85,7 @@ export function RentDialog() {
                   payRent();
                   audioManager.play('pay-rent');
                 }}
-                className="mt-5 w-full px-4 py-2.5 rounded-lg bg-red-600 hover:bg-red-500 text-white font-medium transition-colors"
+                className="mt-5 h-11 w-full rounded-lg bg-red-600 px-4 font-medium text-white transition-colors hover:bg-red-500"
               >
                 交租
               </button>
@@ -103,7 +103,7 @@ export function RentDialog() {
                   audioManager.play('pay-rent');
                 }}
                 disabled={cantPay}
-                className={`mt-5 w-full px-4 py-2.5 rounded-lg font-medium transition-colors ${
+                className={`mt-5 h-11 w-full rounded-lg px-4 font-medium transition-colors ${
                   cantPay
                     ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
                     : 'bg-emerald-600 hover:bg-emerald-500 text-white'

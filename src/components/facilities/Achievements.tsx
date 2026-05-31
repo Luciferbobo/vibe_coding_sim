@@ -8,24 +8,24 @@ export function Achievements() {
   const totalCount = ACHIEVEMENTS.length;
 
   return (
-    <div className="flex h-full flex-col overflow-hidden px-6 py-6">
-      <div className="mb-6">
-        <h2 className="text-2xl font-semibold text-gray-100">
+    <div className="flex h-full flex-col overflow-hidden px-4 py-4 md:px-6 md:py-6">
+      <div className="mb-4 md:mb-6">
+        <h2 className="text-xl font-semibold text-gray-100 md:text-2xl">
           🏅 成就殿堂
         </h2>
-        <p className="mt-1 text-sm text-gray-400">
+        <p className="mt-1 text-xs text-gray-400 md:text-sm">
           每一枚徽章，都是你在AI时代挣扎求生的勋章。
         </p>
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4">
           {ACHIEVEMENTS.map((achievement) => {
             const isUnlocked = unlockedAchievements.includes(achievement.id);
             return (
               <div
                 key={achievement.id}
-                className={`group relative rounded-xl border p-4 transition-all duration-300 ${
+                className={`group relative rounded-xl border p-3 transition-all duration-300 md:p-4 ${
                   isUnlocked
                     ? 'bg-gradient-to-br from-amber-500/10 to-yellow-500/5 border-amber-500/40 shadow-lg shadow-amber-900/10 hover:shadow-amber-800/20 hover:border-amber-400/60'
                     : 'bg-gray-800/40 border-gray-700/40 opacity-60 hover:opacity-80'

@@ -61,7 +61,7 @@ export function TaskDialog({ task, onClose }: Props) {
     >
       <div className="space-y-5">
         {/* 需求详情 */}
-        <div className="grid grid-cols-4 gap-2 text-sm">
+        <div className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
           <Info label="难度" value={DIFF_LABEL[task.difficulty]} accent="text-amber-400" />
           <Info label="Token" value={formatToken(task.tokenCost)} accent="text-violet-400" />
           <Info label="报酬" value={`¥${task.reward}`} accent="text-amber-400" />
@@ -95,7 +95,7 @@ export function TaskDialog({ task, onClose }: Props) {
                   key={t.id}
                   disabled={!enough}
                   onClick={() => setChoice(t.id)}
-                  className={`flex items-center justify-between rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
+                  className={`flex min-h-12 items-center justify-between rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
                     active
                       ? 'border-emerald-500 bg-emerald-500/10 text-emerald-300'
                       : enough
@@ -135,7 +135,7 @@ export function TaskDialog({ task, onClose }: Props) {
           <button
             disabled={lowSpirit}
             onClick={() => setChoice('manual')}
-            className={`mt-2 w-full rounded-lg border px-3 py-2.5 text-left text-sm transition-colors ${
+            className={`mt-2 min-h-12 w-full rounded-lg border px-3 py-2.5 text-left text-sm transition-colors ${
               choice === 'manual'
                 ? 'border-violet-500 bg-violet-500/10 text-violet-300'
                 : lowSpirit
@@ -161,14 +161,14 @@ export function TaskDialog({ task, onClose }: Props) {
         <div className="flex gap-2">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2.5 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-200 font-medium transition-colors"
+            className="min-h-11 flex-1 rounded-lg bg-gray-700 px-4 py-2.5 font-medium text-gray-200 transition-colors hover:bg-gray-600"
           >
             放弃
           </button>
           <button
             onClick={handleConfirm}
             disabled={choice === null}
-            className="flex-[2] px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-emerald-600"
+            className="min-h-11 flex-[2] rounded-lg bg-emerald-600 px-4 py-2.5 font-medium text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-emerald-600"
           >
             确认接单
           </button>

@@ -28,17 +28,17 @@ export function Modal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-fade-in"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 backdrop-blur-sm animate-fade-in sm:items-center sm:p-4"
       onClick={() => {
         if (closable && onClose) onClose();
       }}
     >
       <div
-        className={`relative w-full ${width} rounded-xl bg-gray-800 border border-gray-700 shadow-2xl animate-fade-in-up`}
+        className={`relative flex max-h-[92vh] w-full ${width} flex-col rounded-t-2xl border border-gray-700 bg-gray-800 shadow-2xl animate-fade-in-up sm:rounded-xl`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* 头部 */}
-        <div className="flex items-start justify-between gap-4 px-6 pt-5 pb-4 border-b border-gray-700/60">
+        <div className="flex shrink-0 items-start justify-between gap-4 border-b border-gray-700/60 px-4 pb-4 pt-5 sm:px-6">
           <div className="min-w-0 flex-1">
             <h3 className="text-lg font-semibold text-gray-100 truncate">
               {title}
@@ -74,7 +74,7 @@ export function Modal({
         </div>
 
         {/* 内容 */}
-        <div className="p-6">{children}</div>
+        <div className="min-h-0 overflow-y-auto p-4 sm:p-6">{children}</div>
       </div>
     </div>
   );
