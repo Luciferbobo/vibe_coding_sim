@@ -1,5 +1,5 @@
 // 右侧状态面板 - 干净的数据展示
-import { useGameStore, TokenBatch } from '../../stores/gameStore';
+import { useGameStore, TokenBatch, getValuationPrices } from '../../stores/gameStore';
 import type { PortfolioHistoryPoint } from '../../stores/gameStore';
 import { TOKENS } from '../../data/tokens';
 import { formatMoney, formatToken } from '../../utils/format';
@@ -44,9 +44,6 @@ const OPERATION_TYPES: PortfolioHistoryPoint['eventType'][] = [
 ];
 
 function formatCompactMoney(amount: number): string {
-  const abs = Math.abs(amount);
-  if (abs >= 100000000) return `¥${(amount / 100000000).toFixed(1)}亿`;
-  if (abs >= 10000) return `¥${(amount / 10000).toFixed(1)}万`;
   return formatMoney(amount);
 }
 
@@ -122,8 +119,8 @@ function PortfolioCurve({
     <div className="rounded-xl bg-gray-800/60 border border-gray-700/60 p-3">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs text-gray-400">Portfolio 资产曲线</p>
-          <p className="mt-0.5 font-mono text-lg font-bold tabular text-red-300">
+          <p className="text-xs text-gray-400">总资产估值</p>
+          <p className="mt-0.5 font-mono text-lg font-bold tabular text-emerald-300">
             {formatCompactMoney(currentTotal)}
           </p>
         </div>
@@ -143,8 +140,8 @@ function PortfolioCurve({
       >
         <defs>
           <linearGradient id="portfolioArea" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor="#f87171" stopOpacity="0.28" />
-            <stop offset="100%" stopColor="#f87171" stopOpacity="0" />
+            <stop offset="0%" stopColor="#34d399" stopOpacity="0.28" />
+            <stop offset="100%" stopColor="#34d399" stopOpacity="0" />
           </linearGradient>
         </defs>
         <line
@@ -162,7 +159,7 @@ function PortfolioCurve({
             y1={padY}
             x2={coord.x}
             y2={height - padY}
-            stroke="#34d399"
+            stroke="#f87171"
             strokeLinecap="round"
             strokeWidth="2"
             opacity="0.85"
@@ -172,7 +169,7 @@ function PortfolioCurve({
         <path
           d={linePath}
           fill="none"
-          stroke="#f87171"
+          stroke="#34d399"
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeWidth="3"
@@ -195,11 +192,11 @@ function PortfolioCurve({
       <div className="mt-1 flex items-center justify-between gap-2 text-[10px] text-gray-500">
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center gap-1">
-            <span className="h-1.5 w-3 rounded-full bg-red-400" />
+            <span className="h-1.5 w-3 rounded-full bg-emerald-400" />
             资产
           </span>
           <span className="inline-flex items-center gap-1">
-            <span className="h-3 w-0.5 rounded-full bg-emerald-400" />
+            <span className="h-3 w-0.5 rounded-full bg-red-400" />
             房租
           </span>
           <span className="inline-flex items-center gap-1">
@@ -222,7 +219,11 @@ export function StatusPanel() {
   const rentAmount = useGameStore((s) => s.rentAmount);
   const inventory = useGameStore((s) => s.inventory);
   const currentPrices = useGameStore((s) => s.currentPrices);
+  const xianYuPrices = useGameStore((s) => s.xianYuPrices);
   const portfolioHistory = useGameStore((s) => s.portfolioHistory);
+
+  // 资产估值取两市场最低价
+  const valuationPrices = getValuationPrices(currentPrices, xianYuPrices);
 
   const daysToRent = Math.max(0, nextRentDay - day);
   const rentRedFlag = cash < rentAmount && daysToRent <= 5;
@@ -237,7 +238,7 @@ export function StatusPanel() {
     reputation > 60 ? 'text-blue-400' : reputation > 20 ? 'text-amber-400' : 'text-red-400';
 
   const tokenValue = inventory.reduce(
-    (sum, it) => sum + it.count * (currentPrices[it.tokenId] || 0),
+    (sum, it) => sum + it.count * (valuationPrices[it.tokenId] || 0),
     0
   );
 
@@ -269,12 +270,6 @@ export function StatusPanel() {
         <p className="text-xs text-gray-400">现金余额</p>
         <p className="mt-1 font-mono text-2xl font-bold tabular text-amber-400">
           {formatMoney(cash)}
-        </p>
-        <p className="mt-1 text-xs text-gray-500">
-          总资产估值{' '}
-          <span className="text-gray-300 font-mono">
-            {formatMoney(cash + tokenValue)}
-          </span>
         </p>
       </div>
 
@@ -314,7 +309,7 @@ export function StatusPanel() {
         </div>
         <p
           className={`mt-1 font-mono text-xl font-semibold tabular ${
-            rentRedFlag ? 'text-red-400' : 'text-violet-400'
+            rentRedFlag ? 'text-red-500' : 'text-red-400'
           }`}
         >
           ¥{rentAmount.toLocaleString()}
@@ -341,7 +336,7 @@ export function StatusPanel() {
           <ul className="mt-3 space-y-2 overflow-y-auto pr-1 -mr-1">
             {tokenGroups.map((g) => {
               const t = TOKENS[g.tokenId];
-              const cur = currentPrices[g.tokenId] || 0;
+              const cur = valuationPrices[g.tokenId] || 0;
               const pl = g.avgPrice > 0 ? ((cur - g.avgPrice) / g.avgPrice) * 100 : 0;
               const isXy = g.tokenId === 6;
               return (

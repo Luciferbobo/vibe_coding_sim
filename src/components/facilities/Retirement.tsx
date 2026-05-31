@@ -1,7 +1,8 @@
 // 一键退休 - 夕阳西下，卖掉所有Token，躺平结算
 import { useMemo, useState } from 'react';
-import { useGameStore } from '../../stores/gameStore';
+import { useGameStore, getValuationPrices } from '../../stores/gameStore';
 import { TOKENS } from '../../data/tokens';
+import { RENT_CYCLE } from '../../data/constants';
 import { formatToken, formatDay } from '../../utils/format';
 
 const HORIZON_QUOTES = [
@@ -16,7 +17,9 @@ export function Retirement() {
   const cash = useGameStore((s) => s.cash);
   const inventory = useGameStore((s) => s.inventory);
   const currentPrices = useGameStore((s) => s.currentPrices);
+  const xianYuPrices = useGameStore((s) => s.xianYuPrices);
   const rentAmount = useGameStore((s) => s.rentAmount);
+  const nextRentDay = useGameStore((s) => s.nextRentDay);
   const day = useGameStore((s) => s.day);
   const retire = useGameStore((s) => s.retire);
 
@@ -31,18 +34,22 @@ export function Retirement() {
     return Array.from(map.entries()).filter(([, c]) => c > 0);
   }, [inventory]);
 
+  // 资产估值取两市场最低价
+  const valuationPrices = getValuationPrices(currentPrices, xianYuPrices);
+
   const tokenValue = useMemo(
     () =>
       grouped.reduce(
-        (sum, [tid, count]) => sum + count * (currentPrices[tid] || 0),
+        (sum, [tid, count]) => sum + count * (valuationPrices[tid] || 0),
         0
       ),
-    [grouped, currentPrices]
+    [grouped, valuationPrices]
   );
 
   const totalCash = cash + tokenValue;
+  const daysUntilFirstRent = Math.max(0, nextRentDay - day);
   const weeksAlive = rentAmount > 0 ? Math.floor(totalCash / rentAmount) : 0;
-  const daysAlive = weeksAlive * 7;
+  const daysAlive = daysUntilFirstRent + weeksAlive * RENT_CYCLE;
 
   const quote = useMemo(
     () => HORIZON_QUOTES[Math.floor(Math.random() * HORIZON_QUOTES.length)],
@@ -135,7 +142,7 @@ export function Retirement() {
               <ul className="space-y-1 text-xs">
                 {grouped.map(([tid, count]) => {
                   const t = TOKENS[tid];
-                  const price = currentPrices[tid] || 0;
+                  const price = valuationPrices[tid] || 0;
                   const value = count * price;
                   const isXy = tid === 6;
                   return (

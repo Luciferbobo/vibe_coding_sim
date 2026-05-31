@@ -20,6 +20,8 @@ import {
   SELL_REPUTATION_PENALTY,
   UNPROFITABLE_TIERS,
   MAX_TASKS_PER_DAY,
+  TRADING_TAX_THRESHOLD,
+  TRADING_TAX_RATE,
 } from '../data/constants';
 import { ACHIEVEMENTS } from '../data/achievements';
 import {
@@ -34,7 +36,7 @@ import { generateDailyPrices, generateInitialPrices, applyEventToPrice } from '.
 import { generateDailyTasks, attemptTask } from '../engine/taskEngine';
 import { rollDailyEvents } from '../engine/eventEngine';
 import { randomChoice, randomInt, randomFloat } from '../utils/random';
-import { formatDay } from '../utils/format';
+import { formatDay, formatMoney } from '../utils/format';
 
 // Token 保质期（天）
 export const TOKEN_SHELF_LIFE = 7;
@@ -77,6 +79,13 @@ function calculatePortfolioTokenValue(inventory: TokenBatch[], prices: number[])
     (sum, it) => sum + it.count * (prices[it.tokenId] || 0),
     0
   );
+}
+
+/**
+ * 资产估值取两个市场的最低价格，防止"在便宜商场买入后按贵商场价格瞬间增值"的不合理现象。
+ */
+export function getValuationPrices(officialPrices: number[], xianYuPrices: number[]): number[] {
+  return officialPrices.map((p, i) => Math.min(p, xianYuPrices[i] ?? p));
 }
 
 function appendPortfolioHistory(
@@ -421,6 +430,9 @@ interface GameState {
   // 模板牌堆：记录本轮还未出现过的 templateIndex，保证一轮内不重复
   twitterDeck: number[];
 
+  // 交易税：总资产首次达到 TRADING_TAX_THRESHOLD 后永久激活
+  tradingTaxActivated: boolean;
+
   // 游戏结束原因（主动退休/破产/房租赶出等）
   gameOverReason: string | null;
 
@@ -443,6 +455,7 @@ interface GameState {
   dismissMessage: () => void;
   unlockAchievement: (id: string) => void;
   checkMoneyMilestones: (cash: number) => void;
+  checkTradingTax: () => void;
   likeTwitterPost: (id: number) => void;
 }
 
@@ -490,6 +503,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   twitterFeed: [],
   twitterNextId: 1,
   twitterDeck: [],
+  tradingTaxActivated: false,
   gameOverReason: null,
   retirementData: null,
 
@@ -503,6 +517,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const initialTwitter = refreshTwitterFeed([], [], 1, 1, TWITTER_INITIAL_COUNT);
 
     const initPrices = generateInitialPrices();
+    const initXianYuPrices = generateXianYuPrices(initPrices);
     set({
       phase: 'playing',
       cash: INITIAL_CASH,
@@ -516,7 +531,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           day: 1,
           cash: INITIAL_CASH,
           inventory: [],
-          currentPrices: initPrices,
+          currentPrices: getValuationPrices(initPrices, initXianYuPrices),
           nextRentDay: RENT_CYCLE,
           rentAmount: RENT_BASE,
         },
@@ -525,7 +540,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       ),
       currentSiteId: 0,
       currentPrices: initPrices,
-      xianYuPrices: generateXianYuPrices(initPrices),
+      xianYuPrices: initXianYuPrices,
       githubOutOfStock: generateOutOfStock(),
       xianYuOutOfStock: generateOutOfStock(),
       availableTasks: { niuke: initialNiuke, boss: initialBoss },
@@ -556,6 +571,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       twitterFeed: initialTwitter.feed,
       twitterNextId: initialTwitter.nextId,
       twitterDeck: initialTwitter.deck,
+      tradingTaxActivated: false,
       gameOverReason: null,
       retirementData: null,
     });
@@ -589,6 +605,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
       // 更新价格（即使休息也在涨价）
       const newPrices = generateDailyPrices(newDay, state.currentPrices);
+      const newXianYuPrices = generateXianYuPrices(newPrices);
 
       const messages = [...state.pendingMessages];
       if (newRestDays === 0) {
@@ -605,7 +622,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         spirit: newSpirit,
         restDaysLeft: newRestDays,
         currentPrices: newPrices,
-        xianYuPrices: generateXianYuPrices(newPrices),
+        xianYuPrices: newXianYuPrices,
         githubOutOfStock: generateOutOfStock(),
         xianYuOutOfStock: generateOutOfStock(),
         pendingMessages: messages,
@@ -622,7 +639,7 @@ export const useGameStore = create<GameState>((set, get) => ({
             day: newDay,
             cash: state.cash,
             inventory: state.inventory,
-            currentPrices: newPrices,
+            currentPrices: getValuationPrices(newPrices, newXianYuPrices),
             nextRentDay: state.nextRentDay,
             rentAmount: state.rentAmount,
           },
@@ -789,6 +806,9 @@ export const useGameStore = create<GameState>((set, get) => ({
       }
     }
 
+    // 8.5 预计算新闲鱼价格（用于估值和 state 更新）
+    const newXianYuPrices = generateXianYuPrices(newPrices);
+
     // 9. 检查房租宽限期超时 -> Game Over
     if (rentGameOver) {
       set({
@@ -805,7 +825,7 @@ export const useGameStore = create<GameState>((set, get) => ({
             day: newDay,
             cash: newCash,
             inventory: inventoryCopy.filter(i => i.count > 0),
-            currentPrices: newPrices,
+            currentPrices: getValuationPrices(newPrices, newXianYuPrices),
             nextRentDay: newRentDay,
             rentAmount: newRentAmount,
           },
@@ -833,7 +853,7 @@ export const useGameStore = create<GameState>((set, get) => ({
             day: newDay,
             cash: newCash,
             inventory: inventoryCopy.filter(i => i.count > 0),
-            currentPrices: newPrices,
+            currentPrices: getValuationPrices(newPrices, newXianYuPrices),
             nextRentDay: newRentDay,
             rentAmount: newRentAmount,
           },
@@ -873,7 +893,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       spirit: newSpirit,
       reputation: newReputation,
       currentPrices: newPrices,
-      xianYuPrices: generateXianYuPrices(newPrices),
+      xianYuPrices: newXianYuPrices,
       githubOutOfStock: generateOutOfStock(),
       xianYuOutOfStock: generateOutOfStock(),
       inventory: finalInventory,
@@ -899,7 +919,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           day: newDay,
           cash: newCash,
           inventory: finalInventory,
-          currentPrices: newPrices,
+          currentPrices: getValuationPrices(newPrices, newXianYuPrices),
           nextRentDay: newRentDay,
           rentAmount: newRentAmount,
         },
@@ -924,6 +944,9 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (TOKENS.some(t => getTotalTokenCount(inventoryAfterAdvance, t.id) >= 10000)) {
       get().unlockAchievement('token_10b');
     }
+
+    // 检查交易税（token 价格上涨可能跳发阈值）
+    get().checkTradingTax();
   },
 
   // 购买Token
@@ -991,7 +1014,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           day: state.day,
           cash: state.cash - totalCost,
           inventory: inventoryCopy,
-          currentPrices: state.currentPrices,
+          currentPrices: getValuationPrices(state.currentPrices, state.xianYuPrices),
           nextRentDay: state.nextRentDay,
           rentAmount: state.rentAmount,
         },
@@ -1077,8 +1100,16 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (sellsExpiring) {
       messages.push('把只剩一天保质期的Token卖出，这种事你也干得出来？？（额外扣除 3 点信誉）');
     }
-  
-    const newCash = state.cash + totalIncome;
+
+    // 交易税：总资产达阈后卖出被扣 25%
+    const taxRate = state.tradingTaxActivated ? TRADING_TAX_RATE : 0;
+    const taxAmount = totalIncome * taxRate;
+    const netIncome = totalIncome - taxAmount;
+    if (taxAmount > 0) {
+      messages.push(`💸 缴纳交易税 ${(taxRate * 100).toFixed(0)}%：-${formatMoney(taxAmount)}，到手${formatMoney(netIncome)}`);
+    }
+
+    const newCash = state.cash + netIncome;
 
     // 跨市场套利识别：当日有“在另一市场买入同 tokenId 且买入价 < 当前卖出价”的记录
     // 仅“低买高卖”方向触发；从高价市场买、低价市场卖不算套利
@@ -1122,7 +1153,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           day: state.day,
           cash: newCash,
           inventory: newInventory,
-          currentPrices: state.currentPrices,
+          currentPrices: getValuationPrices(state.currentPrices, state.xianYuPrices),
           nextRentDay: state.nextRentDay,
           rentAmount: state.rentAmount,
         },
@@ -1141,6 +1172,9 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
     // 检查金钱里程碑
     get().checkMoneyMilestones(newCash);
+
+    // 检查是否首次跳发交易税
+    get().checkTradingTax();
 
     // “财富密码”：本局累计 5 次跨市场套利后解锁
     if (isArbitrage && newArbitrageCount >= 5) {
@@ -1251,6 +1285,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (result.reward > 0) {
       get().checkMoneyMilestones(newCash);
     }
+    get().checkTradingTax();
   },
 
   // 喝咖啡
@@ -1404,10 +1439,11 @@ export const useGameStore = create<GameState>((set, get) => ({
   retire: () => {
     const state = get();
 
-    // 1. 按当前市场价（官方价格）折现所有 Token、不扣信誉
+    // 1. 按估值价格（两市场最低价）折现所有 Token、不扣信誉
+    const valuationPrices = getValuationPrices(state.currentPrices, state.xianYuPrices);
     let tokenValue = 0;
     for (const batch of state.inventory) {
-      const price = state.currentPrices[batch.tokenId] || 0;
+      const price = valuationPrices[batch.tokenId] || 0;
       tokenValue += batch.count * price;
     }
 
@@ -1415,9 +1451,11 @@ export const useGameStore = create<GameState>((set, get) => ({
     const totalCash = state.cash + tokenValue;
 
     // 3. 按周扣房租，模拟能坚持多少周/多少天
+    // 考虑距下次交租的剩余天数（提前交租会让这个值更大）
     const rent = state.rentAmount;
+    const daysUntilFirstRent = Math.max(0, state.nextRentDay - state.day);
     const weeksAlive = rent > 0 ? Math.floor(totalCash / rent) : 0;
-    const daysAlive = weeksAlive * 7;
+    const daysAlive = daysUntilFirstRent + weeksAlive * RENT_CYCLE;
 
     // 4. 进入退休播报阶段（不立即结算 day / phase=gameover）
     const reason = `你选择了退休。卖掉了所有Token，带着¥${totalCash.toLocaleString()}的积蓄躺平了。房租每周¥${rent.toLocaleString()}，你坚持了${weeksAlive}周（${daysAlive}天）`;
@@ -1440,7 +1478,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           day: state.day,
           cash: totalCash,
           inventory: [],
-          currentPrices: state.currentPrices,
+          currentPrices: valuationPrices,
           nextRentDay: state.nextRentDay,
           rentAmount: state.rentAmount,
         },
@@ -1514,6 +1552,27 @@ export const useGameStore = create<GameState>((set, get) => ({
         moneyMilestonesReached: newMilestones,
         unlockedAchievements: newAchievements,
         pendingMessages: messages,
+      });
+    }
+  },
+
+  // 检查交易税是否该跳发：总资产（现金 + Token 估值）首次跨过阈值时永久激活
+  checkTradingTax: () => {
+    const state = get();
+    if (state.tradingTaxActivated) return;
+    const valuationPrices = getValuationPrices(state.currentPrices, state.xianYuPrices);
+    const tokenValue = state.inventory.reduce(
+      (s, b) => s + b.count * (valuationPrices[b.tokenId] || 0),
+      0
+    );
+    const totalAssets = state.cash + tokenValue;
+    if (totalAssets >= TRADING_TAX_THRESHOLD) {
+      set({
+        tradingTaxActivated: true,
+        pendingMessages: [
+          ...state.pendingMessages,
+          '📢 重要！因 Token 市场交易过于火爆，全球一致决定，即日起所有 Token 卖出将征收 25% 交易税。\n（你太能赚钱了，连税务局都盯上你了）',
+        ],
       });
     }
   },

@@ -5,6 +5,7 @@ import { TOKENS } from '../../data/tokens';
 import { Modal } from '../common/Modal';
 import { formatMoney, formatToken } from '../../utils/format';
 import { audioManager } from '../../utils/audioManager';
+import { TRADING_TAX_RATE } from '../../data/constants';
 
 interface Props {
   tokenId: number;
@@ -18,6 +19,7 @@ export function SellDialog({ tokenId, onClose }: Props) {
   const currentSiteId = useGameStore((s) => s.currentSiteId);
   const day = useGameStore((s) => s.day);
   const sellTokenAction = useGameStore((s) => s.sellToken);
+  const tradingTaxActivated = useGameStore((s) => s.tradingTaxActivated);
 
   const token = TOKENS[tokenId];
   const isXianyu = tokenId === 6;
@@ -42,6 +44,10 @@ export function SellDialog({ tokenId, onClose }: Props) {
   const total = count * price;
   const profit = (price - avgPrice) * count;
   const profitPct = avgPrice > 0 ? ((price - avgPrice) / avgPrice) * 100 : 0;
+  // 交易税：激活后按销售额扣 25%
+  const taxAmount = tradingTaxActivated ? total * TRADING_TAX_RATE : 0;
+  const netIncome = total - taxAmount;
+  const netProfit = profit - taxAmount;
   // 信誉计算：基础倒卖 -3；每 1B (1000M) 额外 -5；临期剩 ≤1 天则额外 -3
   const bulkPenalty = Math.floor(count / 1000) * 5;
   const isBulk = bulkPenalty > 0;
@@ -135,18 +141,26 @@ export function SellDialog({ tokenId, onClose }: Props) {
           <div className="flex items-baseline justify-between">
             <span className="text-sm text-gray-400">预计收入</span>
             <span className="font-mono text-2xl font-bold text-amber-400 tabular">
-              +{formatMoney(total)}
+              +{formatMoney(netIncome)}
             </span>
           </div>
+          {tradingTaxActivated && (
+            <div className="flex items-baseline justify-between text-xs">
+              <span className="text-red-400">交易税 (25%)</span>
+              <span className="font-mono tabular text-red-400">
+                -{formatMoney(taxAmount)} <span className="text-gray-500">(毛收入 {formatMoney(total)})</span>
+              </span>
+            </div>
+          )}
           <div className="flex items-baseline justify-between text-xs">
             <span className="text-gray-500">本次盈亏</span>
             <span
               className={`font-mono tabular ${
-                profit >= 0 ? 'text-emerald-400' : 'text-red-400'
+                netProfit >= 0 ? 'text-emerald-400' : 'text-red-400'
               }`}
             >
-              {profit >= 0 ? '+' : ''}
-              {formatMoney(profit)}
+              {netProfit >= 0 ? '+' : ''}
+              {formatMoney(netProfit)}
             </span>
           </div>
         </div>

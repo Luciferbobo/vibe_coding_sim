@@ -22,6 +22,7 @@ export function TokenMarket() {
   const xianYuOutOfStock = useGameStore((s) => s.xianYuOutOfStock);
   const inventory = useGameStore((s) => s.inventory);
   const day = useGameStore((s) => s.day);
+  const tradingTaxActivated = useGameStore((s) => s.tradingTaxActivated);
 
   const [buyToken, setBuyToken] = useState<number | null>(null);
   const [sellToken, setSellToken] = useState<number | null>(null);
@@ -209,6 +210,11 @@ export function TokenMarket() {
         <p className="mt-4 text-xs text-gray-500">
           Token 保质期 7 天，购入后请尽快使用
         </p>
+        {tradingTaxActivated && (
+          <p className="mt-1 text-xs text-red-400 font-semibold">
+            现在Token卖出将征收 25% 交易税
+          </p>
+        )}
         {isXianyu && (
           <p className="mt-1 text-xs text-gray-500">
             

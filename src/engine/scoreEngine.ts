@@ -2,9 +2,11 @@
 //
 // 设计原则：与「一键退休」逻辑使用同一把尺。
 // retire 的本质是把剩余资产按周租消耗模拟成「还能再活多少天」：
-//   weeksAlive = floor(totalCash / rent)；daysAlive = weeksAlive * 7
-// 因此评分也把「资产」按同样的换算率折算成「等效天数」，再统一按 100 分/天计分。
-// 这样「主动退休」与「被动结算（破产/被赶出）」两条路径在同一时刻的得分一致，
+//   daysUntilFirstRent = max(0, nextRentDay - day)
+//   weeksAlive = floor(totalCash / rent)
+//   daysAlive = daysUntilFirstRent + weeksAlive * RENT_CYCLE
+// 评分用简化公式 assetDays = totalAssets * 7 / rent 作为近似，
+// 这样「主动退休」与「被动结算（破产/被赶出）」两条路径在同一时刻的得分接近，
 // 退休不再「白丢资产分」。
 
 const DAYS_PER_WEEK = 7;     // 1 周租 = 7 天生存成本

@@ -6,7 +6,7 @@ export const INITIAL_REPUTATION = 50;       // 初始信誉值（改为50）
 export const MAX_SPIRIT = 100;              // 精神值上限
 export const MAX_REPUTATION = 100;          // 信誉值上限
 export const RENT_BASE = 2000;              // 每周房租
-export const RENT_INCREASE = 0;             // 暂不涨租
+export const RENT_INCREASE = 2;             // 暂不涨租
 export const RENT_CYCLE = 7;               // 7天一个周期
 export const SELL_REPUTATION_PENALTY = -3;  // 倒卖token信誉惩罚
 export const BULK_SELL_THRESHOLD = 30;      // 大量卖出阈值（M tokens 或咸鱼个数）
@@ -85,3 +85,8 @@ export const INFLATION_PHASES = [
 
 // 每日最大可接任务数
 export const MAX_TASKS_PER_DAY = 3;
+
+// 交易税：总资产达到阈值后，卖出 Token 被扣 25% 税
+export const TRADING_TAX_THRESHOLD = 3_000_000; // 300万
+export const TRADING_TAX_RATE = 0.25;
+
