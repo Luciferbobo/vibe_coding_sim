@@ -1,12 +1,12 @@
 // 游戏核心参数常量
 
-export const INITIAL_CASH = 5000;           // 初始现金
+export const INITIAL_CASH = 500000;           // 初始现金
 export const INITIAL_SPIRIT = 100;          // 初始精神值
 export const INITIAL_REPUTATION = 50;       // 初始信誉值（改为50）
 export const MAX_SPIRIT = 100;              // 精神值上限
 export const MAX_REPUTATION = 100;          // 信誉值上限
 export const RENT_BASE = 2000;              // 每周房租
-export const RENT_INCREASE = 2;             // 暂不涨租
+export const RENT_INCREASE = 2;             // 每周房租递增金额（元）
 export const RENT_CYCLE = 7;               // 7天一个周期
 export const SELL_REPUTATION_PENALTY = -3;  // 倒卖token信誉惩罚
 export const BULK_SELL_THRESHOLD = 30;      // 大量卖出阈值（M tokens 或咸鱼个数）

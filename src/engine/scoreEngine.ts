@@ -13,6 +13,37 @@ const DAYS_PER_WEEK = 7;     // 1 周租 = 7 天生存成本
 const SCORE_PER_DAY = 100;   // 1 天等效存活 = 100 分
 
 /**
+ * 称号 / 大标题共用档位表。
+ * 两者基于同一个 totalDays（含退休后追加天数），保证档位严格对应。
+ * 数组按 minDays 从高到低排列，便于线性查找。
+ */
+interface Tier {
+  minDays: number;
+  title: string;     // 下方 Final Title（带 emoji）
+  comment: string;   // 顶部大标题（4 字风格）
+}
+
+const TIERS: Tier[] = [
+  { minDays: 365 * 50, title: '🌌 时代见证者',         comment: '颐享天年' },
+  { minDays: 365 * 20, title: '👑 财富自由的人',       comment: '安度晚年' },
+  { minDays: 365 * 10, title: '🏆 AI时代的生存大师',   comment: '生存大师' },
+  { minDays: 365 * 5,  title: '💎 Token大亨',          comment: '五年光阴' },
+  { minDays: 365 * 2,  title: '🌟 资深Vibe Coder',     comment: '小有所成' },
+  { minDays: 365,      title: '💻 熟练Prompt工程师',   comment: '勉强存活' },
+  { minDays: 180,      title: '📱 独立开发者',         comment: '半年即逝' },
+  { minDays: 90,       title: '🔧 外包接单仔',         comment: '昙花一现' },
+  { minDays: 30,       title: '📝 初级工程师',         comment: '转瞬即逝' },
+  { minDays: 0,        title: '💀 被AI取代的人',       comment: '出师未捷' },
+];
+
+function findTier(totalDays: number): Tier {
+  for (const tier of TIERS) {
+    if (totalDays >= tier.minDays) return tier;
+  }
+  return TIERS[TIERS.length - 1];
+}
+
+/**
  * 计算最终得分
  * @param cash 剩余现金
  * @param tokenValue 持有Token总价值
@@ -39,20 +70,13 @@ export function calculateScore(
 }
 
 /**
- * 根据分数给称号
- * 门槛按「等效存活天数」校准，1 天 = 100 分
- * @param score 综合得分
- * @returns 称号字符串
+ * 根据「等效存活总天数」给称号。
+ * 与 getDayComment 共用同一份档位表，保证顶部/底部档位严格对应。
+ *
+ * @param totalDays 等效存活总天数（退休结局已包含资产折算追加天数；破产结局即真实游玩天数）
  */
-export function getTitle(score: number): string {
-  if (score >= 28000) return '🏆 AI时代的生存大师';   // ≈ 280 天
-  if (score >= 20000) return '💎 Token大亨';          // ≈ 200 天
-  if (score >= 15000) return '🌟 资深Vibe Coder';     // ≈ 150 天
-  if (score >= 10000) return '💻 熟练Prompt工程师';    // ≈ 100 天
-  if (score >= 7500) return '📱 独立开发者';           // ≈  75 天
-  if (score >= 5000) return '🔧 外包接单仔';           // ≈  50 天
-  if (score >= 3000) return '📝 初级工程师';           // ≈  30 天
-  return '💀 被AI取代的人';                            //  <  30 天
+export function getTitle(totalDays: number): string {
+  return findTier(totalDays).title;
 }
 
 /**
@@ -60,14 +84,5 @@ export function getTitle(score: number): string {
  * 这个字样会在 GameOverScreen 的摘要区作为小标题呈现。
  */
 export function getDayComment(totalDays: number): string {
-  if (totalDays >= 365 * 50) return '颐享天年';      // 50 年+
-  if (totalDays >= 365 * 20) return '安度晚年';      // 20 年+
-  if (totalDays >= 365 * 10) return '十年光阴';      // 10 年+
-  if (totalDays >= 365 * 5) return '小有所成';        //  5 年+
-  if (totalDays >= 365 * 2) return '苟延残喘';        //  2 年+
-  if (totalDays >= 365) return '勉强存活';             //  1 年+
-  if (totalDays >= 180) return '半年即逝';             // 半年+
-  if (totalDays >= 90) return '昙花一现';              //  3 个月+
-  if (totalDays >= 30) return '转瞬即逝';              //  1 个月+
-  return '出师未捷';                                   //  < 1 个月
+  return findTier(totalDays).comment;
 }

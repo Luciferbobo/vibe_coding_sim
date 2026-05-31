@@ -1,8 +1,8 @@
 // 一键退休 - 夕阳西下，卖掉所有Token，躺平结算
 import { useMemo, useState } from 'react';
-import { useGameStore, getValuationPrices } from '../../stores/gameStore';
+import { useGameStore, getValuationPrices, computeRetirementWeeks } from '../../stores/gameStore';
 import { TOKENS } from '../../data/tokens';
-import { RENT_CYCLE } from '../../data/constants';
+import { RENT_CYCLE, RENT_INCREASE } from '../../data/constants';
 import { formatToken, formatDay } from '../../utils/format';
 
 const HORIZON_QUOTES = [
@@ -48,7 +48,8 @@ export function Retirement() {
 
   const totalCash = cash + tokenValue;
   const daysUntilFirstRent = Math.max(0, nextRentDay - day);
-  const weeksAlive = rentAmount > 0 ? Math.floor(totalCash / rentAmount) : 0;
+  // 按真实涨租机制推演，与 retire() 算法保持一致
+  const weeksAlive = computeRetirementWeeks(totalCash, rentAmount, RENT_INCREASE);
   const daysAlive = daysUntilFirstRent + weeksAlive * RENT_CYCLE;
 
   const quote = useMemo(
@@ -203,7 +204,7 @@ export function Retirement() {
                 </span>
               </div>
               <p className="mt-2 text-xs text-amber-100/60 leading-snug">
-                按当前周租 {formatYuan(rentAmount)} 推演，钱花光那天即为终局。
+                以当前周租 {formatYuan(rentAmount)} 起步，每周递增 {formatYuan(RENT_INCREASE)} 推演，钱花光那天即为终局。
               </p>
             </div>
           </div>

@@ -1,30 +1,12 @@
 // 结束画面 - 简洁终局结算
-import { useEffect, useMemo, useState } from 'react';
-import { useGameStore, LeaderboardEntry } from '../../stores/gameStore';
+import { useMemo, useState } from 'react';
+import { useGameStore } from '../../stores/gameStore';
+import type { PortfolioHistoryPoint } from '../../stores/gameStore';
 import { GAME_OVER_QUOTES } from '../../data/events';
+import { TOKENS } from '../../data/tokens';
 import { calculateScore, getTitle, getDayComment } from '../../engine/scoreEngine';
 import { formatMoney, formatDay } from '../../utils/format';
 import { randomChoice } from '../../utils/random';
-
-const LB_KEY = 'vibe-coding-leaderboard';
-
-function loadBoard(): LeaderboardEntry[] {
-  try {
-    const raw = localStorage.getItem(LB_KEY);
-    if (!raw) return [];
-    return JSON.parse(raw) as LeaderboardEntry[];
-  } catch {
-    return [];
-  }
-}
-
-function saveBoard(list: LeaderboardEntry[]) {
-  try {
-    localStorage.setItem(LB_KEY, JSON.stringify(list));
-  } catch {
-    /* noop */
-  }
-}
 
 export function GameOverScreen() {
   const day = useGameStore((s) => s.day);
@@ -35,6 +17,15 @@ export function GameOverScreen() {
   const rentAmount = useGameStore((s) => s.rentAmount);
   const startNewGame = useGameStore((s) => s.startNewGame);
   const gameOverReason = useGameStore((s) => s.gameOverReason);
+  // 人生报告统计
+  const totalTasksCompleted = useGameStore((s) => s.totalTasksCompleted);
+  const totalCoffeeDrunk = useGameStore((s) => s.totalCoffeeDrunk);
+  const totalBlogsWritten = useGameStore((s) => s.totalBlogsWritten);
+  const tokenUsageCount = useGameStore((s) => s.tokenUsageCount);
+  const totalSellCount = useGameStore((s) => s.totalSellCount);
+  const bestEarningDay = useGameStore((s) => s.bestEarningDay);
+  const inflationLossTotal = useGameStore((s) => s.inflationLossTotal);
+  const portfolioHistory = useGameStore((s) => s.portfolioHistory);
 
   const tokenValue = useMemo(
     () =>
@@ -46,7 +37,7 @@ export function GameOverScreen() {
   );
 
   const score = calculateScore(cash, tokenValue, day, rentAmount);
-  const title = getTitle(score);
+  const title = getTitle(day);
   const dayComment = getDayComment(day);
 
   const repLabel =
@@ -62,22 +53,20 @@ export function GameOverScreen() {
     randomChoice(GAME_OVER_QUOTES).replace('{days}', formatDay(day))
   );
 
-  const [board, setBoard] = useState<LeaderboardEntry[]>([]);
-  useEffect(() => {
-    const list = loadBoard();
-    const entry: LeaderboardEntry = {
-      score,
-      days: day,
-      title,
-      date: new Date().toISOString().slice(0, 10),
-    };
-    const merged = [...list, entry]
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 10);
-    saveBoard(merged);
-    setBoard(merged);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // 计算最爱的模型（被使用次数最多的 Token）
+  const favoriteModel = useMemo(() => {
+    let bestIdx = -1;
+    let bestCount = 0;
+    for (let i = 0; i < tokenUsageCount.length; i++) {
+      if (tokenUsageCount[i] > bestCount) {
+        bestCount = tokenUsageCount[i];
+        bestIdx = i;
+      }
+    }
+    return bestIdx >= 0 && bestIdx < TOKENS.length
+      ? { name: TOKENS[bestIdx].name, count: bestCount }
+      : null;
+  }, [tokenUsageCount]);
 
   return (
     <div className="min-h-screen w-full bg-gray-900 text-gray-200">
@@ -103,15 +92,12 @@ export function GameOverScreen() {
           </p>
         </div>
 
-        {/* 引言 */}
+        {/* 引言：结局描述（quote 已移至页面最下方作为收束） */}
         {gameOverReason && (
           <blockquote className="mt-8 rounded-xl bg-gradient-to-br from-amber-900/30 to-rose-900/20 border border-amber-500/30 px-6 py-5 text-base leading-relaxed text-amber-100">
             🏖️ {gameOverReason}
           </blockquote>
         )}
-        <blockquote className="mt-6 rounded-xl bg-gray-800/60 border border-gray-700/60 px-6 py-5 text-base italic leading-relaxed text-gray-200">
-          "{quote}"
-        </blockquote>
 
         {/* 数据卡片 */}
         <div className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -147,47 +133,70 @@ export function GameOverScreen() {
           </p>
         </div>
 
-        {/* 排行榜 */}
-        <div className="mt-6 rounded-xl bg-gray-800/60 border border-gray-700/60 p-5">
-          <h3 className="text-sm font-semibold text-gray-200">
-            排行榜 · Top 10
+        {/* 人生收益曲线 */}
+        <LifeCurve history={portfolioHistory} />
+
+        {/* 人生报告 */}
+        <div className="mt-6 rounded-xl bg-gray-800/60 border border-gray-700/60 p-6">
+          <h3 className="text-sm font-semibold tracking-[0.25em] uppercase text-gray-400">
+            人生报告 · Life Report
           </h3>
-          <ol className="mt-4 space-y-1.5 text-sm">
-            {board.length === 0 ? (
-              <li className="py-6 text-center text-gray-500">
-                还没有任何记录
-              </li>
+          <div className="mt-5 space-y-2.5 text-base leading-relaxed text-gray-200">
+            <p>
+              你这辈子接了{' '}
+              <span className="font-mono font-semibold text-emerald-400">{totalTasksCompleted}</span>{' '}个项目，喝了{' '}
+              <span className="font-mono font-semibold text-amber-400">{totalCoffeeDrunk}</span>{' '}杯咖啡，写了{' '}
+              <span className="font-mono font-semibold text-violet-400">{totalBlogsWritten}</span>{' '}次博客。
+            </p>
+            {favoriteModel ? (
+              <p>
+                你最爱的模型是{' '}
+                <span className="font-semibold text-cyan-400">{favoriteModel.name}</span>{' '}
+                <span className="text-gray-400">
+                  （用了 <span className="font-mono">{favoriteModel.count}</span> 次）
+                </span>
+              </p>
             ) : (
-              board.map((e, i) => {
-                const isYou =
-                  e.score === score && e.days === day && e.title === title;
-                return (
-                  <li
-                    key={i}
-                    className={`flex items-center justify-between rounded-lg px-3 py-2 ${
-                      isYou
-                        ? 'bg-emerald-500/10 text-emerald-300'
-                        : 'text-gray-300 hover:bg-gray-700/40'
-                    }`}
-                  >
-                    <span className="flex items-center gap-3 min-w-0">
-                      <span className="font-mono w-6 text-right text-gray-500">
-                        {String(i + 1).padStart(2, '0')}
-                      </span>
-                      <span className="truncate">{e.title}</span>
-                    </span>
-                    <span className="flex items-center gap-3 text-xs">
-                      <span className="text-gray-500">{formatDay(e.days)}</span>
-                      <span className="font-mono font-semibold text-amber-400">
-                        {e.score.toLocaleString()}
-                      </span>
-                    </span>
-                  </li>
-                );
-              })
+              <p className="text-gray-500">你这辈子从没用 AI 写过一行代码。</p>
             )}
-          </ol>
+            <p>
+              你倒卖 Token 共计{' '}
+              <span className="font-mono font-semibold text-rose-400">{totalSellCount}</span>{' '}次。
+            </p>
+            {bestEarningDay.amount > 0 ? (
+              <p>
+                你赚钱最多的一天是{' '}
+                <span className="font-mono text-amber-300">{formatDay(bestEarningDay.day)}</span>，这一天到账{' '}
+                <span className="font-mono font-semibold text-amber-400">
+                  {formatMoney(bestEarningDay.amount)}
+                </span>
+              </p>
+            ) : (
+              <p className="text-gray-500">你这辈子，没有什么“高光时刻”。</p>
+            )}
+            <p>
+              你被通胀蚕食的总价值：{' '}
+              <span className="font-mono font-semibold text-red-400">
+                {formatMoney(inflationLossTotal)}
+              </span>
+            </p>
+          </div>
+
         </div>
+
+        {/* 收尾分割线：醒目地将上方数据区与“深刻话语”分隔 */}
+        <div className="mt-12 flex items-center gap-4">
+          <div className="flex-1 h-px bg-gradient-to-r from-transparent to-gray-500/70" />
+          <span className="text-[11px] tracking-[0.4em] uppercase text-gray-400">
+            The End
+          </span>
+          <div className="flex-1 h-px bg-gradient-to-l from-transparent to-gray-500/70" />
+        </div>
+
+        {/* 深刻话语：全局收束，沉淀性收尾 */}
+        <blockquote className="mt-5 rounded-xl bg-gray-800/60 border border-gray-700/60 px-6 py-7 text-center text-base italic leading-relaxed text-gray-300">
+          “{quote}”
+        </blockquote>
 
         {/* 重开 */}
         <div className="mt-10 flex flex-col sm:flex-row items-center justify-end gap-4">
@@ -198,6 +207,176 @@ export function GameOverScreen() {
             再来一局
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function LifeCurve({ history }: { history: PortfolioHistoryPoint[] }) {
+  // 找到退休点（如有），曲线截止到该点
+  const retireIdx = history.findIndex((p) => p.eventType === 'retire');
+  const points = retireIdx >= 0 ? history.slice(0, retireIdx + 1) : history;
+
+  if (points.length < 2) {
+    return (
+      <div className="mt-6 rounded-xl bg-gray-800/60 border border-gray-700/60 p-6">
+        <h3 className="text-sm font-semibold tracking-[0.25em] uppercase text-gray-400">
+          人生收益 · Life Curve
+        </h3>
+        <p className="mt-6 text-center text-sm text-gray-500">
+          数据点不足，无法绘制曲线
+        </p>
+      </div>
+    );
+  }
+
+  const isRetire = retireIdx >= 0;
+
+  const width = 720;
+  const height = 220;
+  const padX = 24;
+  const padY = 28;
+
+  const values = points.map((p) => p.totalValue);
+  const minValue = Math.min(...values);
+  const maxValue = Math.max(...values);
+  const fallbackRange = Math.max(1000, Math.abs(maxValue) * 0.12);
+  const low = minValue === maxValue ? minValue - fallbackRange / 2 : minValue;
+  const high = minValue === maxValue ? maxValue + fallbackRange / 2 : maxValue;
+  const range = Math.max(1, high - low);
+
+  // x 按事件点索引等距分布（避免同一天多事件挤在一起造成视觉跳变）
+  const xStep = (width - padX * 2) / (points.length - 1);
+  const coords = points.map((p, i) => ({
+    point: p,
+    x: padX + i * xStep,
+    y: height - padY - ((p.totalValue - low) / range) * (height - padY * 2),
+  }));
+
+  // 横坐标刻度：事件点位置等距、标签以真实天数显示（最多 5 个，去重避免点太少时重复）
+  const tickPositions = [0, 0.25, 0.5, 0.75, 1.0];
+  const tickIndicesRaw = tickPositions.map((p) =>
+    Math.round(p * (points.length - 1))
+  );
+  const tickIndices = Array.from(new Set(tickIndicesRaw)).sort((a, b) => a - b);
+  const ticks = tickIndices.map((idx) => ({
+    day: points[idx].day,
+    xPct: (coords[idx].x / width) * 100,
+    isFirst: idx === 0,
+    isLast: idx === points.length - 1,
+  }));
+
+  const linePath = coords
+    .map((c, i) => `${i === 0 ? 'M' : 'L'} ${c.x.toFixed(1)} ${c.y.toFixed(1)}`)
+    .join(' ');
+  const lastX = coords[coords.length - 1].x.toFixed(1);
+  const firstX = coords[0].x.toFixed(1);
+  const baseY = (height - padY).toFixed(1);
+  const areaPath = `${linePath} L ${lastX} ${baseY} L ${firstX} ${baseY} Z`;
+
+  const peakValue = Math.max(...values);
+
+  return (
+    <div className="mt-6 rounded-xl bg-gray-800/60 border border-gray-700/60 p-6">
+      <div className="flex items-baseline justify-between gap-3">
+        <h3 className="text-sm font-semibold tracking-[0.25em] uppercase text-gray-400">
+          人生收益 · Life Curve
+        </h3>
+        <div className="text-right text-xs text-gray-500">
+          <span>峰值 </span>
+          <span className="font-mono font-semibold text-amber-300">
+            {formatMoney(peakValue)}
+          </span>
+        </div>
+      </div>
+
+      <svg
+        className="mt-4 w-full"
+        viewBox={`0 0 ${width} ${height}`}
+        preserveAspectRatio="none"
+        role="img"
+        aria-label="人生收益曲线"
+      >
+        <defs>
+          <linearGradient id="lifeCurveArea" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor="#34d399" stopOpacity="0.32" />
+            <stop offset="100%" stopColor="#34d399" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+
+        {/* 基线 */}
+        <line
+          x1={padX}
+          y1={height - padY}
+          x2={width - padX}
+          y2={height - padY}
+          stroke="rgba(148,163,184,0.2)"
+          strokeWidth="1"
+        />
+
+        {/* 资产填充区 + 折线 */}
+        <path d={areaPath} fill="url(#lifeCurveArea)" />
+        <path
+          d={linePath}
+          fill="none"
+          stroke="#34d399"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2.5"
+        />
+
+        {/* 退休锚点：仅退休结局显示 */}
+        {isRetire && (
+          <g>
+            <line
+              x1={coords[coords.length - 1].x}
+              y1={padY}
+              x2={coords[coords.length - 1].x}
+              y2={height - padY}
+              stroke="#fbbf24"
+              strokeWidth="1.5"
+              strokeDasharray="3 3"
+              opacity="0.75"
+            />
+            <circle
+              cx={coords[coords.length - 1].x}
+              cy={coords[coords.length - 1].y}
+              r="4.5"
+              fill="#fbbf24"
+              stroke="#1f2937"
+              strokeWidth="1.5"
+            />
+          </g>
+        )}
+      </svg>
+
+      {/* 横坐标刻度：事件点等距，标签显示真实天数 */}
+      <div className="relative mt-2 h-5 text-xs text-gray-500">
+        {ticks.map((tick, i) => {
+          const isRetireTick = isRetire && tick.isLast;
+          const align = tick.isFirst
+            ? 'translate-x-0'
+            : tick.isLast
+            ? '-translate-x-full'
+            : '-translate-x-1/2';
+          return (
+            <span
+              key={i}
+              className={`absolute top-0 whitespace-nowrap ${align} ${
+                isRetireTick ? 'font-medium text-amber-400' : 'font-mono'
+              }`}
+              style={{ left: `${tick.xPct}%` }}
+            >
+              {isRetireTick ? (
+                <>
+                  🏖️ <span className="font-mono">{formatDay(tick.day)}</span> · 退休
+                </>
+              ) : (
+                formatDay(tick.day)
+              )}
+            </span>
+          );
+        })}
       </div>
     </div>
   );

@@ -172,12 +172,33 @@ export function consumeTokensFIFO(
   return batches.filter(b => b.count > 0);
 }
 
-// 排行榜项
-export interface LeaderboardEntry {
-  score: number;
-  days: number;
-  title: string;
-  date: string;
+/**
+ * 按真实涨租机制计算退休后能完整支付几周房租。
+ * 第 1 周扣 baseRent，第 2 周扣 baseRent + weeklyIncrease，依此类推。
+ * 当现金不足以支付当周租金时停止。
+ *
+ * @param totalCash      退休时净资产（现金 + Token 折现）
+ * @param baseRent       退休那一刻的周租
+ * @param weeklyIncrease 每周递增金额（来自 RENT_INCREASE）
+ * @returns 完整支付的周数（≥0）
+ */
+export function computeRetirementWeeks(
+  totalCash: number,
+  baseRent: number,
+  weeklyIncrease: number
+): number {
+  if (totalCash <= 0 || baseRent <= 0) return 0;
+  let weeks = 0;
+  let remaining = totalCash;
+  let currentRent = baseRent;
+  // 安全上限：远超任何合理资产规模，避免极端参数下死循环
+  const MAX_WEEKS = 1_000_000;
+  while (remaining >= currentRent && weeks < MAX_WEEKS) {
+    remaining -= currentRent;
+    currentRent += weeklyIncrease;
+    weeks += 1;
+  }
+  return weeks;
 }
 
 // Twitter 资讯流条目（一旦生成即固化，不随渲染变化）
@@ -421,8 +442,15 @@ interface GameState {
   // 模型不赚钱提示记录（按份存储：每个模型已提示的亏本档位数）
   modelUnprofitableNotified: number[];
 
-  // 排行榜
-  leaderboard: LeaderboardEntry[];
+  // 人生报告统计（跨局不保留，每局重置）
+  totalTasksCompleted: number;       // 累计完成项目数（AI + 手动）
+  totalCoffeeDrunk: number;          // 累计喝咖啡次数
+  totalBlogsWritten: number;         // 累计写博客次数
+  tokenUsageCount: number[];         // 每个 tokenId 被消耗在项目上的次数
+  totalSellCount: number;            // 累计倒卖 Token 次数
+  bestEarningDay: { day: number; amount: number };  // 赚钱最多的一天
+  todayEarnings: number;             // 当日累计收入（advanceDay 重置）
+  inflationLossTotal: number;        // 累计被通胀蚕食的购买力（按现金折算）
 
   // Twitter 资讯流（每天追加 2-5 条，同一天内内容固定）
   twitterFeed: TwitterFeedItem[];
@@ -499,7 +527,14 @@ export const useGameStore = create<GameState>((set, get) => ({
   moneyMilestonesReached: [],
   unlockedAchievements: [],
   modelUnprofitableNotified: Array(TOKENS.length).fill(0),
-  leaderboard: [],
+  totalTasksCompleted: 0,
+  totalCoffeeDrunk: 0,
+  totalBlogsWritten: 0,
+  tokenUsageCount: Array(TOKENS.length).fill(0),
+  totalSellCount: 0,
+  bestEarningDay: { day: 0, amount: 0 },
+  todayEarnings: 0,
+  inflationLossTotal: 0,
   twitterFeed: [],
   twitterNextId: 1,
   twitterDeck: [],
@@ -568,6 +603,14 @@ export const useGameStore = create<GameState>((set, get) => ({
       moneyMilestonesReached: [],
       unlockedAchievements: [],
       modelUnprofitableNotified: Array(TOKENS.length).fill(0),
+      totalTasksCompleted: 0,
+      totalCoffeeDrunk: 0,
+      totalBlogsWritten: 0,
+      tokenUsageCount: Array(TOKENS.length).fill(0),
+      totalSellCount: 0,
+      bestEarningDay: { day: 0, amount: 0 },
+      todayEarnings: 0,
+      inflationLossTotal: 0,
       twitterFeed: initialTwitter.feed,
       twitterNextId: initialTwitter.nextId,
       twitterDeck: initialTwitter.deck,
@@ -617,6 +660,15 @@ export const useGameStore = create<GameState>((set, get) => ({
       // 刷新 Twitter 资讯流（即使在休息，世界仍在转动）
       const twitterRefresh = refreshTwitterFeed(state.twitterFeed, state.twitterDeck, newDay, state.twitterNextId);
 
+      // 人生报告：通胀蚕食 + 当日最佳收入快照（即使休息，市场仍在涨）
+      const oldAvgPrice = state.currentPrices.reduce((s, p) => s + p, 0) / Math.max(1, state.currentPrices.length);
+      const newAvgPrice = newPrices.reduce((s, p) => s + p, 0) / Math.max(1, newPrices.length);
+      const inflationRate = oldAvgPrice > 0 ? Math.max(0, newAvgPrice / oldAvgPrice - 1) : 0;
+      const dailyInflationLoss = Math.max(0, state.cash) * inflationRate;
+      const newBestEarningDay = state.todayEarnings > state.bestEarningDay.amount
+        ? { day: state.day, amount: state.todayEarnings }
+        : state.bestEarningDay;
+
       set({
         day: newDay,
         spirit: newSpirit,
@@ -649,6 +701,9 @@ export const useGameStore = create<GameState>((set, get) => ({
         twitterFeed: twitterRefresh.feed,
         twitterNextId: twitterRefresh.nextId,
         twitterDeck: twitterRefresh.deck,
+        bestEarningDay: newBestEarningDay,
+        todayEarnings: 0,
+        inflationLossTotal: state.inflationLossTotal + dailyInflationLoss,
       });
       return;
     }
@@ -723,6 +778,15 @@ export const useGameStore = create<GameState>((set, get) => ({
           break;
       }
     }
+
+    // 3.5 人生报告：通胀蚕食 + 当日最佳收入快照（基于事件应用后的最终价格）
+    const oldAvgPrice2 = state.currentPrices.reduce((s, p) => s + p, 0) / Math.max(1, state.currentPrices.length);
+    const newAvgPrice2 = newPrices.reduce((s, p) => s + p, 0) / Math.max(1, newPrices.length);
+    const inflationRate2 = oldAvgPrice2 > 0 ? Math.max(0, newAvgPrice2 / oldAvgPrice2 - 1) : 0;
+    const dailyInflationLoss2 = Math.max(0, state.cash) * inflationRate2;
+    const newBestEarningDay2 = state.todayEarnings > state.bestEarningDay.amount
+      ? { day: state.day, amount: state.todayEarnings }
+      : state.bestEarningDay;
 
     // 4. 计算新的现金
     let newCash = state.cash + cashChange;
@@ -833,6 +897,9 @@ export const useGameStore = create<GameState>((set, get) => ({
           '房租逾期'
         ),
         pendingMessages: [...messages, `🔑 你已经欠了 ¥${state.rentAmount} 房租超过宽限期，房东换了锁，你被赶出了北京...`],
+        bestEarningDay: newBestEarningDay2,
+        todayEarnings: 0,
+        inflationLossTotal: state.inflationLossTotal + dailyInflationLoss2,
       });
       return;
     }
@@ -861,6 +928,9 @@ export const useGameStore = create<GameState>((set, get) => ({
           '破产'
         ),
         pendingMessages: [...messages, '💸 你破产了...连一杯咖啡都买不起了。'],
+        bestEarningDay: newBestEarningDay2,
+        todayEarnings: 0,
+        inflationLossTotal: state.inflationLossTotal + dailyInflationLoss2,
       });
       return;
     }
@@ -929,6 +999,9 @@ export const useGameStore = create<GameState>((set, get) => ({
       twitterFeed: twitterRefresh.feed,
       twitterNextId: twitterRefresh.nextId,
       twitterDeck: twitterRefresh.deck,
+      bestEarningDay: newBestEarningDay2,
+      todayEarnings: 0,
+      inflationLossTotal: state.inflationLossTotal + dailyInflationLoss2,
     });
 
     // 检查连续喝咖啡成就
@@ -1147,6 +1220,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       todayResoldOnce: newResoldOnce,
       arbitrageCount: newArbitrageCount,
       arbitrageTipShown: newArbitrageTipShown,
+      totalSellCount: state.totalSellCount + 1,
+      todayEarnings: state.todayEarnings + Math.max(0, netIncome),
       portfolioHistory: appendPortfolioHistory(
         state.portfolioHistory,
         {
@@ -1210,6 +1285,8 @@ export const useGameStore = create<GameState>((set, get) => ({
         reputation: Math.min(MAX_REPUTATION, state.reputation + 3),
         tasksCompletedToday: state.tasksCompletedToday + 1,
         manualTasksCompleted: newManualTasks,
+        totalTasksCompleted: state.totalTasksCompleted + 1,
+        todayEarnings: state.todayEarnings + task.reward,
         availableTasks: {
           niuke: state.availableTasks.niuke.filter(t => t.id !== task.id),
           boss: state.availableTasks.boss.filter(t => t.id !== task.id),
@@ -1258,6 +1335,8 @@ export const useGameStore = create<GameState>((set, get) => ({
     const newReputation = Math.max(0, Math.min(MAX_REPUTATION, state.reputation + result.reputationChange));
 
     const newCash = state.cash + result.reward;
+    const newTokenUsageCount = [...state.tokenUsageCount];
+    newTokenUsageCount[useTokenId] = (newTokenUsageCount[useTokenId] || 0) + 1;
     set({
       cash: newCash,
       reputation: newReputation,
@@ -1268,6 +1347,9 @@ export const useGameStore = create<GameState>((set, get) => ({
         boss: state.availableTasks.boss.filter(t => t.id !== task.id),
       },
       pendingMessages: messages,
+      totalTasksCompleted: state.totalTasksCompleted + 1,
+      tokenUsageCount: newTokenUsageCount,
+      todayEarnings: state.todayEarnings + Math.max(0, result.reward),
       portfolioHistory: appendPortfolioHistory(
         state.portfolioHistory,
         {
@@ -1307,6 +1389,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       cash: state.cash - COFFEE_COST,
       spirit: newSpirit,
       coffeeUsedToday: true,
+      totalCoffeeDrunk: state.totalCoffeeDrunk + 1,
       pendingMessages: messages,
       portfolioHistory: appendPortfolioHistory(
         state.portfolioHistory,
@@ -1428,6 +1511,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({
       reputation: newReputation,
       zhihuUsedToday: true,
+      totalBlogsWritten: state.totalBlogsWritten + 1,
       pendingMessages: messages,
     });
 
@@ -1452,9 +1536,10 @@ export const useGameStore = create<GameState>((set, get) => ({
 
     // 3. 按周扣房租，模拟能坚持多少周/多少天
     // 考虑距下次交租的剩余天数（提前交租会让这个值更大）
+    // 同时按 RENT_INCREASE 真实模拟每周涨租
     const rent = state.rentAmount;
     const daysUntilFirstRent = Math.max(0, state.nextRentDay - state.day);
-    const weeksAlive = rent > 0 ? Math.floor(totalCash / rent) : 0;
+    const weeksAlive = computeRetirementWeeks(totalCash, rent, RENT_INCREASE);
     const daysAlive = daysUntilFirstRent + weeksAlive * RENT_CYCLE;
 
     // 4. 进入退休播报阶段（不立即结算 day / phase=gameover）
