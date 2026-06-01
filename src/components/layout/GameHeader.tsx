@@ -2,8 +2,27 @@
 import { useState } from 'react';
 import { useGameStore } from '../../stores/gameStore';
 import { SITES } from '../../data/sites';
-import { formatDay } from '../../utils/format';
 import { audioManager } from '../../utils/audioManager';
+
+/**
+ * 格式化游戏内天数显示（day 从 1 开始）。
+ * - 1 ~ 29 天：“第N天”
+ * - 30 ~ 359 天：“第N月第M天”（每月30天）
+ * - 360+ 天：“第Y年第N月第M天”（每年360天=12月）
+ */
+function formatGameDay(day: number): string {
+  if (day < 30) {
+    return `第${day}天`;
+  }
+  const years = Math.floor(day / 360);
+  const remainingAfterYears = day % 360;
+  const months = Math.floor(remainingAfterYears / 30);
+  const days = remainingAfterYears % 30;
+  if (years > 0) {
+    return `第${years}年第${months + 1}月第${days + 1}天`;
+  }
+  return `第${months + 1}月第${days + 1}天`;
+}
 
 export function GameHeader() {
   const day = useGameStore((s) => s.day);
@@ -49,7 +68,7 @@ export function GameHeader() {
 
         <div className="hidden sm:flex items-center gap-2">
           <span className="font-mono text-base font-semibold text-gray-100 tabular">
-            {formatDay(day)}
+            {formatGameDay(day)}
           </span>
         </div>
 

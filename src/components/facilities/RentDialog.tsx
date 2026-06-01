@@ -2,6 +2,8 @@
 import { useGameStore } from '../../stores/gameStore';
 import { formatMoney, formatDay } from '../../utils/format';
 import { audioManager } from '../../utils/audioManager';
+import { GPUS } from '../../data/gpus';
+import { TOKENS } from '../../data/tokens';
 
 export function RentDialog() {
   const cash = useGameStore((s) => s.cash);
@@ -10,10 +12,27 @@ export function RentDialog() {
   const rentAmount = useGameStore((s) => s.rentAmount);
   const payRent = useGameStore((s) => s.payRent);
   const consecutiveEarlyRents = useGameStore((s) => s.consecutiveEarlyRents);
+  const gpus = useGameStore((s) => s.gpus);
+  const currentPrices = useGameStore((s) => s.currentPrices);
+
+  // 电费随通胀上涨：以 Claude(tokenId=0) 当前价 / 基础价 为准
+  const inflationRatio = TOKENS[0].basePrice > 0
+    ? (currentPrices[0] || 0) / TOKENS[0].basePrice
+    : 1;
+  const baseDailyElectricity = gpus
+    .filter((g) => g.active && g.usedDays < g.lifespan)
+    .reduce((sum, g) => sum + GPUS[g.gpuTierId].dailyElectricity, 0);
+  const dailyElectricity = baseDailyElectricity * inflationRatio;
+  const weeklyElectricity = Math.round(dailyElectricity * 7);
+  const totalRentCost = rentAmount + weeklyElectricity;
 
   const daysToRent = Math.max(0, nextRentDay - day);
   const isDue = daysToRent <= 0;
-  const cantPay = cash < rentAmount;
+  const cantPay = cash < totalRentCost;
+  // 有活跃GPU（产生电费）时禁止提前交租：电费需按实际天数计算
+  const hasElectricity =
+    gpus.some((g) => g.active && g.usedDays < g.lifespan) || weeklyElectricity > 0;
+  const earlyBlockedByGpu = !isDue && hasElectricity;
 
   return (
     <div className="flex h-full items-center justify-center px-6 py-6">
@@ -33,7 +52,9 @@ export function RentDialog() {
           }`}
         >
           <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-400">每周房租</p>
+            <p className="text-sm text-gray-400">
+              {weeklyElectricity > 0 ? '每周房租+电费' : '每周房租'}
+            </p>
             <p
               className={`text-xs font-medium ${
                 isDue ? 'text-red-400' : 'text-gray-500'
@@ -48,8 +69,20 @@ export function RentDialog() {
               isDue ? 'text-red-400' : 'text-violet-400'
             }`}
           >
-            {formatMoney(rentAmount)}<span className="text-lg text-gray-500">/周</span>
+            {formatMoney(totalRentCost)}<span className="text-lg text-gray-500">/周</span>
           </p>
+
+          {weeklyElectricity > 0 && (
+            <p className="mt-1 text-xs text-gray-400">
+              房租 {formatMoney(rentAmount)} + 电费 {formatMoney(weeklyElectricity)}
+            </p>
+          )}
+
+          {weeklyElectricity > rentAmount && (
+            <p className="mt-2 text-xs text-amber-400 italic">
+              "怎么这个月电费比房租都贵啊..."
+            </p>
+          )}
 
           <div className="mt-5 grid grid-cols-2 gap-2">
             <div className="rounded-lg bg-gray-900/60 border border-gray-700/50 px-3 py-2">
@@ -65,7 +98,7 @@ export function RentDialog() {
                   cantPay ? 'text-red-400' : 'text-amber-400'
                 }`}
               >
-                {formatMoney(cash - rentAmount)}
+                {formatMoney(cash - totalRentCost)}
               </p>
             </div>
           </div>
@@ -82,10 +115,16 @@ export function RentDialog() {
             <>
               <button
                 onClick={() => {
+                  if (cantPay) return;
                   payRent();
                   audioManager.play('pay-rent');
                 }}
-                className="mt-5 w-full px-4 py-2.5 rounded-lg bg-red-600 hover:bg-red-500 text-white font-medium transition-colors"
+                disabled={cantPay}
+                className={`mt-5 w-full px-4 py-2.5 rounded-lg font-medium transition-colors ${
+                  cantPay
+                    ? 'bg-gray-700 text-gray-500 cursor-not-allowed opacity-50'
+                    : 'bg-red-600 hover:bg-red-500 text-white'
+                }`}
               >
                 交租
               </button>
@@ -99,18 +138,24 @@ export function RentDialog() {
             <>
               <button
                 onClick={() => {
+                  if (cantPay || earlyBlockedByGpu) return;
                   payRent();
                   audioManager.play('pay-rent');
                 }}
-                disabled={cantPay}
+                disabled={cantPay || earlyBlockedByGpu}
                 className={`mt-5 w-full px-4 py-2.5 rounded-lg font-medium transition-colors ${
-                  cantPay
-                    ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                  cantPay || earlyBlockedByGpu
+                    ? 'bg-gray-700 text-gray-500 cursor-not-allowed opacity-50'
                     : 'bg-emerald-600 hover:bg-emerald-500 text-white'
                 }`}
               >
                 提前交租
               </button>
+              {earlyBlockedByGpu && (
+                <p className="mt-2 text-xs text-amber-400">
+                  ⚡ 有GPU运行时无法提前交租（电费按实际天数计算）
+                </p>
+              )}
               <div className="mt-3 rounded-lg bg-gray-900/40 border border-gray-700/50 p-3 text-sm leading-relaxed text-gray-400">
                 <p>
                   <span className="text-emerald-400">·</span> 还有{' '}

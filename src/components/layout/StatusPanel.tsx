@@ -1,5 +1,5 @@
 // 右侧状态面板 - 干净的数据展示
-import { useGameStore, TokenBatch, getValuationPrices } from '../../stores/gameStore';
+import { useGameStore, TokenBatch, getValuationPrices, calculateGpuDepreciationValue } from '../../stores/gameStore';
 import type { PortfolioHistoryPoint } from '../../stores/gameStore';
 import { TOKENS } from '../../data/tokens';
 import { formatMoney, formatToken } from '../../utils/format';
@@ -221,6 +221,7 @@ export function StatusPanel() {
   const currentPrices = useGameStore((s) => s.currentPrices);
   const xianYuPrices = useGameStore((s) => s.xianYuPrices);
   const portfolioHistory = useGameStore((s) => s.portfolioHistory);
+  const gpus = useGameStore((s) => s.gpus);
 
   // 资产估值取两市场最低价
   const valuationPrices = getValuationPrices(currentPrices, xianYuPrices);
@@ -241,6 +242,7 @@ export function StatusPanel() {
     (sum, it) => sum + it.count * (valuationPrices[it.tokenId] || 0),
     0
   );
+  const gpuValue = calculateGpuDepreciationValue(gpus);
 
   // 按 tokenId 聚合批次
   const groupedByToken = new Map<number, TokenBatch[]>();
@@ -261,7 +263,7 @@ export function StatusPanel() {
     <aside className="flex h-full w-full flex-col gap-3 overflow-y-auto bg-gray-900 p-4">
       <PortfolioCurve
         history={portfolioHistory}
-        currentTotal={cash + tokenValue}
+        currentTotal={cash + tokenValue + gpuValue}
         daysToRent={daysToRent}
       />
 

@@ -37,6 +37,17 @@ import { generateDailyTasks, attemptTask } from '../engine/taskEngine';
 import { rollDailyEvents } from '../engine/eventEngine';
 import { randomChoice, randomInt, randomFloat } from '../utils/random';
 import { formatDay, formatMoney } from '../utils/format';
+import {
+  GPUS,
+  GPUInstance,
+  GPU_CENTER_UNLOCK_THRESHOLD,
+  GPU_RECYCLE_RATE,
+} from '../data/gpus';
+import {
+  generateGpuDailyOutput,
+  advanceGpuLifespan,
+  calculateWeeklyElectricity,
+} from '../engine/gpuEngine';
 
 // Token 保质期（天）
 export const TOKEN_SHELF_LIFE = 7;
@@ -82,6 +93,22 @@ function calculatePortfolioTokenValue(inventory: TokenBatch[], prices: number[])
 }
 
 /**
+ * GPU 折旧资产价值：以回收价（basePrice * GPU_RECYCLE_RATE）为基准按寿命线性折旧。
+ * 剩余价值 = basePrice * GPU_RECYCLE_RATE * (lifespan - usedDays) / lifespan。
+ * 这样买入即按回收价计入资产，避免“买入瞬间总资产虚高、卖出瞬间巨亏”的错觉。
+ * 只计算 active 的 GPU。
+ */
+export function calculateGpuDepreciationValue(gpus: GPUInstance[]): number {
+  return gpus.reduce((sum, gpu) => {
+    if (!gpu.active) return sum;
+    const def = GPUS[gpu.gpuTierId];
+    if (!def) return sum;
+    const remainingRatio = (gpu.lifespan - gpu.usedDays) / gpu.lifespan;
+    return sum + Math.round(def.basePrice * GPU_RECYCLE_RATE * Math.max(0, remainingRatio));
+  }, 0);
+}
+
+/**
  * 资产估值取两个市场的最低价格，防止"在便宜商场买入后按贵商场价格瞬间增值"的不合理现象。
  */
 export function getValuationPrices(officialPrices: number[], xianYuPrices: number[]): number[] {
@@ -97,6 +124,7 @@ function appendPortfolioHistory(
     currentPrices: number[];
     nextRentDay: number;
     rentAmount: number;
+    gpus: GPUInstance[];
   },
   eventType: PortfolioEventType,
   label: string
@@ -105,13 +133,14 @@ function appendPortfolioHistory(
     snapshot.inventory,
     snapshot.currentPrices
   );
+  const gpuValue = calculateGpuDepreciationValue(snapshot.gpus);
   const last = history[history.length - 1];
   const point: PortfolioHistoryPoint = {
     id: (last?.id ?? 0) + 1,
     day: snapshot.day,
     cash: snapshot.cash,
     tokenValue,
-    totalValue: snapshot.cash + tokenValue,
+    totalValue: snapshot.cash + tokenValue + gpuValue,
     nextRentDay: snapshot.nextRentDay,
     rentAmount: snapshot.rentAmount,
     eventType,
@@ -347,6 +376,11 @@ const MONEY_ACHIEVEMENT_MAP: Record<number, string> = {
   10000000: 'money_10m',
 };
 
+// 总资产里程碑（基于现金 + Token 估值 + GPU 折旧）
+const ASSET_ACHIEVEMENT_THRESHOLDS: { threshold: number; achievementId: string }[] = [
+  { threshold: 50_000_000, achievementId: 'money_50m' },
+];
+
 // 退休播报数据
 export interface RetirementData {
   totalCash: number;     // 退休时总资产
@@ -467,6 +501,22 @@ interface GameState {
   // 退休播报数据（仅在 phase === 'retiring' 时有值）
   retirementData: RetirementData | null;
 
+  // GPU算力中心
+  gpuUnlocked: boolean;
+  gpus: GPUInstance[];
+  gpuNextId: number;
+  gpuUnlockDay: number;
+  showGpuUnlockModal: boolean;
+
+  // 房租最后期限警告弹窗
+  showRentDeadlineModal: boolean;
+
+  // 交易税首次激活强制确认弹窗
+  showTradingTaxModal: boolean;
+
+  // 累计已交房租总额（用于退休结算播报）
+  totalRentPaid: number;
+
   // Actions
   startNewGame: () => void;
   navigateToSite: (siteId: number) => void;
@@ -485,6 +535,13 @@ interface GameState {
   checkMoneyMilestones: (cash: number) => void;
   checkTradingTax: () => void;
   likeTwitterPost: (id: number) => void;
+  // GPU 相关
+  buyGpu: (gpuTierId: number) => boolean;
+  configureGpuOutput: (gpuInstanceId: number, tokenId: number) => void;
+  sellGpu: (gpuInstanceId: number) => void;
+  dismissGpuUnlockModal: () => void;
+  dismissRentDeadlineModal: () => void;
+  dismissTradingTaxModal: () => void;
 }
 
 // 创建Store
@@ -541,6 +598,14 @@ export const useGameStore = create<GameState>((set, get) => ({
   tradingTaxActivated: false,
   gameOverReason: null,
   retirementData: null,
+  gpuUnlocked: false,
+  gpus: [],
+  gpuNextId: 0,
+  gpuUnlockDay: 0,
+  showGpuUnlockModal: false,
+  showRentDeadlineModal: false,
+  showTradingTaxModal: false,
+  totalRentPaid: 0,
 
   // 开始新游戏
   startNewGame: () => {
@@ -569,6 +634,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           currentPrices: getValuationPrices(initPrices, initXianYuPrices),
           nextRentDay: RENT_CYCLE,
           rentAmount: RENT_BASE,
+          gpus: [],
         },
         'start',
         '开局'
@@ -617,6 +683,14 @@ export const useGameStore = create<GameState>((set, get) => ({
       tradingTaxActivated: false,
       gameOverReason: null,
       retirementData: null,
+      gpuUnlocked: false,
+      gpus: [],
+      gpuNextId: 0,
+      gpuUnlockDay: 0,
+      showGpuUnlockModal: false,
+      showRentDeadlineModal: false,
+      showTradingTaxModal: false,
+      totalRentPaid: 0,
     });
   },
 
@@ -694,6 +768,7 @@ export const useGameStore = create<GameState>((set, get) => ({
             currentPrices: getValuationPrices(newPrices, newXianYuPrices),
             nextRentDay: state.nextRentDay,
             rentAmount: state.rentAmount,
+            gpus: state.gpus,
           },
           'day',
           newRestDays === 0 ? '休息结束' : '强制休息'
@@ -788,6 +863,33 @@ export const useGameStore = create<GameState>((set, get) => ({
       ? { day: state.day, amount: state.todayEarnings }
       : state.bestEarningDay;
 
+    // 3.6 通胀系数：以 Claude(tokenId=0) 为基准（GPU 售价固定，仅电费随通胀上涨）
+    const inflationRatio = TOKENS[0].basePrice > 0 ? newPrices[0] / TOKENS[0].basePrice : 1;
+
+    // 3.7 GPU 产出Token（在 Token 保质期清理之前生成，用当前价格累加totalOutput）
+    const { batches: gpuOutputBatches, updatedGpus: gpusAfterOutput } = generateGpuDailyOutput(
+      state.gpus,
+      newDay,
+      newPrices
+    );
+    if (gpuOutputBatches.length > 0) {
+      inventoryCopy.push(...gpuOutputBatches);
+    }
+
+    // 3.8 推进 GPU 寿命
+    const { active: newGpus, scrapped: scrappedGpus } = advanceGpuLifespan(gpusAfterOutput);
+    if (scrappedGpus.length > 0) {
+      for (const sg of scrappedGpus) {
+        const sgDef = GPUS[sg.gpuTierId];
+        const electricityCost = sgDef.dailyElectricity * sg.usedDays;
+        const totalOutput = Math.round(sg.totalOutput);
+        const netProfit = Math.round(sg.totalOutput - sg.purchasePrice - electricityCost);
+        messages.push(
+          `⚠️ ${sgDef.name} 已报废（使用${sg.usedDays}天）。通过该GPU累计产出价值 ¥${totalOutput.toLocaleString()}，净利润 ¥${netProfit.toLocaleString()}`
+        );
+      }
+    }
+
     // 4. 计算新的现金
     let newCash = state.cash + cashChange;
 
@@ -823,11 +925,21 @@ export const useGameStore = create<GameState>((set, get) => ({
     let newRentOverdueDays = state.rentOverdueDays;
     let rentGameOver = false;
     let newConsecutiveEarlyRents = state.consecutiveEarlyRents;
+    let rentJustPaid = 0;
+    const weeklyElectricity = calculateWeeklyElectricity(newGpus, inflationRatio);
+    const totalRentCost = state.rentAmount + weeklyElectricity;
     if (newDay >= state.nextRentDay) {
-      if (newCash >= state.rentAmount) {
+      if (newCash >= totalRentCost) {
         // 自动扣款（到期才交，不算提前）
-        newCash -= state.rentAmount;
+        newCash -= totalRentCost;
+        rentJustPaid = state.rentAmount;
         messages.push(`🏠 ${randomChoice(RENT_MESSAGES)} 房租¥${state.rentAmount}已自动扣除。`);
+        if (weeklyElectricity > 0) {
+          messages.push(`🔌 电费 ¥${weeklyElectricity.toLocaleString()} 已随房租扣除`);
+        }
+        if (weeklyElectricity > state.rentAmount) {
+          messages.push('怎么这个月电费比房租都贵啊...');
+        }
         newRentDay = state.nextRentDay + RENT_CYCLE;
         newRentAmount = state.rentAmount + RENT_INCREASE;
         newRentOverdueDays = 0;
@@ -840,7 +952,11 @@ export const useGameStore = create<GameState>((set, get) => ({
           rentGameOver = true;
         } else {
           const remaining = 2 - newRentOverdueDays + 1;
-          messages.push(`⚠️ 现金不足以支付房租 ¥${state.rentAmount}！宽限期还剩 ${remaining} 天，再不交钱房东就要换锁了（去『公寓』也许能想想办法）...`);
+          messages.push(`⚠️ 现金不足以支付房租 ¥${state.rentAmount}！宽限期还剩 ${remaining} 天，再不交钱房东就要换锁了`);
+          // 进入最后一天（明天将 game over），强制弹窗警告
+          if (newRentOverdueDays === 2) {
+            set({ showRentDeadlineModal: true });
+          }
         }
       }
     }
@@ -883,6 +999,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         reputation: newReputation,
         currentPrices: newPrices,
         inventory: inventoryCopy.filter(i => i.count > 0),
+        gpus: newGpus,
         portfolioHistory: appendPortfolioHistory(
           state.portfolioHistory,
           {
@@ -892,6 +1009,7 @@ export const useGameStore = create<GameState>((set, get) => ({
             currentPrices: getValuationPrices(newPrices, newXianYuPrices),
             nextRentDay: newRentDay,
             rentAmount: newRentAmount,
+            gpus: newGpus,
           },
           'rent',
           '房租逾期'
@@ -914,6 +1032,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         reputation: newReputation,
         currentPrices: newPrices,
         inventory: inventoryCopy.filter(i => i.count > 0),
+        gpus: newGpus,
         portfolioHistory: appendPortfolioHistory(
           state.portfolioHistory,
           {
@@ -923,6 +1042,7 @@ export const useGameStore = create<GameState>((set, get) => ({
             currentPrices: getValuationPrices(newPrices, newXianYuPrices),
             nextRentDay: newRentDay,
             rentAmount: newRentAmount,
+            gpus: newGpus,
           },
           'event',
           '破产'
@@ -957,6 +1077,25 @@ export const useGameStore = create<GameState>((set, get) => ({
     const twitterRefresh = refreshTwitterFeed(state.twitterFeed, state.twitterDeck, newDay, state.twitterNextId);
     const finalInventory = inventoryCopy.filter(i => i.count > 0);
 
+    // 14. GPU 中心解锁检查（总资产 ≥ 200万，含GPU折旧价值）
+    let gpuUnlocked = state.gpuUnlocked;
+    let gpuUnlockDay = state.gpuUnlockDay;
+    if (!gpuUnlocked) {
+      const valPrices = getValuationPrices(newPrices, newXianYuPrices);
+      const tokenValue = finalInventory.reduce(
+        (s, b) => s + b.count * (valPrices[b.tokenId] || 0),
+        0
+      );
+      const gpuValue = calculateGpuDepreciationValue(newGpus);
+      const totalAssets = newCash + tokenValue + gpuValue;
+      if (totalAssets >= GPU_CENTER_UNLOCK_THRESHOLD) {
+        gpuUnlocked = true;
+        gpuUnlockDay = newDay;
+        messages.push('🎉 你的资产达到了200万！侧边栏出现了一个神秘选项：「GPU算力中心」');
+        set({ showGpuUnlockModal: true });
+      }
+    }
+
     set({
       day: newDay,
       cash: newCash,
@@ -974,6 +1113,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       rentAmount: newRentAmount,
       rentOverdueDays: newRentOverdueDays,
       consecutiveEarlyRents: newConsecutiveEarlyRents,
+      totalRentPaid: state.totalRentPaid + rentJustPaid,
       restDaysLeft: newRestDays,
       coffeeUsedToday: false,
       zhihuUsedToday: false,
@@ -983,6 +1123,9 @@ export const useGameStore = create<GameState>((set, get) => ({
       todayBoughtIds: [],
       todayResoldOnce: [],
       todayBuyTrades: [],
+      gpus: newGpus,
+      gpuUnlocked,
+      gpuUnlockDay,
       portfolioHistory: appendPortfolioHistory(
         state.portfolioHistory,
         {
@@ -992,6 +1135,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           currentPrices: getValuationPrices(newPrices, newXianYuPrices),
           nextRentDay: newRentDay,
           rentAmount: newRentAmount,
+          gpus: newGpus,
         },
         'day',
         events.length > 0 ? '进入下一天·事件' : '进入下一天'
@@ -1090,6 +1234,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           currentPrices: getValuationPrices(state.currentPrices, state.xianYuPrices),
           nextRentDay: state.nextRentDay,
           rentAmount: state.rentAmount,
+          gpus: state.gpus,
         },
         'trade',
         `买入${TOKENS[tokenId].name}`
@@ -1231,6 +1376,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           currentPrices: getValuationPrices(state.currentPrices, state.xianYuPrices),
           nextRentDay: state.nextRentDay,
           rentAmount: state.rentAmount,
+          gpus: state.gpus,
         },
         'trade',
         `卖出${TOKENS[tokenId].name}`
@@ -1301,6 +1447,7 @@ export const useGameStore = create<GameState>((set, get) => ({
             currentPrices: state.currentPrices,
             nextRentDay: state.nextRentDay,
             rentAmount: state.rentAmount,
+            gpus: state.gpus,
           },
           'income',
           '手写项目'
@@ -1359,6 +1506,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           currentPrices: state.currentPrices,
           nextRentDay: state.nextRentDay,
           rentAmount: state.rentAmount,
+          gpus: state.gpus,
         },
         'income',
         result.reward > 0 ? '完成需求' : '需求失败'
@@ -1400,6 +1548,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           currentPrices: state.currentPrices,
           nextRentDay: state.nextRentDay,
           rentAmount: state.rentAmount,
+          gpus: state.gpus,
         },
         'expense',
         '喝咖啡'
@@ -1410,31 +1559,34 @@ export const useGameStore = create<GameState>((set, get) => ({
   // 交房租
   payRent: () => {
     const state = get();
-    if (state.cash < state.rentAmount) {
-      // 交不起房租 -> game over
+
+    // 计算电费（与 RentDialog/advanceDay 保持一致）
+    const inflationRatio = TOKENS[0].basePrice > 0
+      ? (state.currentPrices[0] || 0) / TOKENS[0].basePrice
+      : 1;
+    const weeklyElectricity = calculateWeeklyElectricity(state.gpus, inflationRatio);
+    const totalCost = state.rentAmount + weeklyElectricity;
+
+    // 防御性检查：现金不足以支付房租+电费时直接拒绝执行
+    if (state.cash < totalCost) return;
+
+    const isEarly = state.day < state.nextRentDay; // 还没到期就交了
+
+    // 防御性检查：有活跃GPU产生电费时，禁止提前交租（电费按实际天数计算）
+    const hasActiveGpu = state.gpus.some(
+      (g) => g.active && g.usedDays < g.lifespan
+    );
+    if (isEarly && (hasActiveGpu || weeklyElectricity > 0)) {
       set({
-        phase: 'gameover',
-        cash: state.cash,
-        portfolioHistory: appendPortfolioHistory(
-          state.portfolioHistory,
-          {
-            day: state.day,
-            cash: state.cash,
-            inventory: state.inventory,
-            currentPrices: state.currentPrices,
-            nextRentDay: state.nextRentDay,
-            rentAmount: state.rentAmount,
-          },
-          'rent',
-          '交租失败'
-        ),
-        pendingMessages: [...state.pendingMessages, '🔑 房东换了锁，你被赶出去了...'],
+        pendingMessages: [
+          ...state.pendingMessages,
+          '⚡ 有GPU运行时无法提前交租（电费按实际天数计算），等到期日自动扣除即可。',
+        ],
       });
       return;
     }
 
     const messages = [...state.pendingMessages];
-    const isEarly = state.day < state.nextRentDay; // 还没到期就交了
     let newConsecutive = state.consecutiveEarlyRents;
     let newEarlyTipsUnlocked = state.earlyRentTipsUnlocked;
     let newMaxConsecutive = state.maxConsecutiveEarlyRents;
@@ -1465,8 +1617,18 @@ export const useGameStore = create<GameState>((set, get) => ({
       messages.push(`🏠 房租已缴：¥${state.rentAmount}。下次交租日：${formatDay(state.nextRentDay + RENT_CYCLE)}`);
     }
 
+    // 同步播报电费扣款（与 advanceDay 自动扣款行为保持一致）
+    if (weeklyElectricity > 0) {
+      messages.push(`🔌 电费 ¥${weeklyElectricity.toLocaleString()} 已随房租扣除`);
+      if (weeklyElectricity > state.rentAmount) {
+        messages.push('怎么这个月电费比房租都贵啊...');
+      }
+    }
+
+    const newCashAfterRent = state.cash - totalCost;
+
     set({
-      cash: state.cash - state.rentAmount,
+      cash: newCashAfterRent,
       nextRentDay: state.nextRentDay + RENT_CYCLE,
       rentAmount: state.rentAmount + RENT_INCREASE,
       rentOverdueDays: 0,
@@ -1475,15 +1637,17 @@ export const useGameStore = create<GameState>((set, get) => ({
       earlyRentTipsUnlocked: newEarlyTipsUnlocked,
       unlockedAchievements: newUnlockedAchievements,
       pendingMessages: messages,
+      totalRentPaid: state.totalRentPaid + state.rentAmount,
       portfolioHistory: appendPortfolioHistory(
         state.portfolioHistory,
         {
           day: state.day,
-          cash: state.cash - state.rentAmount,
+          cash: newCashAfterRent,
           inventory: state.inventory,
           currentPrices: state.currentPrices,
           nextRentDay: state.nextRentDay + RENT_CYCLE,
           rentAmount: state.rentAmount + RENT_INCREASE,
+          gpus: state.gpus,
         },
         'rent',
         isEarly ? '提前交租' : '缴房租'
@@ -1519,7 +1683,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     get().advanceDay();
   },
 
-  // 一键退休：卖出所有 Token，模拟房租消耗，进入退休生活播报阶段
+  // 一键退休：卖出所有 Token（以及 GPU 折旧价值），模拟房租消耗，进入退休生活播报阶段
   retire: () => {
     const state = get();
 
@@ -1531,8 +1695,11 @@ export const useGameStore = create<GameState>((set, get) => ({
       tokenValue += batch.count * price;
     }
 
+    // 1.5 GPU 折旧价值也计入退休资产
+    const gpuValue = calculateGpuDepreciationValue(state.gpus);
+
     // 2. 总资产
-    const totalCash = state.cash + tokenValue;
+    const totalCash = state.cash + tokenValue + gpuValue;
 
     // 3. 按周扣房租，模拟能坚持多少周/多少天
     // 考虑距下次交租的剩余天数（提前交租会让这个值更大）
@@ -1543,7 +1710,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const daysAlive = daysUntilFirstRent + weeksAlive * RENT_CYCLE;
 
     // 4. 进入退休播报阶段（不立即结算 day / phase=gameover）
-    const reason = `你选择了退休。卖掉了所有Token，带着¥${totalCash.toLocaleString()}的积蓄躺平了。房租每周¥${rent.toLocaleString()}，你坚持了${weeksAlive}周（${daysAlive}天）`;
+    const reason = `你选择了退休。卖掉了所有Token，带着¥${totalCash.toLocaleString()}的积蓄躺平了。房租共交了¥${state.totalRentPaid.toLocaleString()}，你坚持了${weeksAlive}周（${daysAlive}天）`;
 
     set({
       cash: 0,
@@ -1566,6 +1733,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           currentPrices: valuationPrices,
           nextRentDay: state.nextRentDay,
           rentAmount: state.rentAmount,
+          gpus: state.gpus,
         },
         'retire',
         '一键退休'
@@ -1632,6 +1800,28 @@ export const useGameStore = create<GameState>((set, get) => ({
       }
     }
 
+    // 总资产里程碑检查（现金 + Token 估值 + GPU 折旧）
+    const valuationPrices = getValuationPrices(state.currentPrices, state.xianYuPrices);
+    const tokenValueForAssets = state.inventory.reduce(
+      (s, b) => s + b.count * (valuationPrices[b.tokenId] || 0),
+      0
+    );
+    const gpuValueForAssets = calculateGpuDepreciationValue(state.gpus);
+    const totalAssets = cash + tokenValueForAssets + gpuValueForAssets;
+    for (const item of ASSET_ACHIEVEMENT_THRESHOLDS) {
+      if (totalAssets >= item.threshold && !newMilestones.includes(item.threshold)) {
+        newMilestones.push(item.threshold);
+        changed = true;
+        if (!newAchievements.includes(item.achievementId)) {
+          newAchievements.push(item.achievementId);
+          const achievement = ACHIEVEMENTS.find(a => a.id === item.achievementId);
+          if (achievement) {
+            messages.push(`🏅 成就解锁：${achievement.icon} ${achievement.name} — ${achievement.description}`);
+          }
+        }
+      }
+    }
+
     if (changed) {
       set({
         moneyMilestonesReached: newMilestones,
@@ -1641,7 +1831,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
   },
 
-  // 检查交易税是否该跳发：总资产（现金 + Token 估值）首次跨过阈值时永久激活
+  // 检查交易税是否该跳发：总资产（现金 + Token 估值 + GPU折旧价值）首次跨过阈值时永久激活
   checkTradingTax: () => {
     const state = get();
     if (state.tradingTaxActivated) return;
@@ -1650,10 +1840,12 @@ export const useGameStore = create<GameState>((set, get) => ({
       (s, b) => s + b.count * (valuationPrices[b.tokenId] || 0),
       0
     );
-    const totalAssets = state.cash + tokenValue;
+    const gpuValue = calculateGpuDepreciationValue(state.gpus);
+    const totalAssets = state.cash + tokenValue + gpuValue;
     if (totalAssets >= TRADING_TAX_THRESHOLD) {
       set({
         tradingTaxActivated: true,
+        showTradingTaxModal: true,
         pendingMessages: [
           ...state.pendingMessages,
           '📢 重要！因 Token 市场交易过于火爆，全球一致决定，即日起所有 Token 卖出将征收 25% 交易税。\n（你太能赚钱了，连税务局都盯上你了）',
@@ -1682,5 +1874,134 @@ export const useGameStore = create<GameState>((set, get) => ({
     } else {
       set({ twitterFeed: updatedFeed });
     }
+  },
+
+  // 购买 GPU
+  buyGpu: (gpuTierId: number) => {
+    const state = get();
+    const gpuDef = GPUS[gpuTierId];
+    if (!gpuDef) return false;
+    // GPU 售价固定为 basePrice，不再随通胀变化
+    const currentPrice = gpuDef.basePrice;
+    if (state.cash < currentPrice) return false;
+
+    const newGpu: GPUInstance = {
+      id: state.gpuNextId,
+      gpuTierId,
+      purchaseDay: state.day,
+      purchasePrice: currentPrice,
+      lifespan: gpuDef.lifespan,
+      usedDays: 0,
+      selectedTokenId: 0, // 默认产出 Claude Opus 4.7，避免买回来空转
+      active: true,
+      totalOutput: 0,
+    };
+
+    const newCash = state.cash - currentPrice;
+    const newGpus = [...state.gpus, newGpu];
+    const isFirst = state.gpus.length === 0;
+
+    set({
+      cash: newCash,
+      gpus: newGpus,
+      gpuNextId: state.gpuNextId + 1,
+      portfolioHistory: appendPortfolioHistory(
+        state.portfolioHistory,
+        {
+          day: state.day,
+          cash: newCash,
+          inventory: state.inventory,
+          currentPrices: getValuationPrices(state.currentPrices, state.xianYuPrices),
+          nextRentDay: state.nextRentDay,
+          rentAmount: state.rentAmount,
+          gpus: newGpus,
+        },
+        'expense',
+        `购买GPU: ${gpuDef.name}`
+      ),
+    });
+
+    // 首次购买解锁成就“老黄的信徒”
+    if (isFirst) {
+      get().unlockAchievement('gpu_first_buy');
+    }
+    // 购买量子计算机原型机解锁成就“遇事不决，量子力学”
+    if (gpuTierId === 4) {
+      get().unlockAchievement('quantum_computer');
+    }
+    return true;
+  },
+
+  // 配置 GPU 产出 Token（0-5 有效）6(咸鱼)不可选
+  configureGpuOutput: (gpuInstanceId: number, tokenId: number) => {
+    const state = get();
+    if (tokenId < 0 || tokenId > 5) return;
+    set({
+      gpus: state.gpus.map(g =>
+        g.id === gpuInstanceId ? { ...g, selectedTokenId: tokenId } : g
+      ),
+    });
+  },
+
+  // 关闭GPU解锁弹窗
+  dismissGpuUnlockModal: () => {
+    set({ showGpuUnlockModal: false });
+  },
+
+  // 关闭房租最后期限警告弹窗
+  dismissRentDeadlineModal: () => {
+    set({ showRentDeadlineModal: false });
+  },
+
+  // 关闭交易税弹窗
+  dismissTradingTaxModal: () => {
+    set({ showTradingTaxModal: false });
+  },
+
+  // 出售 GPU：回收价 = 当前售价 * 回收率 * 剩余寿命比例
+  sellGpu: (gpuInstanceId: number) => {
+    const state = get();
+    const gpu = state.gpus.find(g => g.id === gpuInstanceId);
+    if (!gpu) return;
+
+    const gpuDef = GPUS[gpu.gpuTierId];
+    const remainingRatio = (gpu.lifespan - gpu.usedDays) / gpu.lifespan;
+    // GPU 售价固定，回收价基于 basePrice
+    const recyclePrice = Math.round(
+      gpuDef.basePrice * GPU_RECYCLE_RATE * remainingRatio
+    );
+
+    const newCash = state.cash + recyclePrice;
+    const newGpus = state.gpus.filter(g => g.id !== gpuInstanceId);
+
+    // 收益提示：净利润 = 累计产出 + 回收价 - 购买价 - 已交电费
+    const electricityCost = gpuDef.dailyElectricity * gpu.usedDays;
+    const netProfit = Math.round(
+      gpu.totalOutput + recyclePrice - gpu.purchasePrice - electricityCost
+    );
+    const messages = [
+      ...state.pendingMessages,
+      `♻️ 出售 ${gpuDef.name}（已使用${gpu.usedDays}天），回收 ¥${recyclePrice.toLocaleString()}。净利润 ¥${netProfit.toLocaleString()}`,
+    ];
+
+    set({
+      cash: newCash,
+      gpus: newGpus,
+      pendingMessages: messages,
+      portfolioHistory: appendPortfolioHistory(
+        state.portfolioHistory,
+        {
+          day: state.day,
+          cash: newCash,
+          inventory: state.inventory,
+          currentPrices: getValuationPrices(state.currentPrices, state.xianYuPrices),
+          nextRentDay: state.nextRentDay,
+          rentAmount: state.rentAmount,
+          gpus: newGpus,
+        },
+        'income',
+        `出售GPU: ${gpuDef.name}`
+      ),
+    });
   },
 }));

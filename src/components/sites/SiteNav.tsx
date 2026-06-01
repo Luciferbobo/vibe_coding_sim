@@ -24,6 +24,7 @@ export function SiteNav() {
   const restDaysLeft = useGameStore((s) => s.restDaysLeft);
   const tasksCompletedToday = useGameStore((s) => s.tasksCompletedToday);
   const maxTasksPerDay = useGameStore((s) => s.maxTasksPerDay);
+  const gpuUnlocked = useGameStore((s) => s.gpuUnlocked);
 
   return (
     <nav className="flex h-full w-full flex-col overflow-hidden bg-gray-900">
@@ -43,7 +44,10 @@ export function SiteNav() {
       )}
 
       <div className="flex-1 overflow-y-auto px-2 space-y-0.5">
-        {SITES.map((site) => {
+        {SITES.filter((site) => {
+          if (site.id === 10 && !gpuUnlocked) return false;
+          return true;
+        }).map((site) => {
           const active = site.id === currentSiteId;
           const disabled = restDaysLeft > 0;
           return (

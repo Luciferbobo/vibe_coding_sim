@@ -22,4 +22,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'manual_3', name: '真正的程序员', description: '使用手动完成3个项目', icon: '⌨️' },
   { id: 'sell_expiring', name: '大善人', description: '卖出只剩1天保质期的Token', icon: '😈' },
   { id: 'arbitrage_5', name: '财富密码', description: '跨市场套利（低买高卖）累计达到 5 次', icon: '💹' },
+  { id: 'gpu_first_buy', name: '老黄的信徒', description: '购买第一台GPU服务器', icon: '🖥️' },
+  { id: 'quantum_computer', name: '遇事不决，量子力学', description: '购买第一台量子计算机原型机', icon: '⚛️' },
+  { id: 'money_50m', name: '造富神话', description: '总资产达到5000万', icon: '👑' },
 ];

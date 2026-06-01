@@ -1,6 +1,7 @@
 // 结束画面 - 简洁终局结算
 import { useMemo, useState } from 'react';
 import { useGameStore } from '../../stores/gameStore';
+import { calculateGpuDepreciationValue } from '../../stores/gameStore';
 import type { PortfolioHistoryPoint } from '../../stores/gameStore';
 import { GAME_OVER_QUOTES } from '../../data/events';
 import { TOKENS } from '../../data/tokens';
@@ -26,6 +27,7 @@ export function GameOverScreen() {
   const bestEarningDay = useGameStore((s) => s.bestEarningDay);
   const inflationLossTotal = useGameStore((s) => s.inflationLossTotal);
   const portfolioHistory = useGameStore((s) => s.portfolioHistory);
+  const gpus = useGameStore((s) => s.gpus);
 
   const tokenValue = useMemo(
     () =>
@@ -36,7 +38,10 @@ export function GameOverScreen() {
     [inventory, currentPrices]
   );
 
-  const score = calculateScore(cash, tokenValue, day, rentAmount);
+  // GPU 折旧价值也计入总资产评分
+  const gpuValue = useMemo(() => calculateGpuDepreciationValue(gpus), [gpus]);
+
+  const score = calculateScore(cash, tokenValue + gpuValue, day, rentAmount);
   const title = getTitle(day);
   const dayComment = getDayComment(day);
 

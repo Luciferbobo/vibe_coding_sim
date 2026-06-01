@@ -1,6 +1,6 @@
 // 游戏核心参数常量
 
-export const INITIAL_CASH = 500000;           // 初始现金
+export const INITIAL_CASH = 5000;           // 初始现金
 export const INITIAL_SPIRIT = 100;          // 初始精神值
 export const INITIAL_REPUTATION = 50;       // 初始信誉值（改为50）
 export const MAX_SPIRIT = 100;              // 精神值上限
@@ -89,4 +89,7 @@ export const MAX_TASKS_PER_DAY = 3;
 // 交易税：总资产达到阈值后，卖出 Token 被扣 25% 税
 export const TRADING_TAX_THRESHOLD = 3_000_000; // 300万
 export const TRADING_TAX_RATE = 0.25;
+
+// GPU算力中心解锁阈值（总资产达到 200 万解锁）
+export const GPU_CENTER_UNLOCK_THRESHOLD = 2_000_000;
 

@@ -1,6 +1,6 @@
 // 一键退休 - 夕阳西下，卖掉所有Token，躺平结算
 import { useMemo, useState } from 'react';
-import { useGameStore, getValuationPrices, computeRetirementWeeks } from '../../stores/gameStore';
+import { useGameStore, getValuationPrices, computeRetirementWeeks, calculateGpuDepreciationValue } from '../../stores/gameStore';
 import { TOKENS } from '../../data/tokens';
 import { RENT_CYCLE, RENT_INCREASE } from '../../data/constants';
 import { formatToken, formatDay } from '../../utils/format';
@@ -21,6 +21,7 @@ export function Retirement() {
   const rentAmount = useGameStore((s) => s.rentAmount);
   const nextRentDay = useGameStore((s) => s.nextRentDay);
   const day = useGameStore((s) => s.day);
+  const gpus = useGameStore((s) => s.gpus);
   const retire = useGameStore((s) => s.retire);
 
   const [confirming, setConfirming] = useState(false);
@@ -46,7 +47,10 @@ export function Retirement() {
     [grouped, valuationPrices]
   );
 
-  const totalCash = cash + tokenValue;
+  // GPU 折旧资产也计入退休资产
+  const gpuValue = useMemo(() => calculateGpuDepreciationValue(gpus), [gpus]);
+
+  const totalCash = cash + tokenValue + gpuValue;
   const daysUntilFirstRent = Math.max(0, nextRentDay - day);
   // 按真实涨租机制推演，与 retire() 算法保持一致
   const weeksAlive = computeRetirementWeeks(totalCash, rentAmount, RENT_INCREASE);

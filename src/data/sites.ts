@@ -11,6 +11,7 @@ export interface SiteDef {
 export const SITES: SiteDef[] = [
   { id: 0, name: 'API商城', type: 'market', description: '主要Token交易市场，价格稳定', icon: '🏪' },
   { id: 1, name: '闲鱼二手区', type: 'market', description: '野生Token市场，价格波动大', icon: '🐟' },
+  { id: 10, name: 'GPU算力中心', type: 'market', description: '购买GPU服务器，自动产出Token', icon: '⚛️' },
   { id: 2, name: '外包广场', type: 'task', description: '正规需求平台，各种难度都有', icon: '💼' },
   { id: 3, name: '高端猎头', type: 'task', description: '高端需求平台，信誉要求高', icon: '👔' },
   { id: 4, name: 'Twitter', type: 'info', description: '查看行情消息，触发事件', icon: '📱' },
