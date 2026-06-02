@@ -180,7 +180,7 @@ export function getAvgBuyPrice(inventory: TokenBatch[], tokenId: number): number
 }
 
 // FIFO 消耗某 tokenId 的指定数量（先消耗最早过期的批次）
-// 返回新 inventory（已过滤 count<=0 的批次）
+// 返回新 inventory（已过滤浮点残留 / count<=0 的批次）
 export function consumeTokensFIFO(
   inventory: TokenBatch[],
   tokenId: number,
@@ -197,7 +197,11 @@ export function consumeTokensFIFO(
     b.count -= take;
     remaining -= take;
   }
-  return batches.filter(b => b.count > 0);
+  // 过滤浮点残留：咸鱼Cursor 必须是整数个数；其他 Token 余量 < 1e-9 视为已清空
+  return batches.filter(b => {
+    if (b.tokenId === 6) return b.count >= 1;
+    return b.count > 1e-9;
+  });
 }
 
 /**
@@ -471,6 +475,8 @@ interface GameState {
 
   // 成就系统
   unlockedAchievements: string[];
+  // 成就解锁天数映射：id -> day（用于结局页按时间线展示成就）
+  achievementUnlockDays: Record<string, number>;
 
   // 模型不赚钱提示记录（按份存储：每个模型已提示的亏本档位数）
   modelUnprofitableNotified: number[];
@@ -520,6 +526,9 @@ interface GameState {
 
   // 交易税首次激活强制确认弹窗
   showTradingTaxModal: boolean;
+
+  // “电费比房租贵”提示是否已首次推送（全局只推一次）
+  electricityOverRentTipShown: boolean;
 
   // 累计已交房租总额（用于退休结算播报）
   totalRentPaid: number;
@@ -590,6 +599,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   arbitrageTipShown: false,
   moneyMilestonesReached: [],
   unlockedAchievements: [],
+  achievementUnlockDays: {},
   modelUnprofitableNotified: Array(TOKENS.length).fill(0),
   totalTasksCompleted: 0,
   totalCoffeeDrunk: 0,
@@ -615,6 +625,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   quantumComputerSold: false,
   showRentDeadlineModal: false,
   showTradingTaxModal: false,
+  electricityOverRentTipShown: false,
   totalRentPaid: 0,
 
   // 开始新游戏
@@ -678,6 +689,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       arbitrageTipShown: false,
       moneyMilestonesReached: [],
       unlockedAchievements: [],
+      achievementUnlockDays: {},
       modelUnprofitableNotified: Array(TOKENS.length).fill(0),
       totalTasksCompleted: 0,
       totalCoffeeDrunk: 0,
@@ -703,6 +715,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       quantumComputerSold: false,
       showRentDeadlineModal: false,
       showTradingTaxModal: false,
+      electricityOverRentTipShown: false,
       totalRentPaid: 0,
     });
   },
@@ -950,8 +963,9 @@ export const useGameStore = create<GameState>((set, get) => ({
         if (weeklyElectricity > 0) {
           messages.push(`🔌 电费 ¥${weeklyElectricity.toLocaleString()} 已随房租扣除`);
         }
-        if (weeklyElectricity > state.rentAmount) {
+        if (weeklyElectricity > state.rentAmount && !state.electricityOverRentTipShown) {
           messages.push('怎么这个月电费比房租都贵啊...');
+          set({ electricityOverRentTipShown: true });
         }
         newRentDay = state.nextRentDay + RENT_CYCLE;
         newRentAmount = state.rentAmount + RENT_INCREASE;
@@ -1609,6 +1623,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     let newEarlyTipsUnlocked = state.earlyRentTipsUnlocked;
     let newMaxConsecutive = state.maxConsecutiveEarlyRents;
     const newUnlockedAchievements = [...state.unlockedAchievements];
+    const newAchievementDays = { ...state.achievementUnlockDays };
 
     if (isEarly) {
       newConsecutive += 1;
@@ -1627,6 +1642,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       // 检查连续10次提前交租成就
       if (newConsecutive >= 10 && !newUnlockedAchievements.includes('early_rent_10')) {
         newUnlockedAchievements.push('early_rent_10');
+        newAchievementDays['early_rent_10'] = state.day;
         messages.push('🏅 成就解锁：富婆快乐球 - 连续10次提前交房租！');
       }
     } else {
@@ -1638,8 +1654,9 @@ export const useGameStore = create<GameState>((set, get) => ({
     // 同步播报电费扣款（与 advanceDay 自动扣款行为保持一致）
     if (weeklyElectricity > 0) {
       messages.push(`🔌 电费 ¥${weeklyElectricity.toLocaleString()} 已随房租扣除`);
-      if (weeklyElectricity > state.rentAmount) {
+      if (weeklyElectricity > state.rentAmount && !state.electricityOverRentTipShown) {
         messages.push('怎么这个月电费比房租都贵啊...');
+        set({ electricityOverRentTipShown: true });
       }
     }
 
@@ -1654,6 +1671,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       maxConsecutiveEarlyRents: newMaxConsecutive,
       earlyRentTipsUnlocked: newEarlyTipsUnlocked,
       unlockedAchievements: newUnlockedAchievements,
+      achievementUnlockDays: newAchievementDays,
       pendingMessages: messages,
       totalRentPaid: state.totalRentPaid + state.rentAmount,
       portfolioHistory: appendPortfolioHistory(
@@ -1743,7 +1761,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const taxNote = tokenTax > 0
       ? `（Token 卖出税 ${sellTaxPct}%，扣除 ¥${Math.round(tokenTax).toLocaleString()}）`
       : '';
-    const reason = `你选择了退休。变卖了所有 Token 与 GPU${taxNote}，带着¥${totalCash.toLocaleString()}的积蓄躺平了。房租共交了¥${state.totalRentPaid.toLocaleString()}，你坚持了${weeksAlive}周（${daysAlive}天）`;
+    const reason = `你选择了退休。变卖了所有 Token 与 GPU${taxNote}，带着¥${totalCash.toLocaleString()}的积蓄躺平了。你坚持了${weeksAlive}周（${daysAlive}天）`;
 
     set({
       cash: 0,
@@ -1811,6 +1829,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     messages.push(`🏅 成就解锁：${achievement.icon} ${achievement.name} — ${achievement.description}`);
     set({
       unlockedAchievements: [...state.unlockedAchievements, id],
+      achievementUnlockDays: { ...state.achievementUnlockDays, [id]: state.day },
       pendingMessages: messages,
     });
   },
@@ -1821,6 +1840,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const newMilestones = [...state.moneyMilestonesReached];
     const messages = [...state.pendingMessages];
     const newAchievements = [...state.unlockedAchievements];
+    const newAchievementDays = { ...state.achievementUnlockDays };
     let changed = false;
 
     for (const milestone of MONEY_MILESTONES) {
@@ -1832,6 +1852,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         const achievementId = MONEY_ACHIEVEMENT_MAP[milestone.threshold];
         if (achievementId && !newAchievements.includes(achievementId)) {
           newAchievements.push(achievementId);
+          newAchievementDays[achievementId] = state.day;
           const achievement = ACHIEVEMENTS.find(a => a.id === achievementId);
           if (achievement) {
             messages.push(`🏅 成就解锁：${achievement.icon} ${achievement.name}`);
@@ -1854,6 +1875,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         changed = true;
         if (!newAchievements.includes(item.achievementId)) {
           newAchievements.push(item.achievementId);
+          newAchievementDays[item.achievementId] = state.day;
           const achievement = ACHIEVEMENTS.find(a => a.id === item.achievementId);
           if (achievement) {
             messages.push(`🏅 成就解锁：${achievement.icon} ${achievement.name} — ${achievement.description}`);
@@ -1866,6 +1888,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       set({
         moneyMilestonesReached: newMilestones,
         unlockedAchievements: newAchievements,
+        achievementUnlockDays: newAchievementDays,
         pendingMessages: messages,
       });
     }

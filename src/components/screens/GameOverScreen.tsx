@@ -5,6 +5,7 @@ import { calculateGpuDepreciationValue } from '../../stores/gameStore';
 import type { PortfolioHistoryPoint } from '../../stores/gameStore';
 import { GAME_OVER_QUOTES } from '../../data/events';
 import { TOKENS } from '../../data/tokens';
+import { ACHIEVEMENTS } from '../../data/achievements';
 import { calculateScore, getTitle, getDayComment } from '../../engine/scoreEngine';
 import { formatMoney, formatDay } from '../../utils/format';
 import { randomChoice } from '../../utils/random';
@@ -28,6 +29,8 @@ export function GameOverScreen() {
   const inflationLossTotal = useGameStore((s) => s.inflationLossTotal);
   const portfolioHistory = useGameStore((s) => s.portfolioHistory);
   const gpus = useGameStore((s) => s.gpus);
+  const unlockedAchievements = useGameStore((s) => s.unlockedAchievements);
+  const achievementUnlockDays = useGameStore((s) => s.achievementUnlockDays);
 
   const tokenValue = useMemo(
     () =>
@@ -137,6 +140,12 @@ export function GameOverScreen() {
             </span>
           </p>
         </div>
+
+        {/* 成就墙：按时间顺序展示解锁的成就 */}
+        <AchievementWall
+          unlocked={unlockedAchievements}
+          unlockDays={achievementUnlockDays}
+        />
 
         {/* 人生收益曲线 */}
         <LifeCurve history={portfolioHistory} />
@@ -402,6 +411,112 @@ function StatCard({
       <p className={`mt-1 font-mono text-lg font-semibold ${accent}`}>
         {value}
       </p>
+    </div>
+  );
+}
+
+/**
+ * 成就墙 - 按解锁顺序（天数升序）展示本局获得的成就。
+ * 设计语言：
+ *   - 沉黑底 + amber/yellow 金色叠加，与 Final Title 卡片呔响
+ *   - 卡片左上角序号、右上角徽章，中央大 emoji 勋章
+ *   - 底部微小双行：名称 + Day xxx、描述
+ *   - 底部一根抽象“时间轴”加强顶部语义
+ */
+function AchievementWall({
+  unlocked,
+  unlockDays,
+}: {
+  unlocked: string[];
+  unlockDays: Record<string, number>;
+}) {
+  const total = ACHIEVEMENTS.length;
+  const count = unlocked.length;
+
+  // 按 day 升序排；同一天同时解锁时以原始解锁顺序（unlocked 数组顺序）为次要排序
+  const items = useMemo(() => {
+    return unlocked
+      .map((id, idx) => {
+        const meta = ACHIEVEMENTS.find((a) => a.id === id);
+        if (!meta) return null;
+        const day = unlockDays[id] ?? 0;
+        return { id, meta, day, idx };
+      })
+      .filter(
+        (v): v is { id: string; meta: typeof ACHIEVEMENTS[number]; day: number; idx: number } =>
+          v !== null
+      )
+      .sort((a, b) => (a.day - b.day) || (a.idx - b.idx));
+  }, [unlocked, unlockDays]);
+
+  return (
+    <div className="mt-6 rounded-xl bg-gray-800/60 border border-gray-700/60 p-6">
+      <div className="flex items-baseline justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-semibold tracking-[0.25em] uppercase text-gray-400">
+            成就墙 · Achievements
+          </h3>
+        </div>
+        <div className="text-right text-xs text-gray-500">
+          已获得{' '}
+          <span className="font-mono text-base font-semibold text-amber-300">
+            {count}
+          </span>
+          <span className="text-gray-600"> / {total}</span>
+        </div>
+      </div>
+
+      {count === 0 ? (
+        <div className="mt-6 rounded-lg border border-dashed border-gray-700/60 px-6 py-10 text-center">
+          <p className="text-3xl opacity-30 grayscale">🎖️</p>
+          <p className="mt-3 text-sm text-gray-500">
+            这一生平平无奇，你没有获得任何成就。
+          </p>
+        </div>
+      ) : (
+        <>
+          <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            {items.map((it, i) => (
+              <div
+                key={it.id}
+                className="group relative overflow-hidden rounded-xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-yellow-500/0 px-3 py-3 shadow-sm shadow-amber-900/10 transition-all hover:border-amber-400/60 hover:shadow-amber-700/20"
+                title={`${it.meta.name} — ${it.meta.description}\n解锁于 ${formatDay(it.day)}`}
+              >
+                {/* 微光晕 */}
+                <div className="pointer-events-none absolute -top-8 -right-8 h-20 w-20 rounded-full bg-amber-400/10 blur-2xl transition-opacity group-hover:bg-amber-300/20" />
+
+                {/* 序号 */}
+                <div className="relative flex items-center justify-between text-[10px]">
+                  <span className="font-mono tracking-[0.2em] text-amber-400/70">
+                    #{(i + 1).toString().padStart(2, '0')}
+                  </span>
+                  <span className="rounded bg-amber-500/15 px-1.5 py-0.5 font-mono text-[10px] font-medium text-amber-300">
+                    {formatDay(it.day)}
+                  </span>
+                </div>
+
+                {/* 大勋章 */}
+                <div className="relative mt-2 flex h-12 items-center justify-center">
+                  <span
+                    className="text-4xl leading-none drop-shadow-[0_0_10px_rgba(252,211,77,0.35)] transition-transform group-hover:scale-110"
+                    aria-hidden
+                  >
+                    {it.meta.icon}
+                  </span>
+                </div>
+
+                {/* 名称 + 描述 */}
+                <p className="relative mt-2 truncate text-center text-sm font-semibold text-amber-200">
+                  {it.meta.name}
+                </p>
+                <p className="relative mt-1 line-clamp-2 text-center text-[11px] leading-snug text-gray-400">
+                  {it.meta.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }

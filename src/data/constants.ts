@@ -1,6 +1,6 @@
 // 游戏核心参数常量
 
-export const INITIAL_CASH = 5000;           // 初始现金
+export const INITIAL_CASH = 3000000;           // 初始现金
 export const INITIAL_SPIRIT = 100;          // 初始精神值
 export const INITIAL_REPUTATION = 50;       // 初始信誉值（改为50）
 export const MAX_SPIRIT = 100;              // 精神值上限

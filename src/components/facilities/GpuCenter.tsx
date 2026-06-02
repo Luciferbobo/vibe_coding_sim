@@ -34,11 +34,39 @@ function calcDailyOutput(gpu: GPUInstance): number {
   return baseOutput * GPUS[gpu.gpuTierId].outputMultiplier;
 }
 
-// 进度条颜色阶梯：>50% emerald，20-50% amber，<20% red
-function lifeBarColor(remainingRatio: number): string {
-  if (remainingRatio > 0.5) return 'bg-emerald-500';
-  if (remainingRatio >= 0.2) return 'bg-amber-400';
+// 进度条颜色阶梯：与状态脱冲点保持一致的天数阶梯
+//   ≥ 8 天 emerald，4–7 天 amber，1–3 天 red
+function lifeBarColor(remaining: number): string {
+  if (remaining >= 8) return 'bg-emerald-500';
+  if (remaining >= 4) return 'bg-amber-400';
   return 'bg-red-500';
+}
+
+// 状态脱冲点颜色：按剩余天数 绿（≥ 8）/ 橙（4-7）/ 红（1-3）
+function statusDotStyle(remaining: number): {
+  color: string;
+  shadow: string;
+  label: string;
+} {
+  if (remaining >= 8) {
+    return {
+      color: 'bg-emerald-400',
+      shadow: '0 0 6px rgba(52,211,153,0.7)',
+      label: '正常运行',
+    };
+  }
+  if (remaining >= 4) {
+    return {
+      color: 'bg-amber-400',
+      shadow: '0 0 6px rgba(251,191,36,0.7)',
+      label: '寿命告警',
+    };
+  }
+  return {
+    color: 'bg-red-400',
+    shadow: '0 0 6px rgba(248,113,113,0.7)',
+    label: '即将报废',
+  };
 }
 
 // 可选的产出 Token（id 0-5，不含咸鱼Cursor）
@@ -100,7 +128,7 @@ export default function GpuCenter() {
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
               {gpus.map((gpu) => (
                 <GpuInstanceCard
                   key={gpu.id}
@@ -195,16 +223,13 @@ export default function GpuCenter() {
           </div>
         </section>
 
-        {/* 旁注 */}
+        {/* 运营提示：与 GPU 商城副标题一致的灰色小字 */}
         <section>
-          <div className="rounded-lg border-l-2 border-amber-500/40 bg-gray-800/60 px-3 py-2.5">
-            <p className="text-xs font-medium text-amber-300">运营提示</p>
-            <p className="mt-1 text-sm text-gray-300 leading-snug">
-              GPU 寿命 30 天，期间每天自动产出所选 Token（保质期 7 天）。
-              <br />
-              电费随每周房租一并扣除，余额不足会跟房租一起进入宽限期。
-            </p>
-          </div>
+          <p className="text-xs text-gray-500 leading-relaxed">
+            GPU 寿命 15 天，期间每天自动产出所选 Token（保质期 7 天）
+            <br />
+            电费随每周房租一并扣除，余额不足会跟房租一起进入宽限期
+          </p>
         </section>
       </div>
     </div>
@@ -231,7 +256,8 @@ function GpuInstanceCard({
   const def = GPUS[gpu.gpuTierId];
   const remaining = gpu.lifespan - gpu.usedDays;
   const remainingRatio = remaining / gpu.lifespan;
-  const barColor = lifeBarColor(remainingRatio);
+  const barColor = lifeBarColor(remaining);
+  const status = statusDotStyle(remaining);
   const recyclePrice = calcRecyclePrice(gpu);
   const currentDailyElectricity = Math.round(def.dailyElectricity * inflationRatio);
 
@@ -243,77 +269,96 @@ function GpuInstanceCard({
   const tokenName = hasOutput ? TOKENS[gpu.selectedTokenId].name : null;
 
   return (
-    <div className="rounded-lg border border-gray-700/60 bg-gray-800/60 p-4">
+    <div className="group relative overflow-hidden rounded-xl border border-emerald-500/20 bg-gradient-to-br from-gray-800/80 via-gray-800/60 to-emerald-950/20 p-3.5 flex flex-col transition-all hover:border-emerald-400/40 hover:shadow-lg hover:shadow-emerald-900/20">
+      {/* 微光晕 */}
+      <div className="pointer-events-none absolute -top-10 -right-10 h-24 w-24 rounded-full bg-emerald-400/5 blur-2xl transition-opacity group-hover:bg-emerald-300/10" />
+
       {/* 顶行：型号 + 剩余天数 */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="text-lg">{def.icon}</span>
-          <p className="font-semibold text-gray-100 truncate">{def.name}</p>
-          <span className="shrink-0 rounded bg-gray-700/60 text-gray-400 text-[10px] px-1.5 py-0.5">
-            T{def.tier}
+      <div className="relative flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="text-base shrink-0">{def.icon}</span>
+          <p className="font-semibold text-gray-100 truncate text-sm">{def.name}</p>
+          {/* 运行状态脱冲点：按剩余天数变色 */}
+          <span
+            className="relative shrink-0 inline-flex h-2 w-2"
+            title={status.label}
+            aria-label={status.label}
+          >
+            <span
+              className={`absolute inline-flex h-full w-full rounded-full ${status.color} opacity-60 animate-ping`}
+            />
+            <span
+              className={`relative inline-flex h-2 w-2 rounded-full ${status.color}`}
+              style={{ boxShadow: status.shadow }}
+            />
           </span>
         </div>
-        <p className="font-mono text-xs text-gray-400 tabular shrink-0">
-          {gpu.usedDays}/{gpu.lifespan} 天
+        <p className="font-mono text-[11px] text-gray-400 tabular shrink-0">
+          {gpu.usedDays}/{gpu.lifespan}天
         </p>
       </div>
 
       {/* 寿命进度条 */}
-      <div className="mt-2 h-2 rounded-full bg-gray-900/80 overflow-hidden">
+      <div className="relative mt-2 h-1.5 rounded-full bg-gray-900/80 overflow-hidden">
         <div
           className={`h-full ${barColor} transition-all`}
           style={{ width: `${Math.max(0, Math.min(100, remainingRatio * 100))}%` }}
         />
       </div>
 
-      {/* 产出 + 数据 */}
-      <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-        <div className="rounded bg-gray-900/60 border border-gray-700/50 px-2 py-1.5">
-          <p className="text-gray-500">当前产出</p>
-          <p className="mt-0.5 text-gray-200 truncate">
-            {hasOutput ? (
-              <>
-                <span className="font-medium">{tokenName}</span>
-                <span className="ml-1 font-mono text-gray-400 tabular">
-                  · {dailyOutput.toFixed(0)}M/天
-                </span>
-              </>
-            ) : (
-              <span className="text-amber-300">请选择产出Token</span>
-            )}
+      {/* 当前产出 */}
+      <div className="relative mt-3 rounded-lg border border-cyan-500/20 bg-cyan-500/5 px-2.5 py-1.5">
+        <p className="text-[10px] uppercase tracking-wider text-cyan-300/70">当前产出</p>
+        {hasOutput ? (
+          <p className="mt-0.5 text-sm">
+            <span className="font-semibold text-cyan-200">{tokenName}</span>
+            <span className="ml-1.5 font-mono text-[11px] text-gray-400 tabular">
+              {dailyOutput.toFixed(0)}M/天
+            </span>
           </p>
-        </div>
+        ) : (
+          <p className="mt-0.5 text-sm font-medium text-amber-300">请选择产出Token</p>
+        )}
+      </div>
+
+      {/* 4 宫格数据 */}
+      <div className="relative mt-2 grid grid-cols-2 gap-1.5">
         <div className="rounded bg-gray-900/60 border border-gray-700/50 px-2 py-1.5">
-          <p className="text-gray-500">日产值</p>
-          <p className="mt-0.5 font-mono font-semibold text-amber-400 tabular">
+          <p className="text-[10px] text-gray-500">日产值</p>
+          <p className="mt-0.5 font-mono font-semibold text-amber-400 tabular text-sm">
             {hasOutput ? `¥${Math.round(dailyValue).toLocaleString()}` : '—'}
           </p>
         </div>
         <div className="rounded bg-gray-900/60 border border-gray-700/50 px-2 py-1.5">
-          <p className="text-gray-500">日电费</p>
-          <p className="mt-0.5 font-mono font-semibold text-red-300 tabular">
-            ¥{currentDailyElectricity.toLocaleString()}/天
+          <p className="text-[10px] text-gray-500">日电费</p>
+          <p className="mt-0.5 font-mono font-semibold text-red-300 tabular text-sm">
+            ¥{currentDailyElectricity.toLocaleString()}
           </p>
         </div>
         <div className="rounded bg-gray-900/60 border border-gray-700/50 px-2 py-1.5">
-          <p className="text-gray-500">累计产出</p>
-          <p className="mt-0.5 font-mono font-semibold text-emerald-300 tabular">
+          <p className="text-[10px] text-gray-500">累计产出</p>
+          <p className="mt-0.5 font-mono font-semibold text-emerald-300 tabular text-sm">
             ¥{Math.round(gpu.totalOutput).toLocaleString()}
+          </p>
+        </div>
+        <div className="rounded bg-gray-900/60 border border-gray-700/50 px-2 py-1.5">
+          <p className="text-[10px] text-gray-500">回收价</p>
+          <p className="mt-0.5 font-mono font-semibold text-amber-300 tabular text-sm">
+            ¥{recyclePrice.toLocaleString()}
           </p>
         </div>
       </div>
 
-      {/* 操作行 */}
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <label className="text-xs text-gray-500">切换产出</label>
+      {/* 操作区：切换产出 + 卖出 */}
+      <div className="relative mt-3 space-y-2">
         <select
           value={gpu.selectedTokenId}
           onChange={(e) => onConfigure(Number(e.target.value))}
-          className="text-xs bg-gray-900/80 border border-gray-700/60 rounded px-2 py-1 text-gray-200 focus:outline-none focus:border-emerald-500/60"
+          className="w-full text-xs bg-gray-900/80 border border-gray-700/60 rounded-md px-2 py-1.5 text-gray-200 focus:outline-none focus:border-emerald-500/60"
         >
           {!hasOutput && (
             <option value={-1} disabled>
-              请选择…
+              请选择产出Token…
             </option>
           )}
           {OUTPUT_TOKEN_IDS.map((tid) => {
@@ -328,21 +373,12 @@ function GpuInstanceCard({
             );
           })}
         </select>
-
-        <div className="ml-auto flex items-center gap-2">
-          <span className="text-xs text-gray-500">
-            回收价{' '}
-            <span className="font-mono text-amber-400 tabular">
-              ¥{recyclePrice.toLocaleString()}
-            </span>
-          </span>
-          <button
-            onClick={onSell}
-            className="px-3 py-1.5 rounded-md bg-gray-700 hover:bg-gray-600 text-gray-200 text-xs font-medium transition-colors"
-          >
-            卖出
-          </button>
-        </div>
+        <button
+          onClick={onSell}
+          className="w-full px-3 py-1.5 rounded-md bg-gray-700/80 hover:bg-gray-600 text-gray-200 text-xs font-medium transition-colors"
+        >
+          卖出回收
+        </button>
       </div>
     </div>
   );

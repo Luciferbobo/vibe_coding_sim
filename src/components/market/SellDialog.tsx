@@ -61,6 +61,11 @@ export function SellDialog({ tokenId, onClose }: Props) {
   const canSell = count > 0 && count <= max;
 
   const setQuick = (ratio: number) => {
+    // 全部卖出：直接用 max，避免 floor 操作丢失浮点尾巴（导致剩 0.1M=100k 卖不出去）
+    if (ratio >= 1) {
+      setCount(max);
+      return;
+    }
     const v = isXianyu
       ? Math.floor(max * ratio)
       : Math.floor(max * ratio * 10) / 10;
