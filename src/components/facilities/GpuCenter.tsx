@@ -51,6 +51,7 @@ export default function GpuCenter() {
   const buyGpu = useGameStore((s) => s.buyGpu);
   const configureGpuOutput = useGameStore((s) => s.configureGpuOutput);
   const sellGpu = useGameStore((s) => s.sellGpu);
+  const quantumComputerSold = useGameStore((s) => s.quantumComputerSold);
 
   // 电费通胀系数：以 Claude (tokenId=0) 当前价 / 基础价 为准
   const inflationRatio = TOKENS[0].basePrice > 0
@@ -127,7 +128,9 @@ export default function GpuCenter() {
             {GPUS.map((g) => {
               const price = g.basePrice;
               const currentDailyElectricity = Math.round(g.dailyElectricity * inflationRatio);
-              const canBuy = cash >= price;
+              // 量子计算机原型机（id=4）全世界仅一台，购买后永久禁用
+              const isQuantumSoldOut = g.id === 4 && quantumComputerSold;
+              const canBuy = cash >= price && !isQuantumSoldOut;
               return (
                 <div
                   key={g.id}
@@ -180,7 +183,11 @@ export default function GpuCenter() {
                     disabled={!canBuy}
                     className="mt-3 w-full px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-emerald-600"
                   >
-                    {canBuy ? '购买' : '余额不足'}
+                    {isQuantumSoldOut
+                      ? '全世界仅有一台的原型机已售出'
+                      : canBuy
+                        ? '购买'
+                        : '余额不足'}
                   </button>
                 </div>
               );

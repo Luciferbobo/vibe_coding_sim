@@ -13,11 +13,11 @@ export interface GPUDef {
 }
 
 export const GPUS: GPUDef[] = [
-  { id: 0, name: '8 × RTX 5090', tier: 1, basePrice: 1_000_000, dailyElectricity: 3_000, outputMultiplier: 1.0, lifespan: 30, description: '入门消费级算力', icon: '🖥️' },
-  { id: 1, name: '8 × H200', tier: 2, basePrice: 3_500_000, dailyElectricity: 8_000, outputMultiplier: 3.8, lifespan: 30, description: 'NVIDIA 数据中心标配', icon: '🖥️' },
-  { id: 2, name: '8 × B200', tier: 3, basePrice: 8_000_000, dailyElectricity: 16_000, outputMultiplier: 9.5, lifespan: 30, description: 'Blackwell 架构旗舰', icon: '🖥️' },
-  { id: 3, name: '8 × RTX 9090', tier: 4, basePrice: 20_000_000, dailyElectricity: 35_000, outputMultiplier: 26, lifespan: 30, description: '9090，2030年人均一台', icon: '🖥️' },
-  { id: 4, name: '量子计算原型机', tier: 5, basePrice: 50_000_000, dailyElectricity: 80_000, outputMultiplier: 512, lifespan: 30, description: 'AGI诞生前夕', icon: '⚛️' },
+  { id: 0, name: '8 × RTX 5090', tier: 1, basePrice: 1_000_000, dailyElectricity: 3_000, outputMultiplier: 1.0, lifespan: 15, description: '入门消费级算力', icon: '🖥️' },
+  { id: 1, name: '8 × H200', tier: 2, basePrice: 3_500_000, dailyElectricity: 8_000, outputMultiplier: 3.8, lifespan: 15, description: 'NVIDIA 数据中心标配', icon: '🖥️' },
+  { id: 2, name: '8 × B200', tier: 3, basePrice: 8_000_000, dailyElectricity: 16_000, outputMultiplier: 9.5, lifespan: 15, description: 'Blackwell 架构旗舰', icon: '🖥️' },
+  { id: 3, name: '8 × RTX 9090', tier: 4, basePrice: 20_000_000, dailyElectricity: 35_000, outputMultiplier: 26, lifespan: 15, description: '9090，2030年人均一台', icon: '🖥️' },
+  { id: 4, name: '量子计算原型机', tier: 5, basePrice: 50_000_000, dailyElectricity: 80_000, outputMultiplier: 512, lifespan: 15, description: 'AGI诞生前夕', icon: '⚛️' },
 ];
 
 // 5090基础每日产出量（M/天）- 其他GPU按outputMultiplier乘

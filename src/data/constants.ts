@@ -87,8 +87,82 @@ export const INFLATION_PHASES = [
 export const MAX_TASKS_PER_DAY = 3;
 
 // 交易税：总资产达到阈值后，卖出 Token 被扣 25% 税
+// 注：以下两个常量为历史兼容，实际仅被 UI 文案引用；真正生效的是下面的 SELL_TAX_TIERS 阶梯表
 export const TRADING_TAX_THRESHOLD = 3_000_000; // 300万
 export const TRADING_TAX_RATE = 0.25;
+
+/**
+ * 卖出税阶梯：基于玩家历史总资产峰值（peakTotalAssets）单调递增，跨进一档后永久生效、不可回退。
+ * 设计目标：操作较好的玩家在 5000万 附近几乎赚不动，被迫主动退休。
+ * 第 0 档（300万/25%）为现有交易税阈值，保持原有手感不变。
+ */
+export interface SellTaxTier {
+  threshold: number;       // 购及该档的总资产峰值阈值
+  multiplier: number;      // 卖出实收系数（0~1，越小扣得越狠）
+  taxPct: number;          // 显示用税率百分数
+  thresholdLabel: string;  // 显示用阈值文案
+  modalEmoji: string;      // 弹窗顶部表情
+  modalTitle: string;      // 弹窗标题
+  headlineMessage: string; // 推送到 pendingMessages 的提示信息
+}
+
+export const SELL_TAX_TIERS: SellTaxTier[] = [
+  // 第 0 档：300万 / 25%
+  {
+    threshold: 3_000_000,
+    multiplier: 0.75,
+    taxPct: 25,
+    thresholdLabel: '300万',
+    modalEmoji: '💸',
+    modalTitle: 'Token交易开始收税',
+    headlineMessage:
+      '📢 全球 Token 交易所联合公告：因Token交易活跃，即日起所有 Token 卖出将收取 25% 税额',
+  },
+  // 第 1 档：800万 / 45%
+  {
+    threshold: 8_000_000,
+    multiplier: 0.55,
+    taxPct: 45,
+    thresholdLabel: '800万',
+    modalEmoji: '📈',
+    modalTitle: 'Token交易税上涨',
+    headlineMessage:
+      '📢 全球 Token 交易所联合公告：即日起所有 Token 卖出交易税提高至 45% ',
+  },
+  // 第 2 档：2000万 / 65%
+  {
+    threshold: 20_000_000,
+    multiplier: 0.35,
+    taxPct: 65,
+    thresholdLabel: '2000万',
+    modalEmoji: '🌊',
+    modalTitle: '流动性紧缩警报',
+    headlineMessage:
+      '📢 Token 市场流动性指数连续下跌，做市商集体扩大点差。Token 卖出实际到账仅 35%',
+  },
+  // 第 3 档：3500万 / 80%
+  {
+    threshold: 60_000_000,
+    multiplier: 0.20,
+    taxPct: 80,
+    thresholdLabel: '6000万',
+    modalEmoji: '🐋',
+    modalTitle: '市场深度严重不足',
+    headlineMessage:
+      '📢 Token 深度订单簿持续萎缩，大额抛售难以承接。每笔卖出实际到账仅两成',
+  },
+  // 第 4 档：2亿 / 95%——火热时代终结（设计天花板）
+  {
+    threshold: 200_000_000,
+    multiplier: 0.05,
+    taxPct: 95,
+    thresholdLabel: '2亿',
+    modalEmoji: '🪦',
+    modalTitle: '火热时代的结束',
+    headlineMessage:
+      '📢 全球 Token 市场已过饱和，即日起token几乎只是账户上的数字了',
+  },
+];
 
 // GPU算力中心解锁阈值（总资产达到 200 万解锁）
 export const GPU_CENTER_UNLOCK_THRESHOLD = 2_000_000;

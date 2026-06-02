@@ -81,12 +81,21 @@ const SITE_SOUND_MAP: Record<number, string> = {
 const MUTE_STORAGE_KEY = 'game-audio-muted';
 const PLAY_DEBOUNCE_MS = 200;
 
+// BGM 配置
+const BGM_PATH = '/sounds/Frank Dang - Shattered Paths_H.mp3';
+const BGM_DEFAULT_VOLUME = 0.35; // BGM 默认音量（相对较低，不遮盖音效）
+
 class AudioManager {
   private audioContext: AudioContext | null = null;
   private audioCache: Record<string, HTMLAudioElement> = {};
   private muted: boolean = false;
   private volume: number = 1;
   private lastPlayTime: Record<string, number> = {};
+
+  // BGM 相关
+  private bgm: HTMLAudioElement | null = null;
+  private bgmVolume: number = BGM_DEFAULT_VOLUME;
+  private bgmPlaying: boolean = false;
 
   // 合成函数映射表：当 MP3 不可用时调用
   private synthMap: Record<string, () => void> = {
@@ -284,6 +293,15 @@ class AudioManager {
           /* noop */
         }
       }
+      // 静音时暂停 BGM
+      if (this.bgm && this.bgmPlaying) {
+        try { this.bgm.pause(); } catch { /* noop */ }
+      }
+    } else {
+      // 取消静音时恢复 BGM
+      if (this.bgm && this.bgmPlaying) {
+        try { this.bgm.play().catch(() => {}); } catch { /* noop */ }
+      }
     }
   }
 
@@ -304,6 +322,90 @@ class AudioManager {
         /* noop */
       }
     }
+    // 同步调整 BGM 音量（按比例）
+    if (this.bgm) {
+      try { this.bgm.volume = this.bgmVolume * v; } catch { /* noop */ }
+    }
+  }
+
+  // ============================================================
+  // 🎵 BGM 背景音乐控制
+  // ============================================================
+
+  /**
+   * 播放 BGM（循环），如果已经在播放则忽略
+   */
+  playBgm(): void {
+    if (this.bgmPlaying && this.bgm) return;
+    try {
+      if (typeof Audio === 'undefined') return;
+      if (!this.bgm) {
+        this.bgm = new Audio(BGM_PATH);
+        this.bgm.loop = true;
+        this.bgm.preload = 'auto';
+        this.bgm.addEventListener('error', () => {
+          console.warn('[AudioManager] BGM 加载失败');
+        });
+      }
+      this.bgm.volume = this.muted ? 0 : this.bgmVolume * this.volume;
+      this.bgmPlaying = true;
+      if (!this.muted) {
+        this.bgm.play().catch(() => {
+          // 浏览器可能阻止自动播放，等待用户交互后重试
+          const resumeOnInteraction = () => {
+            if (this.bgm && this.bgmPlaying && !this.muted) {
+              this.bgm.play().catch(() => {});
+            }
+            document.removeEventListener('click', resumeOnInteraction);
+            document.removeEventListener('keydown', resumeOnInteraction);
+          };
+          document.addEventListener('click', resumeOnInteraction, { once: true });
+          document.addEventListener('keydown', resumeOnInteraction, { once: true });
+        });
+      }
+    } catch (err) {
+      console.warn('[AudioManager] playBgm() error:', err);
+    }
+  }
+
+  /**
+   * 暂停 BGM
+   */
+  pauseBgm(): void {
+    this.bgmPlaying = false;
+    if (this.bgm) {
+      try { this.bgm.pause(); } catch { /* noop */ }
+    }
+  }
+
+  /**
+   * 停止 BGM 并重置进度
+   */
+  stopBgm(): void {
+    this.bgmPlaying = false;
+    if (this.bgm) {
+      try {
+        this.bgm.pause();
+        this.bgm.currentTime = 0;
+      } catch { /* noop */ }
+    }
+  }
+
+  /**
+   * 设置 BGM 音量 0-1
+   */
+  setBgmVolume(volume: number): void {
+    this.bgmVolume = Math.max(0, Math.min(1, volume));
+    if (this.bgm) {
+      try { this.bgm.volume = this.muted ? 0 : this.bgmVolume * this.volume; } catch { /* noop */ }
+    }
+  }
+
+  /**
+   * 获取 BGM 是否正在播放
+   */
+  isBgmPlaying(): boolean {
+    return this.bgmPlaying;
   }
 
   // ============================================================

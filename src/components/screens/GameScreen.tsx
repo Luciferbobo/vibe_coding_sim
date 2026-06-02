@@ -1,4 +1,5 @@
 // 主游戏界面 - 三栏布局
+import { useEffect } from 'react';
 import { useGameStore } from '../../stores/gameStore';
 import { GameHeader } from '../layout/GameHeader';
 import { StatusPanel } from '../layout/StatusPanel';
@@ -14,6 +15,8 @@ import { Retirement } from '../facilities/Retirement';
 import GpuCenter from '../facilities/GpuCenter';
 import { EventNotification } from '../events/EventNotification';
 import { calculateWeeklyElectricity } from '../../engine/gpuEngine';
+import { audioManager } from '../../utils/audioManager';
+import { SELL_TAX_TIERS } from '../../data/constants';
 
 function MainContent({ siteId }: { siteId: number }) {
   switch (siteId) {
@@ -50,10 +53,19 @@ export function GameScreen() {
   const dismissRentDeadlineModal = useGameStore((s) => s.dismissRentDeadlineModal);
   const showTradingTaxModal = useGameStore((s) => s.showTradingTaxModal);
   const dismissTradingTaxModal = useGameStore((s) => s.dismissTradingTaxModal);
+  const sellTaxTierReached = useGameStore((s) => s.sellTaxTierReached);
   const cash = useGameStore((s) => s.cash);
   const rentAmount = useGameStore((s) => s.rentAmount);
   const gpus = useGameStore((s) => s.gpus);
   const totalRentCost = rentAmount + calculateWeeklyElectricity(gpus);
+
+  // 进入游戏时启动 BGM
+  useEffect(() => {
+    audioManager.playBgm();
+    return () => {
+      audioManager.stopBgm();
+    };
+  }, []);
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-gray-900 text-gray-200">
@@ -125,33 +137,33 @@ export function GameScreen() {
         </div>
       )}
 
-      {/* 交易税首次激活强制确认弹窗 */}
-      {showTradingTaxModal && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center">
-          <div className="bg-gray-800 border border-amber-500/70 rounded-xl p-6 max-w-md shadow-2xl">
-            <div className="text-center">
-              <p className="text-4xl">💸</p>
-              <h3 className="mt-3 text-xl font-bold text-amber-400">交易税已生效！</h3>
-              <p className="mt-3 text-sm text-gray-300">
-                你的总资产达到了
-                <span className="font-mono font-bold text-amber-300"> 300万 </span>
-                ，从现在开始Token卖出将征收
-                <span className="font-mono font-bold text-red-400"> 25% </span>
-                交易税！
-              </p>
-              <p className="mt-2 text-xs text-gray-500 italic">
-                （你太能赚钱了，连税务局都盯上你了）
-              </p>
-              <button
-                onClick={dismissTradingTaxModal}
-                className="mt-6 w-full bg-amber-600 hover:bg-amber-500 text-white font-semibold py-3 rounded-lg transition-colors"
-              >
-                我知道了
-              </button>
+      {/* 交易税跨档强制确认弹窗（多档动态文案） */}
+      {showTradingTaxModal && sellTaxTierReached >= 0 && (() => {
+        const tier = SELL_TAX_TIERS[sellTaxTierReached];
+        return (
+          <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center">
+            <div className="bg-gray-800 border border-amber-500/70 rounded-xl p-6 max-w-md shadow-2xl">
+              <div className="text-center">
+                <p className="text-4xl">{tier.modalEmoji}</p>
+                <h3 className="mt-3 text-xl font-bold text-amber-400">{tier.modalTitle}</h3>
+                <p className="mt-3 text-sm text-gray-300">
+                  你的总资产达到了
+                  <span className="font-mono font-bold text-amber-300"> {tier.thresholdLabel} </span>
+                  ，从现在开始Token卖出将征收
+                  <span className="font-mono font-bold text-red-400"> {tier.taxPct}% </span>
+                  交易税！
+                </p>
+                <button
+                  onClick={dismissTradingTaxModal}
+                  className="mt-6 w-full bg-amber-600 hover:bg-amber-500 text-white font-semibold py-3 rounded-lg transition-colors"
+                >
+                  我知道了
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

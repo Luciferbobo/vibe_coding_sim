@@ -5,7 +5,7 @@ import { TOKENS } from '../../data/tokens';
 import { Modal } from '../common/Modal';
 import { formatMoney, formatToken } from '../../utils/format';
 import { audioManager } from '../../utils/audioManager';
-import { TRADING_TAX_RATE } from '../../data/constants';
+import { TRADING_TAX_RATE, SELL_TAX_TIERS } from '../../data/constants';
 
 interface Props {
   tokenId: number;
@@ -20,6 +20,7 @@ export function SellDialog({ tokenId, onClose }: Props) {
   const day = useGameStore((s) => s.day);
   const sellTokenAction = useGameStore((s) => s.sellToken);
   const tradingTaxActivated = useGameStore((s) => s.tradingTaxActivated);
+  const sellTaxTierReached = useGameStore((s) => s.sellTaxTierReached);
 
   const token = TOKENS[tokenId];
   const isXianyu = tokenId === 6;
@@ -44,8 +45,11 @@ export function SellDialog({ tokenId, onClose }: Props) {
   const total = count * price;
   const profit = (price - avgPrice) * count;
   const profitPct = avgPrice > 0 ? ((price - avgPrice) / avgPrice) * 100 : 0;
-  // 交易税：激活后按销售额扣 25%
-  const taxAmount = tradingTaxActivated ? total * TRADING_TAX_RATE : 0;
+  // 交易税：按当前阶梯档动态计算（不再是固定 25%）
+  const sellTaxTier = sellTaxTierReached >= 0 ? SELL_TAX_TIERS[sellTaxTierReached] : null;
+  const sellTaxRate = sellTaxTier ? 1 - sellTaxTier.multiplier : 0;
+  const sellTaxPct = sellTaxTier ? sellTaxTier.taxPct : Math.round(TRADING_TAX_RATE * 100);
+  const taxAmount = tradingTaxActivated ? total * sellTaxRate : 0;
   const netIncome = total - taxAmount;
   const netProfit = profit - taxAmount;
   // 信誉计算：基础倒卖 -3；每 1B (1000M) 额外 -5；临期剩 ≤1 天则额外 -3
@@ -146,7 +150,7 @@ export function SellDialog({ tokenId, onClose }: Props) {
           </div>
           {tradingTaxActivated && (
             <div className="flex items-baseline justify-between text-xs">
-              <span className="text-red-400">交易税 (25%)</span>
+              <span className="text-red-400">交易税 ({sellTaxPct}%)</span>
               <span className="font-mono tabular text-red-400">
                 -{formatMoney(taxAmount)} <span className="text-gray-500">(毛收入 {formatMoney(total)})</span>
               </span>

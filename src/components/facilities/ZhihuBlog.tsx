@@ -56,7 +56,7 @@ export function ZhihuBlog() {
           {/* 趣味文案 */}
           <div className="mt-8 space-y-2">
             <p className="text-xs text-gray-600 italic">
-              "水一篇《2025年编程语言对比》也是可以的..."
+              "水一篇《如何写hello world》也是可以的..."
             </p>
             <p className="text-xs text-gray-600 italic">
               "记住：在知乎，自信就是信誉"

@@ -20,8 +20,7 @@ import {
   SELL_REPUTATION_PENALTY,
   UNPROFITABLE_TIERS,
   MAX_TASKS_PER_DAY,
-  TRADING_TAX_THRESHOLD,
-  TRADING_TAX_RATE,
+  SELL_TAX_TIERS,
 } from '../data/constants';
 import { ACHIEVEMENTS } from '../data/achievements';
 import {
@@ -492,8 +491,13 @@ interface GameState {
   // 模板牌堆：记录本轮还未出现过的 templateIndex，保证一轮内不重复
   twitterDeck: number[];
 
-  // 交易税：总资产首次达到 TRADING_TAX_THRESHOLD 后永久激活
+  // 交易税：总资产首次跨入第 0 档后为 true（兼容字段，实际由 sellTaxTierReached 驱动）
   tradingTaxActivated: boolean;
+
+  // 卖出税阶梯：玩家历史总资产峰值（单调递增） + 已跨入的最高档 index
+  // sellTaxTierReached = -1 表示未触发任何档（0~4 对应 SELL_TAX_TIERS 中的 5 个档）
+  peakTotalAssets: number;
+  sellTaxTierReached: number;
 
   // 游戏结束原因（主动退休/破产/房租赶出等）
   gameOverReason: string | null;
@@ -507,6 +511,9 @@ interface GameState {
   gpuNextId: number;
   gpuUnlockDay: number;
   showGpuUnlockModal: boolean;
+
+  // 量子计算机原型机：全世界仅有一台，售出即不可再购（即使卖回收价也不能再买）
+  quantumComputerSold: boolean;
 
   // 房租最后期限警告弹窗
   showRentDeadlineModal: boolean;
@@ -596,6 +603,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   twitterNextId: 1,
   twitterDeck: [],
   tradingTaxActivated: false,
+  peakTotalAssets: 0,
+  sellTaxTierReached: -1,
   gameOverReason: null,
   retirementData: null,
   gpuUnlocked: false,
@@ -603,6 +612,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   gpuNextId: 0,
   gpuUnlockDay: 0,
   showGpuUnlockModal: false,
+  quantumComputerSold: false,
   showRentDeadlineModal: false,
   showTradingTaxModal: false,
   totalRentPaid: 0,
@@ -681,6 +691,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       twitterNextId: initialTwitter.nextId,
       twitterDeck: initialTwitter.deck,
       tradingTaxActivated: false,
+      peakTotalAssets: 0,
+      sellTaxTierReached: -1,
       gameOverReason: null,
       retirementData: null,
       gpuUnlocked: false,
@@ -688,6 +700,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       gpuNextId: 0,
       gpuUnlockDay: 0,
       showGpuUnlockModal: false,
+      quantumComputerSold: false,
       showRentDeadlineModal: false,
       showTradingTaxModal: false,
       totalRentPaid: 0,
@@ -1319,12 +1332,17 @@ export const useGameStore = create<GameState>((set, get) => ({
       messages.push('把只剩一天保质期的Token卖出，这种事你也干得出来？？（额外扣除 3 点信誉）');
     }
 
-    // 交易税：总资产达阈后卖出被扣 25%
-    const taxRate = state.tradingTaxActivated ? TRADING_TAX_RATE : 0;
+    // 交易税：总资产达阈后卖出被扣 阶梯税（随峰值单调递增）
+    const taxRate = state.sellTaxTierReached >= 0
+      ? 1 - SELL_TAX_TIERS[state.sellTaxTierReached].multiplier
+      : 0;
+    const taxPct = state.sellTaxTierReached >= 0
+      ? SELL_TAX_TIERS[state.sellTaxTierReached].taxPct
+      : 0;
     const taxAmount = totalIncome * taxRate;
     const netIncome = totalIncome - taxAmount;
     if (taxAmount > 0) {
-      messages.push(`💸 缴纳交易税 ${(taxRate * 100).toFixed(0)}%：-${formatMoney(taxAmount)}，到手${formatMoney(netIncome)}`);
+      messages.push(`💸 缴纳交易税 ${taxPct}%：-${formatMoney(taxAmount)}，到手${formatMoney(netIncome)}`);
     }
 
     const newCash = state.cash + netIncome;
@@ -1683,22 +1701,34 @@ export const useGameStore = create<GameState>((set, get) => ({
     get().advanceDay();
   },
 
-  // 一键退休：卖出所有 Token（以及 GPU 折旧价值），模拟房租消耗，进入退休生活播报阶段
+  // 一键退休：按市场行为清算所有资产
+  // - Token：按估值价（两市场最低价）折现 + 应用当前阶梯卖出税（与 sellToken 一致），不扣信誉
+  // - 咸鱼Cursor (tokenId === 6)：与 sellToken 一致，不可转卖，不计入清算
+  // - GPU：按回收价（basePrice × GPU_RECYCLE_RATE × 剩余寿命比例，等同 sellGpu）
   retire: () => {
     const state = get();
 
-    // 1. 按估值价格（两市场最低价）折现所有 Token、不扣信誉
+    // 1. Token 折现 → 应用当前阶梯交易税
     const valuationPrices = getValuationPrices(state.currentPrices, state.xianYuPrices);
-    let tokenValue = 0;
+    let tokenGrossValue = 0;
     for (const batch of state.inventory) {
+      if (batch.tokenId === 6) continue; // 咸鱼Cursor不可卖出
       const price = valuationPrices[batch.tokenId] || 0;
-      tokenValue += batch.count * price;
+      tokenGrossValue += batch.count * price;
     }
+    const sellTaxRate = state.sellTaxTierReached >= 0
+      ? 1 - SELL_TAX_TIERS[state.sellTaxTierReached].multiplier
+      : 0;
+    const sellTaxPct = state.sellTaxTierReached >= 0
+      ? SELL_TAX_TIERS[state.sellTaxTierReached].taxPct
+      : 0;
+    const tokenTax = tokenGrossValue * sellTaxRate;
+    const tokenValue = tokenGrossValue - tokenTax;
 
-    // 1.5 GPU 折旧价值也计入退休资产
+    // 1.5 GPU 按回收价折现
     const gpuValue = calculateGpuDepreciationValue(state.gpus);
 
-    // 2. 总资产
+    // 2. 总资产 = 现金 + Token 税后 + GPU 回收
     const totalCash = state.cash + tokenValue + gpuValue;
 
     // 3. 按周扣房租，模拟能坚持多少周/多少天
@@ -1710,11 +1740,15 @@ export const useGameStore = create<GameState>((set, get) => ({
     const daysAlive = daysUntilFirstRent + weeksAlive * RENT_CYCLE;
 
     // 4. 进入退休播报阶段（不立即结算 day / phase=gameover）
-    const reason = `你选择了退休。卖掉了所有Token，带着¥${totalCash.toLocaleString()}的积蓄躺平了。房租共交了¥${state.totalRentPaid.toLocaleString()}，你坚持了${weeksAlive}周（${daysAlive}天）`;
+    const taxNote = tokenTax > 0
+      ? `（Token 卖出税 ${sellTaxPct}%，扣除 ¥${Math.round(tokenTax).toLocaleString()}）`
+      : '';
+    const reason = `你选择了退休。变卖了所有 Token 与 GPU${taxNote}，带着¥${totalCash.toLocaleString()}的积蓄躺平了。房租共交了¥${state.totalRentPaid.toLocaleString()}，你坚持了${weeksAlive}周（${daysAlive}天）`;
 
     set({
       cash: 0,
       inventory: [],
+      gpus: [], // GPU 已全部回收变现
       phase: 'retiring',
       gameOverReason: reason,
       retirementData: {
@@ -1733,12 +1767,18 @@ export const useGameStore = create<GameState>((set, get) => ({
           currentPrices: valuationPrices,
           nextRentDay: state.nextRentDay,
           rentAmount: state.rentAmount,
-          gpus: state.gpus,
+          gpus: [],
         },
         'retire',
         '一键退休'
       ),
-      pendingMessages: [...state.pendingMessages, `🏖️ 你按下了退休按钮。带着¥${totalCash.toLocaleString()}坚持了${weeksAlive}周。`],
+      pendingMessages: [
+        ...state.pendingMessages,
+        `🏖️ 你按下了退休按钮。带着¥${totalCash.toLocaleString()}坚持了${weeksAlive}周。`,
+        ...(tokenTax > 0
+          ? [`💸 退休清算扣除 Token 卖出税 ${sellTaxPct}%：-¥${Math.round(tokenTax).toLocaleString()}`]
+          : []),
+      ],
     });
   },
 
@@ -1831,10 +1871,10 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
   },
 
-  // 检查交易税是否该跳发：总资产（现金 + Token 估值 + GPU折旧价值）首次跨过阈值时永久激活
+  // 检查交易税阶梯：总资产（现金 + Token 估值 + GPU折旧价值）峰值跨入新一档时触发醒目弹窗 + 推送
+  // 峰值单调递增、不可回退；一次可以跨多档（例如事件暴拉资产）但只弹一次最高档的弹窗
   checkTradingTax: () => {
     const state = get();
-    if (state.tradingTaxActivated) return;
     const valuationPrices = getValuationPrices(state.currentPrices, state.xianYuPrices);
     const tokenValue = state.inventory.reduce(
       (s, b) => s + b.count * (valuationPrices[b.tokenId] || 0),
@@ -1842,16 +1882,35 @@ export const useGameStore = create<GameState>((set, get) => ({
     );
     const gpuValue = calculateGpuDepreciationValue(state.gpus);
     const totalAssets = state.cash + tokenValue + gpuValue;
-    if (totalAssets >= TRADING_TAX_THRESHOLD) {
-      set({
-        tradingTaxActivated: true,
-        showTradingTaxModal: true,
-        pendingMessages: [
-          ...state.pendingMessages,
-          '📢 重要！因 Token 市场交易过于火爆，全球一致决定，即日起所有 Token 卖出将征收 25% 交易税。\n（你太能赚钱了，连税务局都盯上你了）',
-        ],
-      });
+
+    // 峰值单调递增
+    const newPeak = Math.max(state.peakTotalAssets, totalAssets);
+
+    // 跳检阶梯：连续跨入多档时，都推一条提示，弹窗只为最高档弹一次
+    let newTier = state.sellTaxTierReached;
+    const newMessages = [...state.pendingMessages];
+    let triggered = false;
+    while (
+      newTier + 1 < SELL_TAX_TIERS.length &&
+      newPeak >= SELL_TAX_TIERS[newTier + 1].threshold
+    ) {
+      newTier += 1;
+      newMessages.push(SELL_TAX_TIERS[newTier].headlineMessage);
+      triggered = true;
     }
+
+    // 无任何变化时提前返回，避免不必要 set
+    if (newPeak === state.peakTotalAssets && !triggered) return;
+
+    set({
+      peakTotalAssets: newPeak,
+      sellTaxTierReached: newTier,
+      // 兼容：只要跨入第 0 档及以上，tradingTaxActivated 为 true（SellDialog/TokenMarket 还在读取该字段）
+      tradingTaxActivated: newTier >= 0,
+      // 跨入新档才拉弹窗；同一档反复检查不重复拉
+      showTradingTaxModal: triggered ? true : state.showTradingTaxModal,
+      pendingMessages: newMessages,
+    });
   },
 
   // 给推文点赞：同一条只能点一次，点赞后 likes+1，并有 10% 概率获得共鸣（精神+1）
@@ -1881,6 +1940,8 @@ export const useGameStore = create<GameState>((set, get) => ({
     const state = get();
     const gpuDef = GPUS[gpuTierId];
     if (!gpuDef) return false;
+    // 量子计算机原型机：全世界仅有一台，已售出后不可再次购买
+    if (gpuTierId === 4 && state.quantumComputerSold) return false;
     // GPU 售价固定为 basePrice，不再随通胀变化
     const currentPrice = gpuDef.basePrice;
     if (state.cash < currentPrice) return false;
@@ -1905,6 +1966,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       cash: newCash,
       gpus: newGpus,
       gpuNextId: state.gpuNextId + 1,
+      // 量子计算机一旦购买，永久标记为已售出（即使后续卖回收价也不可再购）
+      quantumComputerSold: gpuTierId === 4 ? true : state.quantumComputerSold,
       portfolioHistory: appendPortfolioHistory(
         state.portfolioHistory,
         {

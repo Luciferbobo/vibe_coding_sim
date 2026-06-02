@@ -31,7 +31,9 @@ export function GameHeader() {
   const rentAmount = useGameStore((s) => s.rentAmount);
   const restDaysLeft = useGameStore((s) => s.restDaysLeft);
 
-  const site = SITES[currentSiteId];
+  // 注意：SITES 数组的下标与 site.id 并不一致（例如 id=10 的 GPU 算力中心排在下标 2），
+  // 必须用 find 按 id 查找，否则 GameHeader 左上角会显示成错位的站点名/图标。
+  const site = SITES.find((s) => s.id === currentSiteId);
   const daysToRent = Math.max(0, nextRentDay - day);
   const rentUrgent = daysToRent <= 3;
 
@@ -47,10 +49,10 @@ export function GameHeader() {
     <header className="flex items-center justify-between gap-6 px-6 h-14 border-b border-gray-800 bg-gray-900">
       {/* 左：站点信息 */}
       <div className="flex items-center gap-3 min-w-0">
-        <span className="text-xl leading-none">{site.icon}</span>
+        <span className="text-xl leading-none">{site?.icon ?? '❓'}</span>
         <div className="min-w-0">
           <p className="text-sm font-semibold text-gray-100 truncate leading-tight">
-            {site.name}
+            {site?.name ?? '未知场所'}
           </p>
           <p className="text-xs text-gray-500 truncate leading-tight">
             vibe coding 模拟器

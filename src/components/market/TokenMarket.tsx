@@ -5,6 +5,7 @@ import { TOKENS } from '../../data/tokens';
 import { BuyDialog } from './BuyDialog';
 import { SellDialog } from './SellDialog';
 import { formatToken } from '../../utils/format';
+import { SELL_TAX_TIERS } from '../../data/constants';
 
 const TIER_COLOR: Record<string, string> = {
   S: 'bg-violet-500/15 text-violet-300',
@@ -23,6 +24,8 @@ export function TokenMarket() {
   const inventory = useGameStore((s) => s.inventory);
   const day = useGameStore((s) => s.day);
   const tradingTaxActivated = useGameStore((s) => s.tradingTaxActivated);
+  const sellTaxTierReached = useGameStore((s) => s.sellTaxTierReached);
+  const sellTaxPct = sellTaxTierReached >= 0 ? SELL_TAX_TIERS[sellTaxTierReached].taxPct : 25;
 
   const [buyToken, setBuyToken] = useState<number | null>(null);
   const [sellToken, setSellToken] = useState<number | null>(null);
@@ -212,7 +215,7 @@ export function TokenMarket() {
         </p>
         {tradingTaxActivated && (
           <p className="mt-1 text-xs text-red-400 font-semibold">
-            现在Token卖出将征收 25% 交易税
+            现在Token卖出将征收 {sellTaxPct}% 交易税
           </p>
         )}
         {isXianyu && (
