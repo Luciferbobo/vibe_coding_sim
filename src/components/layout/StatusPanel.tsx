@@ -98,13 +98,23 @@ function PortfolioCurve({
     .map((coord, index) => `${index === 0 ? 'M' : 'L'} ${coord.x.toFixed(1)} ${coord.y.toFixed(1)}`)
     .join(' ');
   const areaPath = `${linePath} L ${coords[coords.length - 1].x.toFixed(1)} ${height - padY} L ${coords[0].x.toFixed(1)} ${height - padY} Z`;
-  const rentMarkers = coords.filter((coord, index, all) => {
-    if (coord.point.nextRentDay - coord.point.day > 1 && coord.point.eventType !== 'rent') {
-      return false;
-    }
-    const previous = all[index - 1];
-    return !previous || coord.x - previous.x > 12 || previous.point.nextRentDay !== coord.point.nextRentDay;
-  });
+  // 房租红线：仅在「当前未交付」的房租周期内显示一条。
+  // 一旦交付（rent 事件触发后 nextRentDay 跳到下一周期），原红线就消失，避免同一房租日多次显示。
+  // 位置：当前周期内最后一个非 rent 事件的数据点（最新位置，提示「下次房租即将到来」）。
+  const currentNextRentDay = coords[coords.length - 1]?.point.nextRentDay;
+  const rentMarkers =
+    currentNextRentDay !== undefined
+      ? (() => {
+          const target = [...coords]
+            .reverse()
+            .find(
+              (c) =>
+                c.point.nextRentDay === currentNextRentDay &&
+                c.point.eventType !== 'rent'
+            );
+          return target ? [target] : [];
+        })()
+      : [];
   const operationMarkers = coords.filter((coord) =>
     OPERATION_TYPES.includes(coord.point.eventType)
   );

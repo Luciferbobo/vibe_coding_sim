@@ -1,6 +1,6 @@
 // 游戏核心参数常量
 
-export const INITIAL_CASH = 3000000;           // 初始现金
+export const INITIAL_CASH = 5000;           // 初始现金
 export const INITIAL_SPIRIT = 100;          // 初始精神值
 export const INITIAL_REPUTATION = 50;       // 初始信誉值（改为50）
 export const MAX_SPIRIT = 100;              // 精神值上限
@@ -76,11 +76,11 @@ function buildUnprofitableTiers(): { threshold: number; message: string }[] {
 
 export const UNPROFITABLE_TIERS: { threshold: number; message: string }[] = buildUnprofitableTiers();
 
-// 分阶段通胀率
+// 通胀率：三阶段区间保留，但均固定 3%/天
 export const INFLATION_PHASES = [
   { untilDay: 15, rate: 0.03 },
-  { untilDay: 30, rate: 0.04 },
-  { untilDay: 9999, rate: 0.05 },
+  { untilDay: 30, rate: 0.03 },
+  { untilDay: 9999, rate: 0.03 },
 ];
 
 // 每日最大可接任务数

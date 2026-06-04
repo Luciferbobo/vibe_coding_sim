@@ -1339,7 +1339,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
     
     if (bulkPenalty > 0) {
-      messages.push(`⚠️ 你大量抛售了 ${count}M ${TOKENS[tokenId].name}，业内风评受损...信誉-${bulkPenalty}（每 1B 额外扣 5 点）`);
+      messages.push(`⚠️ 你大量抛售了 ${Math.round(count)}M ${TOKENS[tokenId].name}，业内风评受损...信誉-${bulkPenalty}（每 1B 额外扣 5 点）`);
     }
   
     if (sellsExpiring) {

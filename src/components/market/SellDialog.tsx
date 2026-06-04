@@ -124,7 +124,7 @@ export function SellDialog({ tokenId, onClose }: Props) {
               min={0}
               max={max}
               step={step}
-              value={count}
+              value={isXianyu ? count : Math.round(count * 10) / 10}
               onChange={(e) => {
                 const v = Math.max(0, Math.min(max, parseFloat(e.target.value) || 0));
                 setCount(v);
