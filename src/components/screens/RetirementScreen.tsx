@@ -347,7 +347,7 @@ export function RetirementScreen() {
         />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-3xl px-6 sm:px-10 pt-12 pb-32">
+      <div className="relative z-10 mx-auto max-w-3xl px-4 sm:px-6 md:px-10 pt-8 md:pt-12 pb-24 md:pb-32">
         {/* 顶部 chrome：状态条 */}
         <div className="flex items-center justify-between text-[10px] tracking-[0.4em] uppercase text-amber-300/60">
           <span className="inline-flex items-center gap-2">
@@ -363,17 +363,17 @@ export function RetirementScreen() {
         </div>
 
         {/* 标题 */}
-        <header className="mt-10">
+        <header className="mt-8 md:mt-10">
           <p className="text-[11px] tracking-[0.5em] uppercase text-rose-300/60 font-light">
             chapter — after work
           </p>
           <h1
-            className="mt-3 font-serif text-5xl sm:text-6xl font-bold tracking-tight bg-gradient-to-br from-amber-100 via-orange-200 to-rose-300 bg-clip-text text-transparent"
+            className="mt-3 font-serif text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight bg-gradient-to-br from-amber-100 via-orange-200 to-rose-300 bg-clip-text text-transparent"
             style={{ fontFamily: '"Songti SC","STSong","Noto Serif SC",ui-serif,serif' }}
           >
             退休生活·正在直播
           </h1>
-          <p className="mt-3 max-w-xl text-sm leading-relaxed text-amber-100/55 italic">
+          <p className="mt-3 max-w-xl text-xs md:text-sm leading-relaxed text-amber-100/55 italic">
             带着 <span className="font-mono text-amber-200">¥{totalCash.toLocaleString()}</span>{' '}
             的积蓄，按每周 <span className="font-mono text-amber-200">¥{rentPerWeek.toLocaleString()}</span>{' '}
             的房租推演——这一段时光，开始播放……
@@ -397,26 +397,26 @@ export function RetirementScreen() {
         </div>
 
         {/* 时间线 */}
-        <div className="relative mt-12">
+        <div className="relative mt-10 md:mt-12">
           {/* 主轴 */}
-          <div className="absolute left-[26px] top-2 bottom-2 w-px bg-gradient-to-b from-amber-300/0 via-amber-200/30 to-rose-400/10" />
+          <div className="absolute left-[20px] md:left-[26px] top-2 bottom-2 w-px bg-gradient-to-b from-amber-300/0 via-amber-200/30 to-rose-400/10" />
           {/* 主轴顶部光晕 */}
           <div
-            className="absolute left-[22px] top-0 h-2 w-2 rounded-full bg-amber-200"
+            className="absolute left-[16px] md:left-[22px] top-0 h-2 w-2 rounded-full bg-amber-200"
             style={{ boxShadow: '0 0 14px 2px rgba(252,211,77,0.55)' }}
           />
 
-          <ol className="space-y-9">
+          <ol className="space-y-7 md:space-y-9">
             {events.slice(0, visibleCount).map((ev, idx) => {
               const isLatest = idx === visibleCount - 1;
               return (
                 <li
                   key={`${ev.week}-${idx}`}
-                  className="relative pl-16 animate-fade-in-up"
+                  className="relative pl-12 md:pl-16 animate-fade-in-up"
                   style={{ animationDelay: '0ms' }}
                 >
                   {/* 节点 */}
-                  <span className="absolute left-[18px] top-1.5 flex h-3.5 w-3.5 items-center justify-center">
+                  <span className="absolute left-[12px] md:left-[18px] top-1.5 flex h-3.5 w-3.5 items-center justify-center">
                     {isLatest && (
                       <span className="absolute inline-flex h-full w-full rounded-full bg-amber-300/60 animate-ping" />
                     )}
@@ -446,7 +446,7 @@ export function RetirementScreen() {
 
                   {/* 文本 */}
                   <p
-                    className={`mt-2 text-base sm:text-lg leading-[1.85] ${
+                    className={`mt-2 text-sm sm:text-base md:text-lg leading-[1.85] ${
                       isLatest ? 'text-amber-50' : 'text-amber-100/70'
                     }`}
                     style={{
@@ -465,7 +465,7 @@ export function RetirementScreen() {
 
           {/* 加载中的下一条占位 */}
           {!finished && (
-            <div className="mt-8 pl-16 flex items-center gap-2 text-amber-300/40 text-xs">
+            <div className="mt-8 pl-12 md:pl-16 flex items-center gap-2 text-amber-300/40 text-xs">
               <span className="inline-flex h-1.5 w-1.5 rounded-full bg-amber-300/60 animate-pulse" />
               <span className="inline-flex h-1.5 w-1.5 rounded-full bg-amber-300/40 animate-pulse [animation-delay:200ms]" />
               <span className="inline-flex h-1.5 w-1.5 rounded-full bg-amber-300/20 animate-pulse [animation-delay:400ms]" />
@@ -476,7 +476,7 @@ export function RetirementScreen() {
 
         {/* 终幕 */}
         {showFinale && (
-          <div className="mt-16 animate-fade-in-up">
+          <div className="mt-12 md:mt-16 animate-fade-in-up">
             <div className="relative rounded-3xl border border-amber-500/20 bg-gradient-to-br from-stone-900/80 via-amber-950/20 to-rose-950/30 backdrop-blur-sm overflow-hidden">
               <div
                 className="absolute -top-20 -right-20 h-56 w-56 rounded-full opacity-50 pointer-events-none"
@@ -485,12 +485,12 @@ export function RetirementScreen() {
                     'radial-gradient(circle, rgba(251,191,36,0.45), transparent 70%)',
                 }}
               />
-              <div className="relative px-8 py-10 text-center">
+              <div className="relative px-5 md:px-8 py-8 md:py-10 text-center">
                 <p className="text-[11px] tracking-[0.5em] uppercase text-rose-200/60">
                   fin.
                 </p>
                 <h2
-                  className="mt-4 font-serif text-4xl font-bold bg-gradient-to-br from-amber-100 to-rose-300 bg-clip-text text-transparent"
+                  className="mt-4 font-serif text-3xl md:text-4xl font-bold bg-gradient-to-br from-amber-100 to-rose-300 bg-clip-text text-transparent"
                   style={{
                     fontFamily:
                       '"Songti SC","STSong","Noto Serif SC",ui-serif,serif',

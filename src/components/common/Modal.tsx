@@ -34,17 +34,17 @@ export function Modal({
       }}
     >
       <div
-        className={`relative w-full ${width} rounded-xl bg-gray-800 border border-gray-700 shadow-2xl animate-fade-in-up`}
+        className={`relative w-full ${width} max-h-[90vh] flex flex-col rounded-xl bg-gray-800 border border-gray-700 shadow-2xl animate-fade-in-up`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* 头部 */}
-        <div className="flex items-start justify-between gap-4 px-6 pt-5 pb-4 border-b border-gray-700/60">
+        <div className="flex items-start justify-between gap-3 md:gap-4 px-4 pt-4 pb-3 md:px-6 md:pt-5 md:pb-4 border-b border-gray-700/60 shrink-0">
           <div className="min-w-0 flex-1">
-            <h3 className="text-lg font-semibold text-gray-100 truncate">
+            <h3 className="text-base md:text-lg font-semibold text-gray-100 truncate">
               {title}
             </h3>
             {subtitle && (
-              <p className="mt-1 text-sm text-gray-400 leading-relaxed">
+              <p className="mt-1 text-xs md:text-sm text-gray-400 leading-relaxed">
                 {subtitle}
               </p>
             )}
@@ -74,7 +74,7 @@ export function Modal({
         </div>
 
         {/* 内容 */}
-        <div className="p-6">{children}</div>
+        <div className="p-4 md:p-6 overflow-y-auto flex-1 min-h-0">{children}</div>
       </div>
     </div>
   );

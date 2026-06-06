@@ -35,17 +35,17 @@ export function RentDialog() {
   const earlyBlockedByGpu = !isDue && hasElectricity;
 
   return (
-    <div className="flex h-full items-center justify-center px-6 py-6">
+    <div className="flex h-full items-center justify-center px-4 py-4 md:px-6 md:py-6 overflow-y-auto">
       <div className="w-full max-w-2xl">
-        <h2 className="text-2xl font-semibold text-gray-100">
+        <h2 className="text-xl md:text-2xl font-semibold text-gray-100">
           🏠 公寓 · 你的 10 平米
         </h2>
-        <p className="mt-1 text-sm italic text-gray-400">
+        <p className="mt-1 text-xs md:text-sm italic text-gray-400">
           阳台朝北，下午光线刚好够你看清屏幕反光里的黑眼圈。
         </p>
 
         <div
-          className={`mt-6 rounded-xl border p-6 ${
+          className={`mt-4 md:mt-6 rounded-xl border p-4 md:p-6 ${
             isDue
               ? 'bg-red-500/5 border-red-500/40'
               : 'bg-gray-800/60 border-gray-700/60'
@@ -65,11 +65,11 @@ export function RentDialog() {
           </div>
 
           <p
-            className={`mt-3 font-mono text-4xl font-bold tabular ${
+            className={`mt-3 font-mono text-3xl md:text-4xl font-bold tabular ${
               isDue ? 'text-red-400' : 'text-violet-400'
             }`}
           >
-            {formatMoney(totalRentCost)}<span className="text-lg text-gray-500">/周</span>
+            {formatMoney(totalRentCost)}<span className="text-base md:text-lg text-gray-500">/周</span>
           </p>
 
           {weeklyElectricity > 0 && (

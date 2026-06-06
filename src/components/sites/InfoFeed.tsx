@@ -21,16 +21,16 @@ export function InfoFeed() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b border-gray-800 px-6 py-5">
-        <h2 className="text-xl font-semibold text-gray-100">
+      <div className="border-b border-gray-800 px-4 py-3 md:px-6 md:py-5">
+        <h2 className="text-lg md:text-xl font-semibold text-gray-100">
           📱 Twitter · 行情广场
         </h2>
-        <p className="mt-1 text-sm text-gray-400">
+        <p className="mt-1 text-xs md:text-sm text-gray-400">
           下拉刷新 · 看别人都和你一样焦虑，奇怪地有点欣慰
         </p>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-6 py-4">
+      <div className="flex-1 overflow-y-auto px-4 py-3 md:px-6 md:py-4">
         {feed.length === 0 ? (
           <p className="mt-10 text-center text-sm text-gray-500">
             暂无新动态 · 世界安静得有点反常
@@ -40,7 +40,7 @@ export function InfoFeed() {
             {feed.map((p) => (
               <article
                 key={p.id}
-                className="rounded-xl bg-gray-800/60 border border-gray-700/60 p-4 hover:border-gray-600 transition-colors"
+                className="rounded-xl bg-gray-800/60 border border-gray-700/60 p-3 md:p-4 hover:border-gray-600 transition-colors"
               >
                 <div className="flex items-start gap-3">
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-700 text-xl">
@@ -63,7 +63,7 @@ export function InfoFeed() {
                     <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-gray-200">
                       {p.text}
                     </p>
-                    <div className="mt-2.5 flex gap-5 text-xs text-gray-500">
+                    <div className="mt-2.5 flex gap-4 md:gap-5 text-xs text-gray-500">
                       <button
                         type="button"
                         onClick={() => likeTwitterPost(p.id)}

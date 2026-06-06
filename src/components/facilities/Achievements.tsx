@@ -8,18 +8,18 @@ export function Achievements() {
   const totalCount = ACHIEVEMENTS.length;
 
   return (
-    <div className="flex h-full flex-col overflow-hidden px-6 py-6">
-      <div className="mb-6">
-        <h2 className="text-2xl font-semibold text-gray-100">
+    <div className="flex h-full flex-col overflow-hidden px-4 py-4 md:px-6 md:py-6">
+      <div className="mb-4 md:mb-6">
+        <h2 className="text-xl md:text-2xl font-semibold text-gray-100">
           🏅 成就殿堂
         </h2>
-        <p className="mt-1 text-sm text-gray-400">
+        <p className="mt-1 text-xs md:text-sm text-gray-400">
           每一枚徽章，都是你在AI时代挣扎求生的勋章。
         </p>
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
           {ACHIEVEMENTS.map((achievement) => {
             const isUnlocked = unlockedAchievements.includes(achievement.id);
             return (

@@ -1,5 +1,5 @@
-// 主游戏界面 - 三栏布局
-import { useEffect } from 'react';
+// 主游戏界面 - 三栏布局（PC）/ 左导航 + 主内容 + 右抽屉（移动端）
+import { useEffect, useState } from 'react';
 import { useGameStore } from '../../stores/gameStore';
 import { GameHeader } from '../layout/GameHeader';
 import { StatusPanel } from '../layout/StatusPanel';
@@ -59,6 +59,17 @@ export function GameScreen() {
   const gpus = useGameStore((s) => s.gpus);
   const totalRentCost = rentAmount + calculateWeeklyElectricity(gpus);
 
+  // 移动端：右侧状态面板抽屉开关
+  const [statusPanelOpen, setStatusPanelOpen] = useState(false);
+
+  // 移动端顶部 banner 数据
+  const restDaysLeft = useGameStore((s) => s.restDaysLeft);
+  const tasksCompletedToday = useGameStore((s) => s.tasksCompletedToday);
+  const maxTasksPerDay = useGameStore((s) => s.maxTasksPerDay);
+  const day = useGameStore((s) => s.day);
+  const nextRentDay = useGameStore((s) => s.nextRentDay);
+  const daysToRent = Math.max(0, nextRentDay - day);
+
   // 进入游戏时启动 BGM
   useEffect(() => {
     audioManager.playBgm();
@@ -69,31 +80,74 @@ export function GameScreen() {
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-gray-900 text-gray-200">
-      <GameHeader />
+      <GameHeader onOpenStatusPanel={() => setStatusPanelOpen(true)} />
 
       <div className="flex flex-1 overflow-hidden">
-        {/* 左：导航 */}
-        <div className="w-[240px] shrink-0 border-r border-gray-800">
+        {/* 左：导航（移动 76px / PC 240px） */}
+        <div className="w-[76px] md:w-[240px] shrink-0 border-r border-gray-800">
           <SiteNav />
         </div>
 
         {/* 中：内容 */}
-        <main className="flex-1 overflow-hidden bg-gray-900">
-          <MainContent siteId={currentSiteId} />
+        <main className="flex-1 overflow-hidden bg-gray-900 flex flex-col">
+          {/* 移动端顶部 banner：强制休息 / 今日任务进度 */}
+          <div className="md:hidden shrink-0">
+            {restDaysLeft > 0 ? (
+              <div className="bg-red-500/10 border-b border-red-500/30 px-4 py-2 text-xs text-red-300">
+                强制躺平中 · 还需 {restDaysLeft} 天，点击下方 ☀️ 推进
+              </div>
+            ) : (
+              <div className="bg-gray-800/40 border-b border-gray-800 px-4 py-1.5 text-xs text-gray-400 flex justify-between">
+                <span>
+                  今日需求 <span className="text-amber-400 font-semibold">{tasksCompletedToday}</span>
+                  <span className="text-gray-600">/{maxTasksPerDay}</span>
+                </span>
+                <span>T-{daysToRent}d 到房租</span>
+              </div>
+            )}
+          </div>
+          <div className="flex-1 overflow-hidden">
+            <MainContent siteId={currentSiteId} />
+          </div>
         </main>
 
-        {/* 右：状态 */}
-        <div className="w-[300px] shrink-0 border-l border-gray-800">
+        {/* 右：状态（仅 PC 显示） */}
+        <div className="hidden md:block w-[300px] shrink-0 border-l border-gray-800">
           <StatusPanel />
         </div>
       </div>
+
+      {/* 移动端：右侧抽屉式 StatusPanel */}
+      {statusPanelOpen && (
+        <div className="md:hidden fixed inset-0 z-40 animate-fade-in">
+          <div
+            className="absolute inset-0 bg-black/60"
+            onClick={() => setStatusPanelOpen(false)}
+          />
+          <aside className="absolute right-0 top-0 h-full w-[85vw] max-w-sm bg-gray-900 border-l border-gray-800 shadow-2xl flex flex-col">
+            <div className="px-4 h-12 flex items-center justify-between border-b border-gray-800 shrink-0">
+              <p className="text-sm font-semibold text-gray-200">我的资产</p>
+              <button
+                onClick={() => setStatusPanelOpen(false)}
+                aria-label="关闭"
+                className="h-8 w-8 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-gray-100 transition-colors flex items-center justify-center"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="flex-1 min-h-0 overflow-hidden">
+              <StatusPanel />
+            </div>
+          </aside>
+        </div>
+      )}
 
       <EventNotification />
 
       {/* GPU解锁强制确认弹窗 */}
       {showGpuUnlockModal && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center">
-          <div className="bg-gray-800 border border-gray-600 rounded-xl p-6 max-w-md shadow-2xl">
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+          <div className="bg-gray-800 border border-gray-600 rounded-xl p-5 md:p-6 w-full max-w-md shadow-2xl">
             <div className="text-center">
               <span className="text-4xl">⚛️</span>
               <h2 className="text-xl font-bold text-emerald-400 mt-3">GPU算力中心已解锁！</h2>
@@ -113,8 +167,8 @@ export function GameScreen() {
 
       {/* 房租最后期限警告弹窗 */}
       {showRentDeadlineModal && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center">
-          <div className="bg-gray-800 border border-red-500/60 rounded-xl p-6 max-w-md shadow-2xl">
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+          <div className="bg-gray-800 border border-red-500/60 rounded-xl p-5 md:p-6 w-full max-w-md shadow-2xl">
             <div className="text-center">
               <p className="text-4xl">🚨</p>
               <h3 className="mt-3 text-xl font-bold text-red-400">最后期限警告！</h3>
@@ -141,8 +195,8 @@ export function GameScreen() {
       {showTradingTaxModal && sellTaxTierReached >= 0 && (() => {
         const tier = SELL_TAX_TIERS[sellTaxTierReached];
         return (
-          <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center">
-            <div className="bg-gray-800 border border-amber-500/70 rounded-xl p-6 max-w-md shadow-2xl">
+          <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+            <div className="bg-gray-800 border border-amber-500/70 rounded-xl p-5 md:p-6 w-full max-w-md shadow-2xl">
               <div className="text-center">
                 <p className="text-4xl">{tier.modalEmoji}</p>
                 <h3 className="mt-3 text-xl font-bold text-amber-400">{tier.modalTitle}</h3>

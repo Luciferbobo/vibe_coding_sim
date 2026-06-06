@@ -89,19 +89,19 @@ export default function GpuCenter() {
   return (
     <div className="flex h-full flex-col">
       {/* 顶部标题 */}
-      <div className="border-b border-gray-800 px-6 py-5">
-        <div className="flex items-end justify-between gap-4 flex-wrap">
+      <div className="border-b border-gray-800 px-4 py-3 md:px-6 md:py-5">
+        <div className="flex items-end justify-between gap-3 md:gap-4 flex-wrap">
           <div>
-            <h2 className="text-xl font-semibold text-gray-100">
+            <h2 className="text-lg md:text-xl font-semibold text-gray-100">
               ⚛️ GPU算力中心
             </h2>
-            <p className="mt-1 text-sm italic text-gray-400">
+            <p className="mt-1 text-xs md:text-sm italic text-gray-400">
               购买GPU服务器，让Token自动流入你的钱包
             </p>
           </div>
           <div className="text-right">
             <p className="text-xs text-gray-500">运行中</p>
-            <p className="mt-0.5 font-mono text-lg font-semibold tabular text-emerald-300">
+            <p className="mt-0.5 font-mono text-base md:text-lg font-semibold tabular text-emerald-300">
               {gpus.length} 台
             </p>
           </div>
@@ -109,11 +109,11 @@ export default function GpuCenter() {
       </div>
 
       {/* 滚动主体 */}
-      <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+      <div className="flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-5 space-y-5 md:space-y-6">
         {/* 我的GPU */}
         <section>
           <div className="flex items-baseline justify-between mb-3">
-            <h3 className="text-lg font-semibold text-gray-100">
+            <h3 className="text-base md:text-lg font-semibold text-gray-100">
               📦 我的GPU
               <span className="ml-2 text-xs text-gray-500 font-normal">
                 ({gpus.length} 台运行中)
@@ -145,9 +145,9 @@ export default function GpuCenter() {
 
         {/* GPU 商城 */}
         <section>
-          <div className="flex items-baseline justify-between mb-3">
-            <h3 className="text-lg font-semibold text-gray-100">🛒 GPU商城</h3>
-            <p className="text-xs text-gray-500">
+          <div className="flex items-baseline justify-between mb-3 gap-2">
+            <h3 className="text-base md:text-lg font-semibold text-gray-100">🛒 GPU商城</h3>
+            <p className="text-[10px] md:text-xs text-gray-500 text-right">
               售价固定，电费随Token通胀上涨
             </p>
           </div>
@@ -162,7 +162,7 @@ export default function GpuCenter() {
               return (
                 <div
                   key={g.id}
-                  className="rounded-lg border border-gray-700/60 bg-gray-800/60 p-4 flex flex-col"
+                  className="rounded-lg border border-gray-700/60 bg-gray-800/60 p-3 md:p-4 flex flex-col"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
@@ -269,7 +269,7 @@ function GpuInstanceCard({
   const tokenName = hasOutput ? TOKENS[gpu.selectedTokenId].name : null;
 
   return (
-    <div className="group relative overflow-hidden rounded-xl border border-emerald-500/20 bg-gradient-to-br from-gray-800/80 via-gray-800/60 to-emerald-950/20 p-3.5 flex flex-col transition-all hover:border-emerald-400/40 hover:shadow-lg hover:shadow-emerald-900/20">
+    <div className="group relative overflow-hidden rounded-xl border border-emerald-500/20 bg-gradient-to-br from-gray-800/80 via-gray-800/60 to-emerald-950/20 p-3 md:p-3.5 flex flex-col transition-all hover:border-emerald-400/40 hover:shadow-lg hover:shadow-emerald-900/20">
       {/* 微光晕 */}
       <div className="pointer-events-none absolute -top-10 -right-10 h-24 w-24 rounded-full bg-emerald-400/5 blur-2xl transition-opacity group-hover:bg-emerald-300/10" />
 

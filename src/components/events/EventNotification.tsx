@@ -80,7 +80,7 @@ export function EventNotification() {
         <div className={`h-1 w-full ${style.accent}`} />
 
         {/* 头部 */}
-        <div className="flex items-center justify-between px-6 pt-5 pb-3">
+        <div className="flex items-center justify-between px-4 md:px-6 pt-4 md:pt-5 pb-3">
           <p className={`text-xs font-medium ${style.text}`}>{style.label}</p>
           {pendingMessages.length > 1 && (
             <span className="text-xs text-gray-500">
@@ -90,16 +90,16 @@ export function EventNotification() {
         </div>
 
         {/* 正文 */}
-        <div className="px-6 pb-6">
+        <div className="px-4 md:px-6 pb-5 md:pb-6">
           <p
-            className={`whitespace-pre-line text-base leading-relaxed ${style.text}`}
+            className={`whitespace-pre-line text-sm md:text-base leading-relaxed ${style.text}`}
           >
             {msg}
           </p>
         </div>
 
         {/* 队列提示 + 按钮 */}
-        <div className="border-t border-gray-700/60 px-6 py-3 flex items-center justify-between gap-3">
+        <div className="border-t border-gray-700/60 px-4 md:px-6 py-3 flex items-center justify-between gap-3">
           {pendingMessages.length > 1 && (
             <span className="text-xs text-gray-500">
               还有 {pendingMessages.length - 1} 条事件等待

@@ -78,7 +78,7 @@ export function GameOverScreen() {
 
   return (
     <div className="min-h-screen w-full bg-gray-900 text-gray-200">
-      <div className="mx-auto max-w-4xl px-6 sm:px-8 py-12">
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 md:px-8 py-8 md:py-12">
         {/* 顶部状态 */}
         <div className="flex items-center justify-between text-xs text-gray-500">
           <span className="inline-flex items-center gap-2">
@@ -91,18 +91,18 @@ export function GameOverScreen() {
         </div>
 
         {/* 主标题：天数评级称号 */}
-        <div className="mt-8 text-center">
-          <h1 className="text-5xl sm:text-6xl font-bold tracking-tight text-gray-50">
+        <div className="mt-6 md:mt-8 text-center">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight text-gray-50">
             {dayComment}
           </h1>
-          <p className="mt-4 text-sm tracking-[0.25em] uppercase text-gray-500">
+          <p className="mt-3 md:mt-4 text-xs md:text-sm tracking-[0.25em] uppercase text-gray-500">
             <span className="font-mono text-amber-400">{formatDay(day)}</span> · 游戏结束
           </p>
         </div>
 
         {/* 引言：结局描述（quote 已移至页面最下方作为收束） */}
         {gameOverReason && (
-          <blockquote className="mt-8 rounded-xl bg-gradient-to-br from-amber-900/30 to-rose-900/20 border border-amber-500/30 px-6 py-5 text-base leading-relaxed text-amber-100">
+          <blockquote className="mt-6 md:mt-8 rounded-xl bg-gradient-to-br from-amber-900/30 to-rose-900/20 border border-amber-500/30 px-4 md:px-6 py-4 md:py-5 text-sm md:text-base leading-relaxed text-amber-100">
             🏖️ {gameOverReason}
           </blockquote>
         )}
@@ -128,11 +128,11 @@ export function GameOverScreen() {
         </div>
 
         {/* 称号 */}
-        <div className="mt-6 rounded-xl bg-gradient-to-br from-amber-500/10 to-amber-500/5 border border-amber-500/30 p-6 text-center">
+        <div className="mt-6 rounded-xl bg-gradient-to-br from-amber-500/10 to-amber-500/5 border border-amber-500/30 p-5 md:p-6 text-center">
           <p className="text-xs font-medium tracking-[0.25em] text-amber-400/80 uppercase">
             Final Title
           </p>
-          <p className="mt-2 text-3xl font-bold text-amber-300">{title}</p>
+          <p className="mt-2 text-2xl md:text-3xl font-bold text-amber-300">{title}</p>
           <p className="mt-2 text-sm text-gray-400">
             综合得分{' '}
             <span className="font-mono font-semibold text-amber-300">

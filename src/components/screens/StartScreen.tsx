@@ -27,7 +27,7 @@ export function StartScreen() {
 
   return (
     <div className="min-h-screen w-full bg-gray-900 text-gray-100 flex flex-col">
-      <header className="px-6 sm:px-10 py-5 flex items-center justify-between border-b border-gray-800">
+      <header className="px-4 sm:px-6 md:px-10 py-4 md:py-5 flex items-center justify-between border-b border-gray-800">
         <div className="flex items-center gap-2.5">
           <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
           <span className="text-sm font-medium text-gray-300">
@@ -37,14 +37,14 @@ export function StartScreen() {
         <span className="text-xs text-gray-500">Made by bobo</span>
       </header>
 
-      <main className="flex-1 flex items-center justify-center px-6 sm:px-10 py-12">
+      <main className="flex-1 flex items-center justify-center px-4 sm:px-6 md:px-10 py-8 md:py-12">
         <div className="w-full max-w-3xl">
           {/* 标题 */}
           <div className="text-center">
             <p className="text-xs font-medium tracking-[0.25em] text-emerald-400 uppercase">
               Vibe Coding Simulator
             </p>
-            <h1 className="mt-4 text-5xl sm:text-6xl font-bold tracking-tight text-gray-50">
+            <h1 className="mt-4 text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-gray-50">
               在 AI 取代一切的时代
               <br />
               <span className="text-emerald-400">你还能活多久？</span>
@@ -55,7 +55,7 @@ export function StartScreen() {
           </div>
 
           {/* 规则卡片 */}
-          <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          <div className="mt-8 md:mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
             {RULES.map((r) => (
               <div
                 key={r.title}
@@ -72,7 +72,7 @@ export function StartScreen() {
           </div>
 
           {/* 开始按钮 / 加载进度 */}
-          <div className="mt-12 flex flex-col items-center gap-3">
+          <div className="mt-8 md:mt-12 flex flex-col items-center gap-3">
             {!loading ? (
               <button
                 onClick={handleStart}
@@ -100,7 +100,7 @@ export function StartScreen() {
         </div>
       </main>
 
-      <footer className="px-6 sm:px-10 py-5 border-t border-gray-800 text-center text-xs text-gray-500">
+      <footer className="px-4 sm:px-6 md:px-10 py-4 md:py-5 border-t border-gray-800 text-center text-xs text-gray-500">
         据说公元21世纪，人类还需亲手敲下每一行代码、亲手在凌晨三点解决bug——他们管那段日子叫"青春"
       </footer>
     </div>

@@ -61,7 +61,7 @@ export function TaskDialog({ task, onClose }: Props) {
     >
       <div className="space-y-5">
         {/* 需求详情 */}
-        <div className="grid grid-cols-4 gap-2 text-sm">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
           <Info label="难度" value={DIFF_LABEL[task.difficulty]} accent="text-amber-400" />
           <Info label="Token" value={formatToken(task.tokenCost)} accent="text-violet-400" />
           <Info label="报酬" value={`¥${task.reward}`} accent="text-amber-400" />

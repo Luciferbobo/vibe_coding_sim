@@ -118,7 +118,7 @@ export function SellDialog({ tokenId, onClose }: Props) {
               持有 {isXianyu ? `${max} 个` : formatToken(max)}
             </span>
           </div>
-          <div className="mt-2 flex items-stretch gap-2">
+          <div className="mt-2 flex flex-col gap-2 md:flex-row md:items-stretch">
             <input
               type="number"
               min={0}
@@ -129,9 +129,9 @@ export function SellDialog({ tokenId, onClose }: Props) {
                 const v = Math.max(0, Math.min(max, parseFloat(e.target.value) || 0));
                 setCount(v);
               }}
-              className="font-mono flex-1 rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-base font-semibold text-gray-100 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/40 transition-colors tabular"
+              className="font-mono w-full md:flex-1 rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-base font-semibold text-gray-100 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/40 transition-colors tabular"
             />
-            <div className="flex gap-1">
+            <div className="grid grid-cols-3 gap-1 md:flex md:gap-1">
               {[0.25, 0.5, 1].map((r) => (
                 <button
                   key={r}
@@ -146,7 +146,7 @@ export function SellDialog({ tokenId, onClose }: Props) {
         </div>
 
         {/* 收入预览 */}
-        <div className="rounded-lg bg-gray-900/60 border border-gray-700/60 p-4 space-y-1.5">
+        <div className="rounded-lg bg-gray-900/60 border border-gray-700/60 p-3 md:p-4 space-y-1.5">
           <div className="flex items-baseline justify-between">
             <span className="text-sm text-gray-400">预计收入</span>
             <span className="font-mono text-2xl font-bold text-amber-400 tabular">

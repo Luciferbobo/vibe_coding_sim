@@ -91,7 +91,7 @@ export function Retirement() {
         }}
       />
 
-      <div className="relative z-10 mx-auto max-w-3xl px-6 py-10">
+      <div className="relative z-10 mx-auto max-w-3xl px-4 py-6 md:px-6 md:py-10">
         {/* 顶部小标 */}
         <div className="flex items-center justify-between text-[11px] tracking-[0.3em] uppercase text-amber-300/70">
           <span className="inline-flex items-center gap-2">
@@ -101,18 +101,18 @@ export function Retirement() {
         </div>
 
         {/* 主标题 */}
-        <div className="mt-6">
-          <h2 className="font-serif text-5xl sm:text-6xl font-bold tracking-tight bg-gradient-to-br from-amber-200 via-orange-300 to-rose-400 bg-clip-text text-transparent">
+        <div className="mt-4 md:mt-6">
+          <h2 className="font-serif text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight bg-gradient-to-br from-amber-200 via-orange-300 to-rose-400 bg-clip-text text-transparent">
             🏖️ 一键退休
           </h2>
-          <p className="mt-3 text-base italic text-amber-100/70 leading-relaxed">
+          <p className="mt-3 text-sm md:text-base italic text-amber-100/70 leading-relaxed">
             累了？卖掉所有 Token，看看你的积蓄能让你躺平多久……
           </p>
           <p className="mt-2 text-xs text-amber-200/40 font-light">"{quote}"</p>
         </div>
 
         {/* 资产概况 */}
-        <div className="mt-8 rounded-2xl border border-amber-500/20 bg-gradient-to-br from-stone-900/80 to-amber-950/40 backdrop-blur-sm overflow-hidden">
+        <div className="mt-6 md:mt-8 rounded-2xl border border-amber-500/20 bg-gradient-to-br from-stone-900/80 to-amber-950/40 backdrop-blur-sm overflow-hidden">
           <div className="px-5 py-3 border-b border-amber-500/10 flex items-center justify-between">
             <p className="text-[11px] tracking-[0.25em] uppercase text-amber-300/70">
               Current Holdings · 资产清算预览
@@ -173,12 +173,12 @@ export function Retirement() {
         </div>
 
         {/* 房租 + 预估 */}
-        <div className="mt-6 grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] gap-4">
-          <div className="rounded-2xl border border-amber-500/20 bg-stone-900/70 px-5 py-4">
+        <div className="mt-4 md:mt-6 grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] gap-4">
+          <div className="rounded-2xl border border-amber-500/20 bg-stone-900/70 px-4 md:px-5 py-4">
             <p className="text-[10px] tracking-[0.25em] uppercase text-amber-300/60">
               Weekly Rent
             </p>
-            <p className="mt-2 font-mono text-3xl font-semibold text-amber-200">
+            <p className="mt-2 font-mono text-2xl md:text-3xl font-semibold text-amber-200">
               {formatYuan(rentAmount)}
             </p>
             <p className="mt-1 text-xs text-amber-300/50">每周扣除一次</p>
@@ -194,12 +194,12 @@ export function Retirement() {
                   'radial-gradient(circle, rgba(251,191,36,0.5), transparent 70%)',
               }}
             />
-            <div className="relative px-6 py-5">
+            <div className="relative px-5 md:px-6 py-4 md:py-5">
               <p className="text-[10px] tracking-[0.3em] uppercase text-rose-200/70">
                 Estimated Survival
               </p>
               <div className="mt-2 flex items-baseline gap-3">
-                <span className="font-serif font-bold text-7xl leading-none bg-gradient-to-br from-amber-200 to-rose-400 bg-clip-text text-transparent tabular-nums">
+                <span className="font-serif font-bold text-5xl md:text-7xl leading-none bg-gradient-to-br from-amber-200 to-rose-400 bg-clip-text text-transparent tabular-nums">
                   {weeksAlive}
                 </span>
                 <span className="text-amber-100/70 text-base">周</span>
@@ -215,12 +215,12 @@ export function Retirement() {
         </div>
 
         {/* 退休按钮 */}
-        <div className="mt-8">
+        <div className="mt-6 md:mt-8">
           {!confirming ? (
             <>
               <button
                 onClick={handleClick}
-                className="group relative w-full overflow-hidden rounded-2xl py-5 px-6 text-white font-bold text-lg tracking-wide shadow-2xl shadow-rose-900/40 transition-all hover:shadow-rose-900/60 hover:scale-[1.005] active:scale-[0.995]"
+                className="group relative w-full overflow-hidden rounded-2xl py-4 px-5 md:py-5 md:px-6 text-white font-bold text-base md:text-lg tracking-wide shadow-2xl shadow-rose-900/40 transition-all hover:shadow-rose-900/60 hover:scale-[1.005] active:scale-[0.995]"
                 style={{
                   background:
                     'linear-gradient(135deg, #b45309 0%, #c2410c 35%, #be123c 100%)',
@@ -288,13 +288,13 @@ function AssetCell({
   emphasized?: boolean;
 }) {
   return (
-    <div className={`px-5 py-4 ${emphasized ? 'bg-rose-950/30' : ''}`}>
+    <div className={`px-4 md:px-5 py-3 md:py-4 ${emphasized ? 'bg-rose-950/30' : ''}`}>
       <p className="text-[10px] tracking-[0.2em] uppercase text-amber-300/50">
         {label}
       </p>
       <p
         className={`mt-1.5 font-mono ${
-          emphasized ? 'text-2xl font-bold' : 'text-xl font-semibold'
+          emphasized ? 'text-xl md:text-2xl font-bold' : 'text-lg md:text-xl font-semibold'
         } ${accent} tabular-nums`}
       >
         {value}

@@ -56,16 +56,16 @@ export function TokenMarket() {
   return (
     <div className="flex h-full flex-col">
       {/* 标题 */}
-      <div className="border-b border-gray-800 px-6 py-5">
-        <div className="flex items-end justify-between gap-4 flex-wrap">
+      <div className="border-b border-gray-800 px-4 py-3 md:px-6 md:py-5">
+        <div className="flex items-end justify-between gap-3 md:gap-4 flex-wrap">
           <div>
-            <h2 className="text-xl font-semibold text-gray-100">{title}</h2>
-            <p className="mt-1 text-sm text-gray-400">{subtitle}</p>
+            <h2 className="text-lg md:text-xl font-semibold text-gray-100">{title}</h2>
+            <p className="mt-1 text-xs md:text-sm text-gray-400">{subtitle}</p>
           </div>
           <div className="text-right">
             <p className="text-xs text-gray-500">今日通胀率</p>
             <p
-              className={`mt-0.5 font-mono text-lg font-semibold tabular ${
+              className={`mt-0.5 font-mono text-base md:text-lg font-semibold tabular ${
                 avgInflation >= 0 ? 'text-red-400' : 'text-emerald-400'
               }`}
             >
@@ -75,9 +75,133 @@ export function TokenMarket() {
         </div>
       </div>
 
-      {/* 表格 */}
-      <div className="flex-1 overflow-y-auto px-6 py-4">
-        <div className="rounded-xl bg-gray-800/40 border border-gray-700/60 overflow-hidden">
+      {/* 列表区 */}
+      <div className="flex-1 overflow-y-auto px-3 py-3 md:px-6 md:py-4">
+        {/* 移动端：紧凑卡片网格（2 列 / sm 以上 3 列） */}
+        <div className="md:hidden grid grid-cols-2 sm:grid-cols-3 gap-2">
+          {visibleTokens.map((token) => {
+            const isXy = token.id === 6;
+            const realPrice = activePrices[token.id];
+            const delta =
+              ((activePrices[token.id] - token.basePrice) / token.basePrice) * 100;
+            const tokenBatches = inventory.filter((b) => b.tokenId === token.id);
+            const totalCount = tokenBatches.reduce((s, b) => s + b.count, 0);
+            const hasHolding = totalCount > 0;
+            const minDaysLeft = hasHolding
+              ? Math.max(0, Math.min(...tokenBatches.map((b) => b.expiresDay - day - 1)))
+              : Infinity;
+            const urgencyDot = !hasHolding
+              ? null
+              : minDaysLeft <= 1
+              ? { cls: 'bg-red-500 animate-pulse', label: `${minDaysLeft}天后过期` }
+              : minDaysLeft <= 3
+              ? { cls: 'bg-amber-400', label: `${minDaysLeft}天后过期` }
+              : { cls: 'bg-emerald-500', label: `还有 ${minDaysLeft} 天` };
+            const up = delta >= 0;
+            const isOutOfStock = outOfStock.includes(token.id);
+
+            return (
+              <div
+                key={token.id}
+                className={`relative rounded-lg bg-gray-800/40 border border-gray-700/60 p-2 flex flex-col ${isOutOfStock ? 'opacity-60' : ''}`}
+              >
+                {/* 缺货标记 */}
+                {isOutOfStock && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                    <span
+                      className="text-red-500 font-bold text-sm border-2 border-red-500 px-1.5 py-0.5 rounded"
+                      style={{ transform: 'rotate(-15deg)' }}
+                    >
+                      缺货
+                    </span>
+                  </div>
+                )}
+
+                {/* 名称 + tier */}
+                <div className="flex items-center gap-1 min-w-0">
+                  <p className="font-medium text-gray-100 truncate text-xs flex-1">
+                    {token.name}
+                  </p>
+                  <span
+                    className={`shrink-0 inline-flex w-5 justify-center rounded text-[9px] font-semibold py-0.5 ${TIER_COLOR[token.tier]}`}
+                  >
+                    {token.tier}
+                  </span>
+                </div>
+
+                {/* 价格 */}
+                <p className={`mt-1 font-mono text-sm font-bold tabular ${isOutOfStock ? 'text-gray-500' : 'text-amber-400'}`}>
+                  ¥{realPrice.toFixed(2)}
+                  <span className="ml-0.5 text-[9px] text-gray-500 font-normal">
+                    {isXy ? '/个' : '/M'}
+                  </span>
+                </p>
+
+                {/* 涨跌 */}
+                <p
+                  className={`font-mono text-[11px] font-semibold tabular ${
+                    isOutOfStock ? 'text-gray-500' : up ? 'text-red-400' : 'text-emerald-400'
+                  }`}
+                >
+                  {up ? '↗ +' : '↘ '}
+                  {delta.toFixed(1)}%
+                </p>
+
+                {/* 持仓 */}
+                <div className="mt-1 min-h-[16px] flex items-center gap-1 text-[10px] text-gray-400">
+                  {hasHolding && urgencyDot ? (
+                    <>
+                      <span
+                        title={urgencyDot.label}
+                        className={`inline-block h-1.5 w-1.5 rounded-full shrink-0 ${urgencyDot.cls}`}
+                      />
+                      <span className="font-mono truncate">
+                        持{isXy ? `${totalCount}个` : formatToken(totalCount)}
+                      </span>
+                      {minDaysLeft <= 3 && (
+                        <span className="text-amber-400 shrink-0">{minDaysLeft}d</span>
+                      )}
+                    </>
+                  ) : (
+                    <span className="text-gray-600">未持有</span>
+                  )}
+                </div>
+
+                {/* 操作 */}
+                <div className="mt-1.5 grid grid-cols-2 gap-1">
+                  <button
+                    onClick={() => setBuyToken(token.id)}
+                    disabled={isOutOfStock}
+                    className="px-1 py-1.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-medium transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-emerald-600"
+                    title={isOutOfStock ? '市场缺货，无法购买' : undefined}
+                  >
+                    买入
+                  </button>
+                  {isXy ? (
+                    <button
+                      disabled
+                      className="px-1 py-1.5 rounded bg-gray-700 text-gray-500 text-[11px] font-medium cursor-not-allowed opacity-30"
+                      title="咸鱼Cursor账号不支持转卖"
+                    >
+                      卖出
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setSellToken(token.id)}
+                      disabled={!hasHolding}
+                      className="px-1 py-1.5 rounded bg-gray-700 hover:bg-gray-600 text-gray-200 text-[11px] font-medium transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-gray-700"
+                    >
+                      卖出
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* PC 端：表格视图 */}
+        <div className="hidden md:block rounded-xl bg-gray-800/40 border border-gray-700/60 overflow-hidden">
           <div className="grid grid-cols-[40px_minmax(0,2fr)_50px_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_180px] gap-x-3 px-4 py-2.5 border-b border-gray-700/60 text-xs font-medium text-gray-500 uppercase tracking-wider">
             <span>#</span>
             <span>Token</span>

@@ -11,19 +11,19 @@ export function ZhihuBlog() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b border-gray-800 px-6 py-5">
-        <h2 className="text-xl font-semibold text-gray-100">✍️ 知乎 · 技术博客</h2>
-        <p className="mt-1 text-sm text-gray-400">
+      <div className="border-b border-gray-800 px-4 py-3 md:px-6 md:py-5">
+        <h2 className="text-lg md:text-xl font-semibold text-gray-100">✍️ 知乎 · 技术博客</h2>
+        <p className="mt-1 text-xs md:text-sm text-gray-400">
           写一篇技术博客，恢复你在业界的信誉
         </p>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <div className="flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-6">
         <div className="max-w-lg mx-auto">
           {/* 当前信誉 */}
-          <div className="rounded-xl bg-gray-800/60 border border-gray-700/60 p-5 mb-6">
+          <div className="rounded-xl bg-gray-800/60 border border-gray-700/60 p-4 md:p-5 mb-5 md:mb-6">
             <p className="text-sm text-gray-400">当前信誉值</p>
-            <p className="mt-2 text-4xl font-bold text-blue-400 font-mono tabular">
+            <p className="mt-2 text-3xl md:text-4xl font-bold text-blue-400 font-mono tabular">
               {reputation}
             </p>
             <div className="mt-2 w-full h-2 bg-gray-700 rounded-full overflow-hidden">
