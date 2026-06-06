@@ -1,5 +1,7 @@
 // 开始画面 - 简洁现代欢迎页
+import { useState } from 'react';
 import { useGameStore } from '../../stores/gameStore';
+import { audioManager } from '../../utils/audioManager';
 
 const RULES: Array<{ title: string; desc: string }> = [
   { title: 'VIBE CODING', desc: '购买token，使用vibe coding接单赚钱' },
@@ -11,6 +13,17 @@ const RULES: Array<{ title: string; desc: string }> = [
 
 export function StartScreen() {
   const startNewGame = useGameStore((s) => s.startNewGame);
+  const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState(0); // 0-100
+
+  const handleStart = async () => {
+    setLoading(true);
+    setProgress(0);
+    await audioManager.preloadAll((loaded, total) => {
+      setProgress(Math.round((loaded / total) * 100));
+    });
+    startNewGame();
+  };
 
   return (
     <div className="min-h-screen w-full bg-gray-900 text-gray-100 flex flex-col">
@@ -58,14 +71,28 @@ export function StartScreen() {
             ))}
           </div>
 
-          {/* 开始按钮 */}
+          {/* 开始按钮 / 加载进度 */}
           <div className="mt-12 flex flex-col items-center gap-3">
-            <button
-              onClick={startNewGame}
-              className="px-10 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-base font-medium shadow-lg shadow-emerald-900/30 transition-colors"
-            >
-              开始游戏
-            </button>
+            {!loading ? (
+              <button
+                onClick={handleStart}
+                className="px-10 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-base font-medium shadow-lg shadow-emerald-900/30 transition-colors"
+              >
+                开始游戏
+              </button>
+            ) : (
+              <div className="w-full max-w-xs flex flex-col items-center gap-2">
+                <div className="w-full h-2.5 rounded-full bg-gray-800 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-emerald-500 transition-all duration-150"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+                <p className="text-xs text-gray-400">
+                  加载资源中… {progress}%
+                </p>
+              </div>
+            )}
             <p className="text-xs text-gray-500">
               
             </p>
@@ -74,7 +101,7 @@ export function StartScreen() {
       </main>
 
       <footer className="px-6 sm:px-10 py-5 border-t border-gray-800 text-center text-xs text-gray-500">
-        据说公元21世纪，人类还需亲手敲下每一行代码、亲手在凌晨三点解决bug——他们管那段日子叫“青春”
+        据说公元21世纪，人类还需亲手敲下每一行代码、亲手在凌晨三点解决bug——他们管那段日子叫"青春"
       </footer>
     </div>
   );
