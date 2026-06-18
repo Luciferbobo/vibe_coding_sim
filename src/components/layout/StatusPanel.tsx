@@ -270,7 +270,7 @@ export function StatusPanel() {
   });
 
   return (
-    <aside className="flex h-full w-full flex-col gap-3 overflow-y-auto bg-gray-900 p-3 md:p-4">
+    <aside className="flex h-full w-full flex-col gap-3 overflow-y-auto bg-gray-900 p-4">
       <PortfolioCurve
         history={portfolioHistory}
         currentTotal={cash + tokenValue + gpuValue}
@@ -278,15 +278,15 @@ export function StatusPanel() {
       />
 
       {/* 现金 */}
-      <div className="rounded-xl bg-gray-800/60 border border-gray-700/60 p-3 md:p-4">
+      <div className="rounded-xl bg-gray-800/60 border border-gray-700/60 p-4">
         <p className="text-xs text-gray-400">现金余额</p>
-        <p className="mt-1 font-mono text-xl md:text-2xl font-bold tabular text-amber-400">
+        <p className="mt-1 font-mono text-2xl font-bold tabular text-amber-400">
           {formatMoney(cash)}
         </p>
       </div>
 
       {/* 状态条 */}
-      <div className="rounded-xl bg-gray-800/60 border border-gray-700/60 p-3 md:p-4 space-y-3.5">
+      <div className="rounded-xl bg-gray-800/60 border border-gray-700/60 p-4 space-y-3.5">
         <StatBar
           label="精神 SPIRIT"
           value={spirit}
@@ -309,7 +309,7 @@ export function StatusPanel() {
 
       {/* 下次房租 */}
       <div
-        className={`rounded-xl border p-3 md:p-4 ${
+        className={`rounded-xl border p-4 ${
           rentRedFlag
             ? 'bg-red-500/5 border-red-500/40'
             : 'bg-gray-800/60 border-gray-700/60'
@@ -320,7 +320,7 @@ export function StatusPanel() {
           <span className="text-xs text-gray-500">T-{daysToRent} 天</span>
         </div>
         <p
-          className={`mt-1 font-mono text-lg md:text-xl font-semibold tabular ${
+          className={`mt-1 font-mono text-xl font-semibold tabular ${
             rentRedFlag ? 'text-red-500' : 'text-red-400'
           }`}
         >
@@ -332,7 +332,7 @@ export function StatusPanel() {
       </div>
 
       {/* 持仓 */}
-      <div className="rounded-xl bg-gray-800/60 border border-gray-700/60 p-3 md:p-4 flex-1 min-h-0 flex flex-col">
+      <div className="rounded-xl bg-gray-800/60 border border-gray-700/60 p-4 flex-1 min-h-0 flex flex-col">
         <div className="flex items-center justify-between">
           <p className="text-xs text-gray-400">持仓</p>
           <span className="text-xs text-gray-500">{tokenGroups.length} / 7</span>

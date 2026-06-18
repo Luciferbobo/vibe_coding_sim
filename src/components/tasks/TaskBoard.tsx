@@ -59,9 +59,9 @@ export function TaskBoard() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b border-gray-800 px-4 py-3 md:px-6 md:py-5">
-        <h2 className="text-lg md:text-xl font-semibold text-gray-100">{title}</h2>
-        <p className="mt-1 text-xs md:text-sm text-gray-400">{subtitle}</p>
+      <div className="border-b border-gray-800 px-6 py-5">
+        <h2 className="text-xl font-semibold text-gray-100">{title}</h2>
+        <p className="mt-1 text-sm text-gray-400">{subtitle}</p>
         <p className="mt-2 text-xs text-gray-500">
           当前信誉{' '}
           <span
@@ -78,7 +78,7 @@ export function TaskBoard() {
         </p>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-3 md:px-6 md:py-4">
+      <div className="flex-1 overflow-y-auto px-6 py-4">
         {availableTasks.length === 0 ? (
           <div className="flex h-full items-center justify-center">
             <div className="text-center">

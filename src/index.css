@@ -106,3 +106,28 @@ input[type='number'] {
 button {
   font-family: inherit;
 }
+
+/* === 横屏提示遮罩：默认隐藏，仅竖屏 + 小屏设备显示 === */
+.landscape-guard {
+  display: none;
+}
+
+@media (orientation: portrait) and (max-width: 1024px) {
+  .landscape-guard {
+    display: flex;
+  }
+}
+
+/* 旋转图标呼吸动画 */
+@keyframes rotateHint {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-90deg);
+  }
+}
+
+.rotate-icon {
+  animation: rotateHint 2.5s ease-in-out infinite;
+}

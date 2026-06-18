@@ -61,7 +61,7 @@ export function TaskDialog({ task, onClose }: Props) {
     >
       <div className="space-y-5">
         {/* 需求详情 */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+        <div className="grid grid-cols-4 gap-2 text-sm">
           <Info label="难度" value={DIFF_LABEL[task.difficulty]} accent="text-amber-400" />
           <Info label="Token" value={formatToken(task.tokenCost)} accent="text-violet-400" />
           <Info label="报酬" value={`¥${task.reward}`} accent="text-amber-400" />
@@ -80,7 +80,7 @@ export function TaskDialog({ task, onClose }: Props) {
           <p className="mt-3 text-xs text-emerald-400">
             使用 AI Token（按 token tier 抽卡判定完成率）
           </p>
-          <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="mt-2 grid grid-cols-2 gap-2">
             {TOKENS.map((t) => {
               const owned = getTotalTokenCount(inventory, t.id);
               // 咸鱼Cursor账号特殊处理：按个数消耗
