@@ -34,7 +34,7 @@ export function StartScreen() {
             Vibe Coding 模拟器
           </span>
         </div>
-        <span className="text-xs text-gray-500">Made by bobo</span>
+        <span className="text-xs text-gray-500">PC端体验更佳</span>
       </header>
 
       <main className="flex-1 flex items-center justify-center px-4 sm:px-6 md:px-10 py-8 md:py-12">

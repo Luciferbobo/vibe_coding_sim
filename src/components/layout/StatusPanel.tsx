@@ -4,37 +4,6 @@ import type { PortfolioHistoryPoint } from '../../stores/gameStore';
 import { TOKENS } from '../../data/tokens';
 import { formatMoney, formatToken } from '../../utils/format';
 
-interface BarProps {
-  label: string;
-  value: number;
-  max: number;
-  barColor: string;
-  textColor: string;
-  hint?: string;
-}
-
-function StatBar({ label, value, max, barColor, textColor, hint }: BarProps) {
-  const pct = Math.max(0, Math.min(100, (value / max) * 100));
-  return (
-    <div>
-      <div className="flex items-baseline justify-between">
-        <span className="text-xs text-gray-400">{label}</span>
-        <span className={`font-mono text-sm font-semibold tabular ${textColor}`}>
-          {Math.round(value)}
-          <span className="text-gray-500">/{max}</span>
-        </span>
-      </div>
-      <div className="mt-1.5 h-1.5 w-full rounded-full bg-gray-700/60 overflow-hidden">
-        <div
-          className={`h-full rounded-full transition-all duration-300 ${barColor}`}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-      {hint && <p className="mt-1 text-xs text-gray-500">{hint}</p>}
-    </div>
-  );
-}
-
 const OPERATION_TYPES: PortfolioHistoryPoint['eventType'][] = [
   'trade',
   'income',
@@ -222,31 +191,18 @@ function PortfolioCurve({
 
 export function StatusPanel() {
   const cash = useGameStore((s) => s.cash);
-  const spirit = useGameStore((s) => s.spirit);
-  const reputation = useGameStore((s) => s.reputation);
   const day = useGameStore((s) => s.day);
-  const nextRentDay = useGameStore((s) => s.nextRentDay);
-  const rentAmount = useGameStore((s) => s.rentAmount);
   const inventory = useGameStore((s) => s.inventory);
   const currentPrices = useGameStore((s) => s.currentPrices);
   const xianYuPrices = useGameStore((s) => s.xianYuPrices);
   const portfolioHistory = useGameStore((s) => s.portfolioHistory);
   const gpus = useGameStore((s) => s.gpus);
+  const nextRentDay = useGameStore((s) => s.nextRentDay);
 
   // 资产估值取两市场最低价
   const valuationPrices = getValuationPrices(currentPrices, xianYuPrices);
 
   const daysToRent = Math.max(0, nextRentDay - day);
-  const rentRedFlag = cash < rentAmount && daysToRent <= 5;
-
-  const spiritBar =
-    spirit > 60 ? 'bg-emerald-500' : spirit > 30 ? 'bg-amber-500' : 'bg-red-500';
-  const spiritText =
-    spirit > 60 ? 'text-emerald-400' : spirit > 30 ? 'text-amber-400' : 'text-red-400';
-  const repBar =
-    reputation > 60 ? 'bg-blue-500' : reputation > 20 ? 'bg-amber-500' : 'bg-red-500';
-  const repText =
-    reputation > 60 ? 'text-blue-400' : reputation > 20 ? 'text-amber-400' : 'text-red-400';
 
   const tokenValue = inventory.reduce(
     (sum, it) => sum + it.count * (valuationPrices[it.tokenId] || 0),
@@ -283,52 +239,6 @@ export function StatusPanel() {
         <p className="mt-1 font-mono text-2xl font-bold tabular text-amber-400">
           {formatMoney(cash)}
         </p>
-      </div>
-
-      {/* 状态条 */}
-      <div className="rounded-xl bg-gray-800/60 border border-gray-700/60 p-4 space-y-3.5">
-        <StatBar
-          label="精神 SPIRIT"
-          value={spirit}
-          max={100}
-          barColor={spiritBar}
-          textColor={spiritText}
-          hint={
-            spirit <= 0 ? '已熄火 · 强制休息' : spirit < 30 ? '濒临崩溃' : undefined
-          }
-        />
-        <StatBar
-          label="信誉 REPUTATION"
-          value={reputation}
-          max={100}
-          barColor={repBar}
-          textColor={repText}
-          hint={reputation < 20 ? '已被市场拉黑' : undefined}
-        />
-      </div>
-
-      {/* 下次房租 */}
-      <div
-        className={`rounded-xl border p-4 ${
-          rentRedFlag
-            ? 'bg-red-500/5 border-red-500/40'
-            : 'bg-gray-800/60 border-gray-700/60'
-        }`}
-      >
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-gray-400">下次房租</p>
-          <span className="text-xs text-gray-500">T-{daysToRent} 天</span>
-        </div>
-        <p
-          className={`mt-1 font-mono text-xl font-semibold tabular ${
-            rentRedFlag ? 'text-red-500' : 'text-red-400'
-          }`}
-        >
-          ¥{rentAmount.toLocaleString()}
-        </p>
-        {rentRedFlag && (
-          <p className="mt-1 text-xs text-red-400">现金不足以交租</p>
-        )}
       </div>
 
       {/* 持仓 */}

@@ -49,12 +49,12 @@ export function generateDailyTasks(day: number, site: 'niuke' | 'boss'): TaskTem
  * 各模型在“专家(hell)”难度下的完成率（按产品需求制定，与 tokens.ts 顺序对齐）
  */
 const HELL_RATES: Record<number, number> = {
-  0: 0.90, // Claude Opus 4.7
+  0: 0.90, // Claude Opus 4.8
   1: 0.85, // GPT-5.5
-  2: 0.80, // Gemini 3.1
+  2: 0.80, // Gemini 3.5
   3: 0.55, // DeepSeek v4
-  4: 0.50, // Qwen 3.6 Max
-  5: 0.25, // Kimi K2.5
+  4: 0.50, // Qwen 3.7 Max
+  5: 0.25, // Kimi K2.6
   6: 0.01, // 咸鱼Cursor账号
 };
 

@@ -25,6 +25,7 @@ export function SiteNav() {
   const tasksCompletedToday = useGameStore((s) => s.tasksCompletedToday);
   const maxTasksPerDay = useGameStore((s) => s.maxTasksPerDay);
   const gpuUnlocked = useGameStore((s) => s.gpuUnlocked);
+  const gpuHintShown = useGameStore((s) => s.gpuHintShown);
 
   return (
     <nav className="flex h-full w-full flex-col overflow-hidden bg-gray-900">
@@ -45,42 +46,66 @@ export function SiteNav() {
 
       <div className="flex-1 overflow-y-auto px-2 space-y-0.5">
         {SITES.filter((site) => {
+          // GPU算力中心：解锁后显示，未解锁时用神秘场所占位
           if (site.id === 10 && !gpuUnlocked) return false;
           return true;
         }).map((site) => {
           const active = site.id === currentSiteId;
           const disabled = restDaysLeft > 0;
+
+          // 在GPU位置插入神秘场所预告（显示在GPU商城前，即第三个位置）
+          // 当 site.id === 2（外包广场，紧跟在GPU位置后）时先渲染神秘场所
+          const showHintBefore = site.id === 2 && gpuHintShown && !gpuUnlocked;
+
           return (
-            <button
-              key={site.id}
-              disabled={disabled}
-              onClick={() => {
-                audioManager.playSiteSound(site.id);
-                navigateToSite(site.id);
-              }}
-              title={site.name}
-              aria-label={site.name}
-              className={`group w-full flex flex-row items-center justify-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors ${
-                active
-                  ? 'bg-emerald-500/15 text-emerald-300'
-                  : 'text-gray-300 hover:bg-gray-800'
-              } ${disabled ? 'cursor-not-allowed opacity-40 hover:bg-transparent' : ''}`}
-            >
-              <span className="text-xl leading-none shrink-0">{site.icon}</span>
-              <span className="min-w-0 flex-1 flex flex-col">
-                <span className="block truncate text-sm font-medium">
-                  {site.name}
-                </span>
-                <span className="block truncate text-xs text-gray-500">
-                  {site.description}
-                </span>
-              </span>
-              <span
-                className={`shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium ${TYPE_COLOR[site.type]}`}
+            <>
+              {showHintBefore && (
+                <div key="gpu-hint" className="w-full flex flex-row items-center justify-start gap-3 rounded-lg px-3 py-2.5 text-left opacity-50 cursor-not-allowed">
+                  <span className="text-xl leading-none shrink-0">🔒</span>
+                  <span className="min-w-0 flex-1 flex flex-col">
+                    <span className="block truncate text-sm font-medium text-gray-400">
+                      ???
+                    </span>
+                    <span className="block truncate text-xs text-gray-600">
+                      资产达到200万解锁
+                    </span>
+                  </span>
+                  <span className="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-700/50 text-gray-500">
+                    锁定
+                  </span>
+                </div>
+              )}
+              <button
+                key={site.id}
+                disabled={disabled}
+                onClick={() => {
+                  audioManager.playSiteSound(site.id);
+                  navigateToSite(site.id);
+                }}
+                title={site.name}
+                aria-label={site.name}
+                className={`group w-full flex flex-row items-center justify-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors ${
+                  active
+                    ? 'bg-emerald-500/15 text-emerald-300'
+                    : 'text-gray-300 hover:bg-gray-800'
+                } ${disabled ? 'cursor-not-allowed opacity-40 hover:bg-transparent' : ''}`}
               >
-                {TYPE_LABEL[site.type]}
-              </span>
-            </button>
+                <span className="text-xl leading-none shrink-0">{site.icon}</span>
+                <span className="min-w-0 flex-1 flex flex-col">
+                  <span className="block truncate text-sm font-medium">
+                    {site.name}
+                  </span>
+                  <span className="block truncate text-xs text-gray-500">
+                    {site.description}
+                  </span>
+                </span>
+                <span
+                  className={`shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium ${TYPE_COLOR[site.type]}`}
+                >
+                  {TYPE_LABEL[site.type]}
+                </span>
+              </button>
+            </>
           );
         })}
       </div>

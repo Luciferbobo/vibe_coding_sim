@@ -59,7 +59,7 @@ export function ZhihuBlog() {
               "水一篇《如何写hello world》也是可以的..."
             </p>
             <p className="text-xs text-gray-600 italic">
-              "记住：在知乎，自信就是信誉"
+              "记住：在知乎，自信就是财富"
             </p>
           </div>
         </div>

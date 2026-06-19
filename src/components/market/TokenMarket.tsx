@@ -22,6 +22,7 @@ export function TokenMarket() {
   const githubOutOfStock = useGameStore((s) => s.githubOutOfStock);
   const xianYuOutOfStock = useGameStore((s) => s.xianYuOutOfStock);
   const inventory = useGameStore((s) => s.inventory);
+  const previousPrices = useGameStore((s) => s.previousPrices);
   const day = useGameStore((s) => s.day);
   const tradingTaxActivated = useGameStore((s) => s.tradingTaxActivated);
   const sellTaxTierReached = useGameStore((s) => s.sellTaxTierReached);
@@ -50,7 +51,8 @@ export function TokenMarket() {
   const avgInflation =
     visibleTokens.reduce((sum, t) => {
       const cur = activePrices[t.id];
-      return sum + (cur - t.basePrice) / t.basePrice;
+      const prev = previousPrices[t.id] || t.basePrice;
+      return sum + (prev > 0 ? (cur - prev) / prev : 0);
     }, 0) / visibleTokens.length;
 
   return (

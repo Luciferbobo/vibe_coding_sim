@@ -103,9 +103,6 @@ export function TaskBoard() {
                     <h3 className="text-base font-semibold text-gray-100">
                       {task.name}
                     </h3>
-                    <p className="mt-1 text-sm text-gray-400 leading-snug">
-                      {task.description}
-                    </p>
                   </div>
                   <span
                     className={`shrink-0 px-2 py-0.5 rounded-md text-xs font-medium ${DIFF_COLOR[task.difficulty]}`}

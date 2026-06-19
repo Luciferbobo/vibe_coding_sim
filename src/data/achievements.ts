@@ -15,7 +15,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'money_5m', name: 'coding圈巴菲特', description: '累计现金达到5,000,000元', icon: '🐋' },
   { id: 'money_10m', name: '千万传说', description: '累计现金达到10,000,000元', icon: '🐉' },
   { id: 'first_sell', name: '程序员的事怎么能叫贩卖呢', description: '第一次倒卖Token', icon: '🃏' },
-  { id: 'early_rent_10', name: '富婆快乐球', description: '连续10次提前交房租', icon: '🎱' },
+  { id: 'early_rent_10', name: '哄富婆开心', description: '连续10次提前交房租', icon: '🎱' },
   { id: 'token_10b', name: 'Token大户', description: '任意模型的Token数量达到10B', icon: '🏦' },
   { id: 'coffee_5days', name: '牛马打工人', description: '连续5天喝咖啡', icon: '🐂' },
   { id: 'zhihu_10days', name: '教练！我想学这个', description: '连续10天写知乎文章', icon: '📚' },

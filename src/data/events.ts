@@ -11,11 +11,11 @@ export interface GameEvent {
 }
 
 export const EVENTS: GameEvent[] = [
-  // 利好 - 降价
-  { id: 0, type: 'price_down', message: 'OpenAI服务器爆炸！GPT Token暴跌40%！赶紧囤！', probability: 0.05, tokenId: 0, multiplier: 0.6 },
-  { id: 1, type: 'price_down', message: 'Anthropic被反垄断调查，Claude Token大降价！', probability: 0.05, tokenId: 1, multiplier: 0.65 },
-  { id: 2, type: 'price_down', message: 'Google I/O发布新模型，Gemini老版打骨折！', probability: 0.06, tokenId: 2, multiplier: 0.5 },
-  { id: 3, type: 'price_down', message: 'DeepSeek完成新一轮融资，Token大放价！', probability: 0.06, tokenId: 3, multiplier: 0.6 },
+  // 利好 - 降价（10%/15%/20%三档）
+  { id: 0, type: 'price_down', message: 'OpenAI服务器故障，GPT Token下跌10%！', probability: 0.06, tokenId: 0, multiplier: 0.9 },
+  { id: 1, type: 'price_down', message: 'Anthropic被反垄断调查，Claude Token降价15%！', probability: 0.05, tokenId: 1, multiplier: 0.85 },
+  { id: 2, type: 'price_down', message: 'Google I/O发布新模型，Gemini老版降价20%！', probability: 0.05, tokenId: 2, multiplier: 0.8 },
+  { id: 3, type: 'price_down', message: 'DeepSeek完成新一轮融资，Token降价15%！', probability: 0.05, tokenId: 3, multiplier: 0.85 },
 
   // 利好 - 赠送
   { id: 4, type: 'gift_token', message: '阿里开源新模型，白送你 5M Qwen Token！', probability: 0.04, tokenId: 4, amount: 5 },
@@ -51,15 +51,50 @@ export const EVENTS: GameEvent[] = [
   { id: 22, type: 'reputation_change', message: '有人在脉脉上说你接私活不靠谱（虽然不是你）', probability: 0.04, amount: -5 },
 ];
 
-// 游戏结束深意语句
-export const GAME_OVER_QUOTES = [
+// 游戏结束深意语句（按天数分段）
+// < 365天：短命的悲哀
+export const GAME_OVER_QUOTES_SHORT = [
   '这一天终会到来，你我都心知肚明。游戏中是第{days}天，现实世界呢....',
   '你关上了电脑，走出了那间10平米的出租屋。窗外的世界还在运转，只是不再需要你了。',
   'AI不会疲惫，不会抱怨，不要房租。你唯一的优势，是你还活着——但这似乎也不是什么优势了。',
-  '你打开了招聘网站，搜索"不需要AI的工作"。结果为空。',
+  '你打开了招聘网站，搜索“不需要AI的工作”。结果为空。',
   '游戏结束了。但你知道，这不是游戏。',
-  '最后一个月的房租，你没能交上。房东没有为难你，他说他儿子也是程序员。他说"都一样"。',
   '你想起刚学编程时的兴奋。那时候你觉得，会写代码的人永远不会失业。',
+];
+
+// 365天 ~ 2年：勉强存活
+export const GAME_OVER_QUOTES_1Y = [
+  '一年。你比大多数人撑得更久。但“更久”不等于“足够久”。'
+];
+
+// 2年 ~ 5年：小有成就
+export const GAME_OVER_QUOTES_2Y = [
+  '你坚持了几年。你已经不只是“活着”了，你是在“经营”生活。'
+];
+
+// 5年 ~ 10年：Token大亨
+export const GAME_OVER_QUOTES_5Y = [
+  '有人叫你“Token大亨”。你苦笑。你只是一个学会了和机器共存的人。',
+  '五年前你担心被取代。现在你明白了：不是被取代，是被融合。',
+];
+
+// 10年 ~ 20年：生存大师
+export const GAME_OVER_QUOTES_10Y = [
+  '回看这十几年，你最大的成就不是赚了多少钱，而是始终没有放弃。',
+  '十多年时间，世界变了好几轮。你还在。这本身就是一种胜利。',
+];
+
+// 20年 ~ 50年：财富自由
+export const GAME_OVER_QUOTES_20Y = [
+  '你坐在阳台上，看着这个完全由AI驱动的世界。你是少数还记得“以前”的人。',
+  '有人说你是赢家。你不确定。你只是足够幸运，在AI时代你找到了赚钱的方法。',
+];
+
+// 50年+：时代见证者
+export const GAME_OVER_QUOTES_50Y = [
+  '你见证了人类文明最剧烈的转变。从敲代码到永生，从工具到同伴。',
+  '你从一个担心失业的程序员，变成了一个时代的活化石。你被后人成为奇迹。',
+  '游戏结束了。但你的故事，会被后来的人讲述。',
 ];
 
 // 房租提示

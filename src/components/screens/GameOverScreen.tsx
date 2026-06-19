@@ -3,11 +3,11 @@ import { useMemo, useState } from 'react';
 import { useGameStore } from '../../stores/gameStore';
 import { calculateGpuDepreciationValue } from '../../stores/gameStore';
 import type { PortfolioHistoryPoint } from '../../stores/gameStore';
-import { GAME_OVER_QUOTES } from '../../data/events';
+import { GAME_OVER_QUOTES_SHORT, GAME_OVER_QUOTES_1Y, GAME_OVER_QUOTES_2Y, GAME_OVER_QUOTES_5Y, GAME_OVER_QUOTES_10Y, GAME_OVER_QUOTES_20Y, GAME_OVER_QUOTES_50Y } from '../../data/events';
 import { TOKENS } from '../../data/tokens';
 import { ACHIEVEMENTS } from '../../data/achievements';
 import { calculateScore, getTitle, getDayComment } from '../../engine/scoreEngine';
-import { formatMoney, formatDay } from '../../utils/format';
+import { formatMoney, formatDay, formatDayDetailed } from '../../utils/format';
 import { randomChoice } from '../../utils/random';
 
 export function GameOverScreen() {
@@ -57,9 +57,17 @@ export function GameOverScreen() {
       ? '臭名在外'
       : '人人喊打';
 
-  const [quote] = useState(() =>
-    randomChoice(GAME_OVER_QUOTES).replace('{days}', formatDay(day))
-  );
+  const [quote] = useState(() => {
+    let pool;
+    if (day >= 365 * 50) pool = GAME_OVER_QUOTES_50Y;
+    else if (day >= 365 * 20) pool = GAME_OVER_QUOTES_20Y;
+    else if (day >= 365 * 10) pool = GAME_OVER_QUOTES_10Y;
+    else if (day >= 365 * 5) pool = GAME_OVER_QUOTES_5Y;
+    else if (day >= 365 * 2) pool = GAME_OVER_QUOTES_2Y;
+    else if (day >= 365) pool = GAME_OVER_QUOTES_1Y;
+    else pool = GAME_OVER_QUOTES_SHORT;
+    return randomChoice(pool).replace('{days}', formatDay(day));
+  });
 
   // 计算最爱的模型（被使用次数最多的 Token）
   const favoriteModel = useMemo(() => {
@@ -480,7 +488,7 @@ function AchievementWall({
               <div
                 key={it.id}
                 className="group relative overflow-hidden rounded-xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-yellow-500/0 px-3 py-3 shadow-sm shadow-amber-900/10 transition-all hover:border-amber-400/60 hover:shadow-amber-700/20"
-                title={`${it.meta.name} — ${it.meta.description}\n解锁于 ${formatDay(it.day)}`}
+                title={`${it.meta.name} — ${it.meta.description}\n解锁于 ${formatDayDetailed(it.day)}`}
               >
                 {/* 微光晕 */}
                 <div className="pointer-events-none absolute -top-8 -right-8 h-20 w-20 rounded-full bg-amber-400/10 blur-2xl transition-opacity group-hover:bg-amber-300/20" />
@@ -491,7 +499,7 @@ function AchievementWall({
                     #{(i + 1).toString().padStart(2, '0')}
                   </span>
                   <span className="rounded bg-amber-500/15 px-1.5 py-0.5 font-mono text-[10px] font-medium text-amber-300">
-                    {formatDay(it.day)}
+                    {formatDayDetailed(it.day)}
                   </span>
                 </div>
 

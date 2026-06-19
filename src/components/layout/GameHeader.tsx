@@ -5,23 +5,40 @@ import { SITES } from '../../data/sites';
 import { audioManager } from '../../utils/audioManager';
 
 /**
- * 格式化游戏内天数显示（day 从 1 开始）。
- * - 1 ~ 29 天：“第N天”
- * - 30 ~ 359 天：“第N月第M天”（每月 30 天）
- * - 360+ 天：“第Y年第N月第M天”（每年 360 天=12 月）
+ * 格式化游戏内天数显示：第N天
  */
 function formatGameDay(day: number): string {
-  if (day < 30) {
-    return `第${day}天`;
-  }
-  const years = Math.floor(day / 360);
-  const remainingAfterYears = day % 360;
-  const months = Math.floor(remainingAfterYears / 30);
-  const days = remainingAfterYears % 30;
-  if (years > 0) {
-    return `第${years}年第${months + 1}月第${days + 1}天`;
-  }
-  return `第${months + 1}月第${days + 1}天`;
+  return `第${day}天`;
+}
+
+function HeaderBar({
+  label,
+  value,
+  max,
+  barColor,
+  textColor,
+}: {
+  label: string;
+  value: number;
+  max: number;
+  barColor: string;
+  textColor: string;
+}) {
+  const pct = Math.max(0, Math.min(100, (value / max) * 100));
+  return (
+    <div className="flex items-center gap-2 min-w-[140px]">
+      <span className="text-xs text-gray-400 whitespace-nowrap">{label}</span>
+      <div className="flex-1 h-2 rounded-full bg-gray-700/60 overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-all duration-300 ${barColor}`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <span className={`font-mono text-xs font-semibold tabular ${textColor} w-7 text-right`}>
+        {Math.round(value)}
+      </span>
+    </div>
+  );
 }
 
 export function GameHeader() {
@@ -30,14 +47,23 @@ export function GameHeader() {
   const nextRentDay = useGameStore((s) => s.nextRentDay);
   const rentAmount = useGameStore((s) => s.rentAmount);
   const restDaysLeft = useGameStore((s) => s.restDaysLeft);
+  const spirit = useGameStore((s) => s.spirit);
+  const reputation = useGameStore((s) => s.reputation);
 
-  // 注意：SITES 数组的下标与 site.id 并不一致（例如 id=10 的 GPU 算力中心排在下标 2），
-  // 必须用 find 按 id 查找，否则 GameHeader 左上角会显示成错位的站点名/图标。
   const site = SITES.find((s) => s.id === currentSiteId);
   const daysToRent = Math.max(0, nextRentDay - day);
   const rentUrgent = daysToRent <= 3;
 
-  // 静音状态 - 从 audioManager 初始化
+  const spiritBar =
+    spirit > 60 ? 'bg-emerald-500' : spirit > 30 ? 'bg-amber-500' : 'bg-red-500';
+  const spiritText =
+    spirit > 60 ? 'text-emerald-400' : spirit > 30 ? 'text-amber-400' : 'text-red-400';
+  const repBar =
+    reputation > 60 ? 'bg-blue-500' : reputation > 20 ? 'bg-amber-500' : 'bg-red-500';
+  const repText =
+    reputation > 60 ? 'text-blue-400' : reputation > 20 ? 'text-amber-400' : 'text-red-400';
+
+  // 静音状态
   const [isMuted, setIsMuted] = useState<boolean>(() => audioManager.isMuted());
   const toggleMute = () => {
     const next = !isMuted;
@@ -46,9 +72,9 @@ export function GameHeader() {
   };
 
   return (
-    <header className="flex items-center justify-between gap-6 px-6 h-14 border-b border-gray-800 bg-gray-900">
+    <header className="flex items-center gap-4 px-6 h-14 border-b border-gray-800 bg-gray-900">
       {/* 左：站点信息 */}
-      <div className="flex items-center gap-3 min-w-0">
+      <div className="flex items-center gap-3 min-w-0 shrink-0">
         <span className="text-xl leading-none">{site?.icon ?? '❓'}</span>
         <div className="min-w-0">
           <p className="text-sm font-semibold text-gray-100 truncate leading-tight">
@@ -60,8 +86,8 @@ export function GameHeader() {
         </div>
       </div>
 
-      {/* 右：天数 + 房租 + 休息状态 */}
-      <div className="flex items-center gap-6 text-sm">
+      {/* 右侧全部内容 */}
+      <div className="flex-1 flex items-center justify-end gap-5">
         {restDaysLeft > 0 && (
           <span className="px-2.5 py-1 rounded-md bg-red-500/15 text-red-400 text-xs font-medium border border-red-500/30 whitespace-nowrap">
             强制躺平 {restDaysLeft} 天
@@ -75,13 +101,19 @@ export function GameHeader() {
 
         <div className="h-6 w-px bg-gray-800" />
 
+        {/* 精神 + 信誉 */}
+        <div className="flex items-center gap-4">
+          <HeaderBar label="精神" value={spirit} max={100} barColor={spiritBar} textColor={spiritText} />
+          <HeaderBar label="信誉" value={reputation} max={100} barColor={repBar} textColor={repText} />
+        </div>
+
+        <div className="h-6 w-px bg-gray-800" />
+
         {/* 房租 */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500">房租</span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs text-gray-500">下次房租</span>
           <span
-            className={`font-mono text-sm font-semibold tabular ${
-              rentUrgent ? 'text-red-400' : 'text-amber-400'
-            }`}
+            className="font-mono text-sm font-semibold tabular text-red-400"
           >
             ¥{rentAmount.toLocaleString()}
           </span>
@@ -90,13 +122,13 @@ export function GameHeader() {
               rentUrgent ? 'text-red-400' : 'text-gray-500'
             }`}
           >
-            · T-{daysToRent}d
+            · {daysToRent}天后
           </span>
         </div>
 
         <div className="h-6 w-px bg-gray-800" />
 
-        {/* 静音切换（线性 SVG，跨平台一致） */}
+        {/* 静音 */}
         <button
           onClick={toggleMute}
           className="inline-flex items-center justify-center h-9 w-9 rounded-md text-gray-300 hover:text-gray-100 hover:bg-gray-800 transition-colors"

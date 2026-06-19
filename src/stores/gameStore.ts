@@ -3,7 +3,6 @@
 import { create } from 'zustand';
 import { TaskTemplate } from '../data/tasks';
 import { TOKENS, TokenDef } from '../data/tokens';
-import { RENT_MESSAGES } from '../data/events';
 import {
   INITIAL_CASH,
   INITIAL_SPIRIT,
@@ -347,12 +346,12 @@ function generateXianYuPrices(officialPrices: number[]): number[] {
 
 // 金钱里程碑定义
 const MONEY_MILESTONES = [
-  { threshold: 10000, message: '🎉 恭喜你成为万元户！在这个Token通胀的时代，你居然攒到了一万块！' },
+  { threshold: 10000, message: '🎉 恭喜你成为万元户！你在这个Token的时代有了不错的开始！' },
   { threshold: 100000, message: '🎊 十万大关！你已经是这条街最靓的Prompt工程师了！' },
   { threshold: 1000000, message: '💰 百万身家！你开始考虑要不要给房东涨租了...' },
   { threshold: 2000000, message: '🏆 两百万！你的财富已经超过了99%的AI时代打工人。但这能持续多久呢？' },
   { threshold: 5000000, message: '👑 五百万！Token贩子的传说在江湖上流传。有人叫你“coding圈巴菲特”。' },
-  { threshold: 10000000, message: '🐉 千万富翁！你已经可以买下整栋公寓了。但你知道，这不过是数字游戏...' },
+  { threshold: 10000000, message: '🐉 千万富翁！你已经可以买下整栋公寓了' },
 ];
 
 // 提前交租奇妙反应
@@ -411,6 +410,7 @@ interface GameState {
   // 市场
   currentSiteId: number;
   currentPrices: number[];       // 7种Token当日价格（GitHub商城官方价格）
+  previousPrices: number[];      // 前一天官方价格（用于计算当日涨幅）
   xianYuPrices: number[];        // 闲鱼市场专属价格（基于官方价格±25%波动）
 
   // 缺货
@@ -458,6 +458,9 @@ interface GameState {
   
   // 是否曾经倒卖过Token
   hasEverSoldToken: boolean;
+
+  // 首次使用Token接单保护（必定成功，仅一次）
+  firstTokenTaskProtection: boolean;
 
   // 当日买入过的 tokenId 集合（用于限制"当日买入品种当天只能卖一次"，反套利）
   todayBoughtIds: number[];
@@ -513,6 +516,7 @@ interface GameState {
 
   // GPU算力中心
   gpuUnlocked: boolean;
+  gpuHintShown: boolean;    // 怵50万时显示神秘场所预告
   gpus: GPUInstance[];
   gpuNextId: number;
   gpuUnlockDay: number;
@@ -520,6 +524,10 @@ interface GameState {
 
   // 量子计算机原型机：全世界仅有一台，售出即不可再购（即使卖回收价也不能再买）
   quantumComputerSold: boolean;
+
+  // GPU通胀：现金超过6000万后触发，GPU价格每天涨25%
+  gpuInflationActivated: boolean;
+  gpuInflationStartDay: number;
 
   // 房租最后期限警告弹窗
   showRentDeadlineModal: boolean;
@@ -572,6 +580,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   portfolioHistory: [],
   currentSiteId: 0,
   currentPrices: generateInitialPrices(),
+  previousPrices: generateInitialPrices(),
   xianYuPrices: generateXianYuPrices(generateInitialPrices()),
   githubOutOfStock: generateOutOfStock(),
   xianYuOutOfStock: generateOutOfStock(),
@@ -592,6 +601,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   consecutiveZhihuDays: 0,
   manualTasksCompleted: 0,
   hasEverSoldToken: false,
+  firstTokenTaskProtection: true,
   todayBoughtIds: [],
   todayResoldOnce: [],
   todayBuyTrades: [],
@@ -618,11 +628,14 @@ export const useGameStore = create<GameState>((set, get) => ({
   gameOverReason: null,
   retirementData: null,
   gpuUnlocked: false,
+  gpuHintShown: false,
   gpus: [],
   gpuNextId: 0,
   gpuUnlockDay: 0,
   showGpuUnlockModal: false,
   quantumComputerSold: false,
+  gpuInflationActivated: false,
+  gpuInflationStartDay: 0,
   showRentDeadlineModal: false,
   showTradingTaxModal: false,
   electricityOverRentTipShown: false,
@@ -662,6 +675,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       ),
       currentSiteId: 0,
       currentPrices: initPrices,
+      previousPrices: initPrices,
       xianYuPrices: initXianYuPrices,
       githubOutOfStock: generateOutOfStock(),
       xianYuOutOfStock: generateOutOfStock(),
@@ -682,6 +696,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       consecutiveZhihuDays: 0,
       manualTasksCompleted: 0,
       hasEverSoldToken: false,
+      firstTokenTaskProtection: true,
       todayBoughtIds: [],
       todayResoldOnce: [],
       todayBuyTrades: [],
@@ -708,11 +723,14 @@ export const useGameStore = create<GameState>((set, get) => ({
       gameOverReason: null,
       retirementData: null,
       gpuUnlocked: false,
+      gpuHintShown: false,
       gpus: [],
       gpuNextId: 0,
       gpuUnlockDay: 0,
       showGpuUnlockModal: false,
       quantumComputerSold: false,
+      gpuInflationActivated: false,
+      gpuInflationStartDay: 0,
       showRentDeadlineModal: false,
       showTradingTaxModal: false,
       electricityOverRentTipShown: false,
@@ -774,6 +792,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         spirit: newSpirit,
         restDaysLeft: newRestDays,
         currentPrices: newPrices,
+        previousPrices: state.currentPrices,
         xianYuPrices: newXianYuPrices,
         githubOutOfStock: generateOutOfStock(),
         xianYuOutOfStock: generateOutOfStock(),
@@ -959,7 +978,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         // 自动扣款（到期才交，不算提前）
         newCash -= totalRentCost;
         rentJustPaid = state.rentAmount;
-        messages.push(`🏠 ${randomChoice(RENT_MESSAGES)} 房租¥${state.rentAmount}已自动扣除。`);
+        messages.push(`🏠 房租¥${state.rentAmount}已自动扣除。`);
         if (weeklyElectricity > 0) {
           messages.push(`🔌 电费 ¥${weeklyElectricity.toLocaleString()} 已随房租扣除`);
         }
@@ -1106,6 +1125,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
     // 14. GPU 中心解锁检查（总资产 ≥ 200万，含GPU折旧价值）
     let gpuUnlocked = state.gpuUnlocked;
+    let gpuHintShown = state.gpuHintShown;
     let gpuUnlockDay = state.gpuUnlockDay;
     if (!gpuUnlocked) {
       const valPrices = getValuationPrices(newPrices, newXianYuPrices);
@@ -1115,10 +1135,16 @@ export const useGameStore = create<GameState>((set, get) => ({
       );
       const gpuValue = calculateGpuDepreciationValue(newGpus);
       const totalAssets = newCash + tokenValue + gpuValue;
+      // 50万预告
+      if (!gpuHintShown && totalAssets >= 500_000) {
+        gpuHintShown = true;
+        messages.push('🔒 侧边栏出现了一个神秘场所……资产达到200万时解锁。');
+      }
+      // 200万解锁
       if (totalAssets >= GPU_CENTER_UNLOCK_THRESHOLD) {
         gpuUnlocked = true;
         gpuUnlockDay = newDay;
-        messages.push('🎉 你的资产达到了200万！侧边栏出现了一个神秘选项：「GPU算力中心」');
+        messages.push('🎉 你的资产达到了200万！神秘场所已解锁：「GPU算力中心」（在早期请谨慎投资，token价格过低时购买gpu可能导致亏损）');
         set({ showGpuUnlockModal: true });
       }
     }
@@ -1129,6 +1155,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       spirit: newSpirit,
       reputation: newReputation,
       currentPrices: newPrices,
+      previousPrices: state.currentPrices,
       xianYuPrices: newXianYuPrices,
       githubOutOfStock: generateOutOfStock(),
       xianYuOutOfStock: generateOutOfStock(),
@@ -1152,6 +1179,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       todayBuyTrades: [],
       gpus: newGpus,
       gpuUnlocked,
+      gpuHintShown,
       gpuUnlockDay,
       portfolioHistory: appendPortfolioHistory(
         state.portfolioHistory,
@@ -1508,8 +1536,17 @@ export const useGameStore = create<GameState>((set, get) => ({
     // FIFO 消耗最早过期的批次
     const newInventory = consumeTokensFIFO(state.inventory, useTokenId, requiredCount);
 
-    // 抽卡判定
-    const result = attemptTask(task, tokenDef);
+    // 抽卡判定（首次使用Token接单隐性保底：必定成功）
+    let result = attemptTask(task, tokenDef);
+    if (!result.success && state.firstTokenTaskProtection) {
+      result = {
+        success: true,
+        quality: 'normal',
+        reward: task.reward,
+        reputationChange: 3,
+        message: `需求"${task.name}"顺利完成，钱到账了。`,
+      };
+    }
     const messages = [...state.pendingMessages, result.message];
     const newReputation = Math.max(0, Math.min(MAX_REPUTATION, state.reputation + result.reputationChange));
 
@@ -1529,6 +1566,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       totalTasksCompleted: state.totalTasksCompleted + 1,
       tokenUsageCount: newTokenUsageCount,
       todayEarnings: state.todayEarnings + Math.max(0, result.reward),
+      // 首次使用Token接单后消耗保护
+      firstTokenTaskProtection: false,
       portfolioHistory: appendPortfolioHistory(
         state.portfolioHistory,
         {
@@ -1761,7 +1800,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const taxNote = tokenTax > 0
       ? `（Token 卖出税 ${sellTaxPct}%，扣除 ¥${Math.round(tokenTax).toLocaleString()}）`
       : '';
-    const reason = `你选择了退休。变卖了所有 Token 与 GPU${taxNote}，带着¥${totalCash.toLocaleString()}的积蓄躺平了。你坚持了${weeksAlive}周（${daysAlive}天）`;
+    const reason = `你选择了退休。变卖了所有资产${taxNote}，带着¥${totalCash.toLocaleString()}的积蓄躺平了。你坚持了${weeksAlive}周（${daysAlive}天）`;
 
     set({
       cash: 0,
@@ -1892,6 +1931,17 @@ export const useGameStore = create<GameState>((set, get) => ({
         pendingMessages: messages,
       });
     }
+
+    // GPU通胀触发：现金超过6000万开始GPU急速涨价
+    if (!state.gpuInflationActivated && cash >= 60_000_000) {
+      const gpuMessages = changed ? [] : [...state.pendingMessages];
+      gpuMessages.push('🚨 紧急公告：全球GPU服务器供不应求，从今天开始GPU价格将急速上涨！算力已成为新时代的“石油”。');
+      set({
+        gpuInflationActivated: true,
+        gpuInflationStartDay: state.day,
+        pendingMessages: changed ? [...get().pendingMessages, ...gpuMessages] : gpuMessages,
+      });
+    }
   },
 
   // 检查交易税阶梯：总资产（现金 + Token 估值 + GPU折旧价值）峰值跨入新一档时触发醒目弹窗 + 推送
@@ -1963,10 +2013,16 @@ export const useGameStore = create<GameState>((set, get) => ({
     const state = get();
     const gpuDef = GPUS[gpuTierId];
     if (!gpuDef) return false;
+    // 最多同时拥有3台GPU
+    const activeGpuCount = state.gpus.filter(g => g.active).length;
+    if (activeGpuCount >= 3) return false;
     // 量子计算机原型机：全世界仅有一台，已售出后不可再次购买
-    if (gpuTierId === 4 && state.quantumComputerSold) return false;
-    // GPU 售价固定为 basePrice，不再随通胀变化
-    const currentPrice = gpuDef.basePrice;
+    if (gpuTierId === 3 && state.quantumComputerSold) return false;
+    // GPU 价格：基础价 × 通胀倍率（现金超过6000万后每天涨25%）
+    const gpuInflationMult = state.gpuInflationActivated
+      ? Math.pow(1.25, Math.max(0, state.day - state.gpuInflationStartDay))
+      : 1;
+    const currentPrice = Math.round(gpuDef.basePrice * gpuInflationMult);
     if (state.cash < currentPrice) return false;
 
     const newGpu: GPUInstance = {
@@ -1976,7 +2032,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       purchasePrice: currentPrice,
       lifespan: gpuDef.lifespan,
       usedDays: 0,
-      selectedTokenId: 0, // 默认产出 Claude Opus 4.7，避免买回来空转
+      selectedTokenId: 0, // 默认产出 Claude Opus 4.8，避免买回来空转
       active: true,
       totalOutput: 0,
     };
@@ -1990,7 +2046,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       gpus: newGpus,
       gpuNextId: state.gpuNextId + 1,
       // 量子计算机一旦购买，永久标记为已售出（即使后续卖回收价也不可再购）
-      quantumComputerSold: gpuTierId === 4 ? true : state.quantumComputerSold,
+      quantumComputerSold: gpuTierId === 3 ? true : state.quantumComputerSold,
       portfolioHistory: appendPortfolioHistory(
         state.portfolioHistory,
         {
@@ -2012,7 +2068,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       get().unlockAchievement('gpu_first_buy');
     }
     // 购买量子计算机原型机解锁成就“遇事不决，量子力学”
-    if (gpuTierId === 4) {
+    if (gpuTierId === 3) {
       get().unlockAchievement('quantum_computer');
     }
     return true;

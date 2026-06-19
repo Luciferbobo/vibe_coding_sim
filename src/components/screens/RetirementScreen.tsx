@@ -223,19 +223,24 @@ function generateRetirementEvents(weeksAlive: number): RetirementEvent[] {
     });
 
   // === 最终事件：钱花光的那一周 ===
+  // 50年以上用特殊文案，50年以下用普通文案
+  const finaleText = weeksAlive >= 2600
+    ? `今天你打开了银行账户，看了看余额：¥0。这一天还是来了。曾经无限风光的你，也终会被通胀追上。`
+    : `第 ${weeksAlive} 周。房租账单到了，你看了看余额：¥0。该来的终究会来。`;
+
   // 防御性去重：若某个里程碑恰好等于 weeksAlive，避免出现两条同 week 事件
   const hasFinaleWeek = events.some((e) => e.week === weeksAlive);
   if (!hasFinaleWeek) {
     events.push({
       week: weeksAlive,
-      text: `第 ${weeksAlive} 周。房租账单到了，你看了看余额：¥0。该来的终究会来。`,
+      text: finaleText,
     });
   } else {
     // 用钱花光的语气替换掉同周里程碑，避免节奏被打断
     const idx = events.findIndex((e) => e.week === weeksAlive);
     events[idx] = {
       week: weeksAlive,
-      text: `第 ${weeksAlive} 周。房租账单到了，你看了看余额：¥0。该来的终究会来。`,
+      text: finaleText,
     };
   }
 
@@ -281,8 +286,6 @@ export function RetirementScreen() {
   const finishRetirement = useGameStore((s) => s.finishRetirement);
 
   const weeksAlive = retirementData?.weeksAlive ?? 0;
-  const totalCash = retirementData?.totalCash ?? 0;
-  const rentPerWeek = retirementData?.rentPerWeek ?? 0;
 
   const events = useMemo(() => generateRetirementEvents(weeksAlive), [weeksAlive]);
 
@@ -373,11 +376,6 @@ export function RetirementScreen() {
           >
             退休生活·正在直播
           </h1>
-          <p className="mt-3 max-w-xl text-xs md:text-sm leading-relaxed text-amber-100/55 italic">
-            带着 <span className="font-mono text-amber-200">¥{totalCash.toLocaleString()}</span>{' '}
-            的积蓄，按每周 <span className="font-mono text-amber-200">¥{rentPerWeek.toLocaleString()}</span>{' '}
-            的房租推演——这一段时光，开始播放……
-          </p>
         </header>
 
         {/* 进度条 */}

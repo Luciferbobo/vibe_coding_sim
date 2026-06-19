@@ -75,15 +75,23 @@ const OUTPUT_TOKEN_IDS = [0, 1, 2, 3, 4, 5];
 export default function GpuCenter() {
   const cash = useGameStore((s) => s.cash);
   const gpus = useGameStore((s) => s.gpus);
+  const day = useGameStore((s) => s.day);
   const currentPrices = useGameStore((s) => s.currentPrices);
   const buyGpu = useGameStore((s) => s.buyGpu);
   const configureGpuOutput = useGameStore((s) => s.configureGpuOutput);
   const sellGpu = useGameStore((s) => s.sellGpu);
   const quantumComputerSold = useGameStore((s) => s.quantumComputerSold);
+  const gpuInflationActivated = useGameStore((s) => s.gpuInflationActivated);
+  const gpuInflationStartDay = useGameStore((s) => s.gpuInflationStartDay);
 
-  // 电费通胀系数：以 Claude (tokenId=0) 当前价 / 基础价 为准
+  // 电费通胀系数
   const inflationRatio = TOKENS[0].basePrice > 0
     ? (currentPrices[0] || 0) / TOKENS[0].basePrice
+    : 1;
+
+  // GPU通胀倍率（每天+25%）
+  const gpuInflationMult = gpuInflationActivated
+    ? Math.pow(1.25, Math.max(0, day - gpuInflationStartDay))
     : 1;
 
   return (
@@ -148,17 +156,19 @@ export default function GpuCenter() {
           <div className="flex items-baseline justify-between mb-3 gap-2">
             <h3 className="text-base md:text-lg font-semibold text-gray-100">🛒 GPU商城</h3>
             <p className="text-[10px] md:text-xs text-gray-500 text-right">
-              售价固定，电费随Token通胀上涨
+              售价固定，电费随Token通胀上涨，同时只能持有三台
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
             {GPUS.map((g) => {
-              const price = g.basePrice;
+              const price = Math.round(g.basePrice * gpuInflationMult);
               const currentDailyElectricity = Math.round(g.dailyElectricity * inflationRatio);
               // 量子计算机原型机（id=4）全世界仅一台，购买后永久禁用
-              const isQuantumSoldOut = g.id === 4 && quantumComputerSold;
-              const canBuy = cash >= price && !isQuantumSoldOut;
+              const isQuantumSoldOut = g.id === 3 && quantumComputerSold;
+              const activeGpuCount = gpus.filter(gpu => gpu.active).length;
+              const isAtCapacity = activeGpuCount >= 3;
+              const canBuy = cash >= price && !isQuantumSoldOut && !isAtCapacity;
               return (
                 <div
                   key={g.id}
@@ -213,9 +223,11 @@ export default function GpuCenter() {
                   >
                     {isQuantumSoldOut
                       ? '全世界仅有一台的原型机已售出'
-                      : canBuy
-                        ? '购买'
-                        : '余额不足'}
+                      : cash < price
+                        ? '余额不足'
+                        : isAtCapacity
+                          ? '最多持有三台服务器'
+                          : '购买'}
                   </button>
                 </div>
               );
@@ -268,10 +280,21 @@ function GpuInstanceCard({
     : 0;
   const tokenName = hasOutput ? TOKENS[gpu.selectedTokenId].name : null;
 
+  // 量子计算原型机使用黑金色主题
+  const isQuantum = gpu.gpuTierId === 3;
+  const cardBorder = isQuantum ? 'border-amber-500/40' : 'border-emerald-500/20';
+  const cardBg = isQuantum
+    ? 'bg-gradient-to-br from-gray-900 via-gray-900/90 to-amber-950/30'
+    : 'bg-gradient-to-br from-gray-800/80 via-gray-800/60 to-emerald-950/20';
+  const cardHover = isQuantum
+    ? 'hover:border-amber-400/60 hover:shadow-lg hover:shadow-amber-900/30'
+    : 'hover:border-emerald-400/40 hover:shadow-lg hover:shadow-emerald-900/20';
+  const glowColor = isQuantum ? 'bg-amber-400/8 group-hover:bg-amber-300/15' : 'bg-emerald-400/5 group-hover:bg-emerald-300/10';
+
   return (
-    <div className="group relative overflow-hidden rounded-xl border border-emerald-500/20 bg-gradient-to-br from-gray-800/80 via-gray-800/60 to-emerald-950/20 p-3 md:p-3.5 flex flex-col transition-all hover:border-emerald-400/40 hover:shadow-lg hover:shadow-emerald-900/20">
+    <div className={`group relative overflow-hidden rounded-xl border ${cardBorder} ${cardBg} p-3 md:p-3.5 flex flex-col transition-all ${cardHover}`}>
       {/* 微光晕 */}
-      <div className="pointer-events-none absolute -top-10 -right-10 h-24 w-24 rounded-full bg-emerald-400/5 blur-2xl transition-opacity group-hover:bg-emerald-300/10" />
+      <div className={`pointer-events-none absolute -top-10 -right-10 h-24 w-24 rounded-full ${glowColor} blur-2xl transition-opacity`} />
 
       {/* 顶行：型号 + 剩余天数 */}
       <div className="relative flex items-center justify-between gap-2">

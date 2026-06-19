@@ -20,26 +20,27 @@ export function formatToken(amount: number): string {
 }
 
 /**
- * 将整数天数格式化为「第X年X月X天」「第X月X天」「第X年」「第X月」或「第X天」。
- * 1年 = 365天，1月 = 30天。
- * 依次拼接非零单位，例如：
- *  - day=1   → 「第1天」
- *  - day=30  → 「第1月」
- *  - day=34  → 「第1月4天」
- *  - day=64  → 「第2月4天」
- *  - day=365 → 「第1年」
- *  - day=400 → 「第1年1月5天」
+ * 将整数天数格式化为「第X天」
  */
 export function formatDay(day: number): string {
-  const safeDay = Math.max(0, Math.floor(day));
-  const years = Math.floor(safeDay / 365);
-  const remainingAfterYears = safeDay % 365;
-  const months = Math.floor(remainingAfterYears / 30);
-  const days = remainingAfterYears % 30;
+  return `第${Math.max(1, Math.floor(day))}天`;
+}
 
+/**
+ * 带括号详情的天数格式化（仅成就页使用）。
+ * - day <= 30：「第X天」
+ * - day > 30：「第X天（约X年X月X天）」
+ */
+export function formatDayDetailed(day: number): string {
+  const d = Math.max(1, Math.floor(day));
+  if (d <= 30) return `第${d}天`;
+  const years = Math.floor(d / 365);
+  const remaining = d % 365;
+  const months = Math.floor(remaining / 30);
+  const days = remaining % 30;
   const parts: string[] = [];
   if (years > 0) parts.push(`${years}年`);
   if (months > 0) parts.push(`${months}月`);
-  if (days > 0 || parts.length === 0) parts.push(`${days}天`);
-  return `第${parts.join('')}`;
+  if (days > 0) parts.push(`${days}天`);
+  return `第${d}天（约${parts.join('')}）`;
 }
