@@ -226,15 +226,17 @@ export function StatusPanel() {
   });
 
   return (
-    <aside className="flex h-full w-full flex-col gap-3 overflow-y-auto bg-gray-900 p-4">
-      <PortfolioCurve
-        history={portfolioHistory}
-        currentTotal={cash + tokenValue + gpuValue}
-        daysToRent={daysToRent}
-      />
+    <aside className="flex h-full w-full flex-col gap-3 overflow-hidden bg-gray-900 p-4">
+      <div className="shrink-0">
+        <PortfolioCurve
+          history={portfolioHistory}
+          currentTotal={cash + tokenValue + gpuValue}
+          daysToRent={daysToRent}
+        />
+      </div>
 
       {/* 现金 */}
-      <div className="rounded-xl bg-gray-800/60 border border-gray-700/60 p-4">
+      <div className="shrink-0 rounded-xl bg-gray-800/60 border border-gray-700/60 p-4">
         <p className="text-xs text-gray-400">现金余额</p>
         <p className="mt-1 font-mono text-2xl font-bold tabular text-amber-400">
           {formatMoney(cash)}
@@ -255,7 +257,7 @@ export function StatusPanel() {
             暂无持仓
           </p>
         ) : (
-          <ul className="mt-3 space-y-2 overflow-y-auto pr-1 -mr-1">
+          <ul className="mt-3 flex-1 min-h-0 space-y-2 overflow-y-auto overscroll-contain pr-1 -mr-1">
             {tokenGroups.map((g) => {
               const t = TOKENS[g.tokenId];
               const cur = valuationPrices[g.tokenId] || 0;

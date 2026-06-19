@@ -81,7 +81,7 @@ export function TokenMarket() {
       <div className="flex-1 overflow-y-auto px-6 py-4">
         {/* 表格视图 */}
         <div className="rounded-xl bg-gray-800/40 border border-gray-700/60 overflow-hidden">
-          <div className="grid grid-cols-[40px_minmax(0,2fr)_50px_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_180px] gap-x-3 px-4 py-2.5 border-b border-gray-700/60 text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <div className="grid grid-cols-[32px_minmax(80px,2fr)_42px_minmax(72px,1fr)_minmax(58px,1fr)_minmax(72px,1fr)_140px] gap-x-2.5 px-4 py-2.5 border-b border-gray-700/60 text-xs font-medium text-gray-500 uppercase tracking-wider">
             <span>#</span>
             <span>Token</span>
             <span className="text-center">级</span>
@@ -116,7 +116,7 @@ export function TokenMarket() {
             return (
               <div
                 key={token.id}
-                className={`relative grid grid-cols-[40px_minmax(0,2fr)_50px_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_180px] items-center gap-x-3 px-4 py-3 border-b border-gray-700/40 last:border-0 text-sm hover:bg-gray-800/40 transition-colors ${isOutOfStock ? 'opacity-60' : ''}`}
+                className={`relative grid grid-cols-[32px_minmax(80px,2fr)_42px_minmax(72px,1fr)_minmax(58px,1fr)_minmax(72px,1fr)_140px] items-center gap-x-2.5 px-4 py-3 border-b border-gray-700/40 last:border-0 text-sm hover:bg-gray-800/40 transition-colors ${isOutOfStock ? 'opacity-60' : ''}`}
               >
                 {/* 缺货标记 */}
                 {isOutOfStock && (
@@ -146,14 +146,14 @@ export function TokenMarket() {
                 >
                   {token.tier}
                 </span>
-                <span className={`font-mono text-right font-semibold tabular ${isOutOfStock ? 'text-gray-500' : 'text-amber-400'}`}>
+                <span className={`font-mono text-right font-semibold tabular whitespace-nowrap ${isOutOfStock ? 'text-gray-500' : 'text-amber-400'}`}>
                   ¥{realPrice.toFixed(2)}
                   <span className="ml-0.5 text-xs text-gray-500">
                     {isXy ? '/个' : '/M'}
                   </span>
                 </span>
                 <span
-                  className={`font-mono text-right font-semibold tabular ${
+                  className={`font-mono text-right font-semibold tabular whitespace-nowrap ${
                     isOutOfStock ? 'text-gray-500' : up ? 'text-red-400' : 'text-emerald-400'
                   }`}
                 >

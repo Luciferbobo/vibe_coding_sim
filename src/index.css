@@ -11,11 +11,18 @@ html,
 body,
 #root {
   min-height: 100vh;
-  /* 灵动岛 / 刘海屏安全区适配 */
-  padding-top: env(safe-area-inset-top, 0px);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-  padding-left: env(safe-area-inset-left, 0px);
-  padding-right: env(safe-area-inset-right, 0px);
+}
+
+/* 灵动岛 / 刘海屏安全区适配：仅在真正支持 viewport-fit=cover 的浏览器中应用 */
+@supports (padding: env(safe-area-inset-left)) {
+  @media screen and (orientation: landscape) {
+    #root {
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      padding-left: env(safe-area-inset-left, 0px);
+      padding-right: env(safe-area-inset-right, 0px);
+    }
+  }
 }
 
 body {
