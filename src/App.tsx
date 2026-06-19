@@ -26,9 +26,9 @@ function App() {
         || (!type && window.innerWidth > window.innerHeight);
 
       if (isLandscape) {
-        metaViewport.setAttribute('content', `width=${DESIGN_WIDTH}, user-scalable=no`);
+        metaViewport.setAttribute('content', `width=${DESIGN_WIDTH}, user-scalable=no, viewport-fit=cover`);
       } else {
-        metaViewport.setAttribute('content', 'width=device-width, initial-scale=1.0');
+        metaViewport.setAttribute('content', 'width=device-width, initial-scale=1.0, viewport-fit=cover');
       }
     };
 
@@ -41,7 +41,7 @@ function App() {
     return () => {
       window.screen.orientation?.removeEventListener('change', handler);
       window.removeEventListener('orientationchange', handler);
-      metaViewport.setAttribute('content', 'width=device-width, initial-scale=1.0');
+      metaViewport.setAttribute('content', 'width=device-width, initial-scale=1.0, viewport-fit=cover');
     };
   }, []);
 
