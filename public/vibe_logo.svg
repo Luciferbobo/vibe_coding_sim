@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- 深色圆形背景 -->
+  <circle cx="64" cy="64" r="64" fill="#0F172A"/>
+  <!-- 左尖括号 < -->
+  <path d="M46 44 L26 64 L46 84" stroke="#10B981" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- 右尖括号 > -->
+  <path d="M82 44 L102 64 L82 84" stroke="#10B981" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- 中间斜杠 / -->
+  <line x1="70" y1="34" x2="58" y2="94" stroke="#10B981" stroke-width="10" stroke-linecap="round"/>
+</svg>

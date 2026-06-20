@@ -34,7 +34,6 @@ export function StartScreen() {
             Vibe Coding 模拟器
           </span>
         </div>
-        <span className="text-xs text-gray-500">PC端体验更佳</span>
       </header>
 
       <main className="flex-1 flex items-center justify-center px-4 sm:px-6 md:px-10 py-8 md:py-12">
@@ -100,8 +99,16 @@ export function StartScreen() {
         </div>
       </main>
 
-      <footer className="px-4 sm:px-6 md:px-10 py-4 md:py-5 border-t border-gray-800 text-center text-xs text-gray-500">
-        据说公元21世纪，人类还需亲手敲下每一行代码、亲手在凌晨三点解决bug——他们管那段日子叫"青春"
+      <footer className="px-4 sm:px-6 md:px-10 py-4 md:py-5 border-t border-gray-800 text-xs text-gray-500">
+        <p className="text-center">
+          据说公元21世纪，人类还需亲手敲下每一行代码、亲手在凌晨三点解决bug——他们管那段日子叫"青春"
+        </p>
+        <div className="mt-2 flex items-center justify-center">
+          <span>Made by bobo</span>
+        </div>
+        <div className="mt-1 flex justify-end sm:hidden">
+          <span className="text-gray-600">PC端体验更佳</span>
+        </div>
       </footer>
     </div>
   );
