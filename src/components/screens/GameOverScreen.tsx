@@ -85,7 +85,7 @@ export function GameOverScreen() {
   }, [tokenUsageCount]);
 
   return (
-    <div className="w-full bg-gray-900 text-gray-200" style={{ minHeight: 'var(--app-height, 100vh)' }}>
+    <div className="w-full overflow-y-auto overflow-x-hidden bg-gray-900 text-gray-200" style={{ height: 'var(--app-height, 100vh)' }}>
       <div className="mx-auto max-w-4xl px-4 sm:px-6 md:px-8 py-8 md:py-12">
         {/* 顶部状态 */}
         <div className="flex items-center justify-between text-xs text-gray-500">

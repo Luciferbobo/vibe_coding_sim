@@ -28,7 +28,7 @@ function generateRetirementEvents(weeksAlive: number): RetirementEvent[] {
   const events: RetirementEvent[] = [];
 
   // === 极端兜底：连第一周都撑不到 ===
-  if (weeksAlive < 1) {
+  if (weeksAlive < 3) {
     events.push({
       week: 1,
       text: '你关掉了所有代码编辑器，删除了 VS Code。终于自由——但还没等你享受退休，房租账单就敲响了门。',
@@ -322,7 +322,7 @@ export function RetirementScreen() {
   const progressPct = Math.min(100, (currentWeek / Math.max(weeksAlive, 1)) * 100);
 
   return (
-    <div className="relative w-full overflow-hidden bg-[#0c0a09] text-amber-50" style={{ minHeight: 'var(--app-height, 100vh)' }}>
+    <div className="relative w-full overflow-y-auto overflow-x-hidden bg-[#0c0a09] text-amber-50" style={{ height: 'var(--app-height, 100vh)' }}>
       {/* 暮色基底 */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute inset-0 bg-gradient-to-b from-[#1c1410] via-[#0c0a09] to-black" />
