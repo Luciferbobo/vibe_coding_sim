@@ -68,7 +68,7 @@ export function GameScreen() {
   }, []);
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-gray-900 text-gray-200">
+    <div className="flex flex-col overflow-hidden bg-gray-900 text-gray-200" style={{ height: 'var(--app-height, 100vh)' }}>
       <GameHeader />
 
       <div className="flex flex-1 overflow-hidden">

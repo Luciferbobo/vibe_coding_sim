@@ -7,10 +7,27 @@
   box-sizing: border-box;
 }
 
-html,
-body,
+/* 动态视口高度：解决手机浏览器地址栏/工具栏导致 100vh 超出可见区域的问题 */
+:root {
+  --app-height: 100vh;         /* 默认 fallback */
+  --app-height: 100dvh;        /* 现代浏览器优先使用 dynamic viewport height */
+}
+
+html {
+  height: var(--app-height);
+  overflow: hidden;
+}
+
+body {
+  height: var(--app-height);
+  overflow: hidden;
+  overscroll-behavior: none;   /* 禁止橡皮筋回弹 & 下拉刷新 */
+  -webkit-overflow-scrolling: touch; /* iOS 内部滚动惯性 */
+}
+
 #root {
-  min-height: 100vh;
+  height: var(--app-height);
+  overflow: hidden;
 }
 
 /* 灵动岛 / 刘海屏安全区适配：仅在真正支持 viewport-fit=cover 的浏览器中应用 */

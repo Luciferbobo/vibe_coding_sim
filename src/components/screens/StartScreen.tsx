@@ -26,7 +26,7 @@ export function StartScreen() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-gray-900 text-gray-100 flex flex-col">
+    <div className="w-full bg-gray-900 text-gray-100 flex flex-col" style={{ minHeight: 'var(--app-height, 100vh)' }}>
       <header className="px-4 sm:px-6 md:px-10 py-4 md:py-5 flex items-center justify-between border-b border-gray-800">
         <div className="flex items-center gap-2.5">
           <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />

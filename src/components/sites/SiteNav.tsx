@@ -114,14 +114,8 @@ export function SiteNav() {
       <div className="px-3 py-3 border-t border-gray-800">
         <button
           onClick={() => {
-            const prevRest = useGameStore.getState().restDaysLeft;
             audioManager.play('next-day');
             advanceDay();
-            // 如果原本不在强制休息，下一天后变成强制休息，说明触发了精神崩溃
-            const nextRest = useGameStore.getState().restDaysLeft;
-            if (prevRest === 0 && nextRest > 0) {
-              audioManager.play('spirit-crash');
-            }
           }}
           title="进入下一天"
           aria-label="进入下一天"

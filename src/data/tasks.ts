@@ -13,13 +13,7 @@ export interface TaskTemplate {
 
 // 设计原则：
 // 报酬随信誉等级提升，单位 token 收益更高，激励玩家攒信誉接大活：
-//   信誉 0-10  → 120 元/M（起步活）
-//   信誉 20-35 → 150 元/M（中等活）
-//   信誉 40-45 → 180 元/M（进阶活）
-//   信誉 80-85 → 220 元/M（高端活）
-//   信誉 90-95 → 280 元/M（顶级活）
-// - 便宜模型利润更高，但 Token 通胀会持续蚕食利润空间
-// - 通胀分阶段：前15天3%/天，15-30天4%/天，30天后5%/天
+
 export const TASK_TEMPLATES: TaskTemplate[] = [
   { id: 0,  name: '写个TODO应用',     tokenCost: 2,    reward: 240,    reputationRequired: 5,  difficulty: 'easy',   spiritCostIfManual: 15, description: '增删改查，前端基础活' },
   { id: 1,  name: '修个CSS居中Bug',   tokenCost: 0.3,  reward: 35,     reputationRequired: 0,  difficulty: 'easy',   spiritCostIfManual: 10, description: '一个div，居中，几轮对话搞定' },
@@ -36,6 +30,19 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
   { id: 12, name: '写个Chrome插件',   tokenCost: 1.5,  reward: 180,    reputationRequired: 0,  difficulty: 'easy',   spiritCostIfManual: 15, description: '网页内容提取器' },
   { id: 13, name: '数据大屏可视化',   tokenCost: 15,   reward: 2250,   reputationRequired: 35, difficulty: 'medium', spiritCostIfManual: 30, description: 'ECharts + 大屏适配 + 数据联动' },
   { id: 14, name: '全栈低代码平台',   tokenCost: 180,  reward: 50400,  reputationRequired: 90, difficulty: 'hell',   spiritCostIfManual: 50, description: '拖拽建站+逻辑编排+部署' },
+  { id: 15, name: '大模型训练',       tokenCost: 200,  reward: 56000,  reputationRequired: 95, difficulty: 'hell',   spiritCostIfManual: 50, description: '数据清洗+模型设计+RLHF对齐' },
+  // --- 扩充任务 ---
+  { id: 16, name: '前端小工具',       tokenCost: 1,    reward: 120,    reputationRequired: 0,  difficulty: 'easy',   spiritCostIfManual: 10, description: '设计稿转代码，像素级还原' },
+  { id: 17, name: '办公自动化脚本',       tokenCost: 3,    reward: 360,    reputationRequired: 5,  difficulty: 'easy',   spiritCostIfManual: 15, description: 'Python批量处理Excel，老板急用' },
+  { id: 18, name: '微信H5活动页',     tokenCost: 1.5,  reward: 180,    reputationRequired: 5,  difficulty: 'easy',   spiritCostIfManual: 12, description: '转盘抽奖+分享裂变，甲方要明天上线' },
+  { id: 19, name: '在线教育平台',     tokenCost: 10,   reward: 1500,   reputationRequired: 25, difficulty: 'medium', spiritCostIfManual: 30, description: '课程管理+视频播放+学员系统' },
+  { id: 20, name: '物联网监控面板',   tokenCost: 18,   reward: 2700,   reputationRequired: 35, difficulty: 'medium', spiritCostIfManual: 30, description: 'MQTT接入+实时图表+告警推送' },
+  { id: 21, name: '用户管理系统',        tokenCost: 20,   reward: 3600,   reputationRequired: 40, difficulty: 'medium', spiritCostIfManual: 35, description: '客户管理+销售漏斗+数据隔离' },
+  { id: 22, name: '短视频推荐引擎',   tokenCost: 45,   reward: 9900,   reputationRequired: 80, difficulty: 'hard',   spiritCostIfManual: 40, description: '内容分发+用户画像+AB实验' },
+  { id: 23, name: '实时协作文档',     tokenCost: 60,   reward: 13200,  reputationRequired: 80, difficulty: 'hard',   spiritCostIfManual: 45, description: 'CRDT同步+WebSocket+权限管理' },
+  { id: 24, name: '支付中台系统',     tokenCost: 70,   reward: 15400,  reputationRequired: 85, difficulty: 'hard',   spiritCostIfManual: 45, description: '多渠道聚合+对账清算+风控引擎' },
+  { id: 25, name: '分布式训练框架',   tokenCost: 200,  reward: 56000,  reputationRequired: 95, difficulty: 'hell',   spiritCostIfManual: 50, description: '多节点调度+梯度同步+容错恢复' },
+  { id: 26, name: '文生视频基模训练', tokenCost: 200,  reward: 56000,  reputationRequired: 95, difficulty: 'hell',   spiritCostIfManual: 50, description: 'DiT架构+训练分析+多卡并行' },
 ];
 
 // 精神值过低无法自己写代码的提示

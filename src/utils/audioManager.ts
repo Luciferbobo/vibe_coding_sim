@@ -9,14 +9,9 @@
 // ============================================================
 const SOUND_ENABLED: Record<string, boolean> = {
   // --- 场所进入音效 ---
-  'site-market': false,       // API商城 / 闲鱼，siteId 0,1）
   'site-outsource': true,    // 外包广场 / 猎头，siteId 2,3）
   'site-twitter': true,      // 推特，siteId 4）
-  'site-apartment': false,    // 公寓，siteId 5）
-  'site-coffee': false,       // 星巴克，siteId 6）
-  'site-zhihu': false,        // 知乎，siteId 7）
-  'site-achievement': false,  // 成就页，siteId 8）
-  'site-retirement': false,   // 退休页，siteId 9）
+  'site-apartment': true,    // 公寓，siteId 5）
   // --- 导航 ---
   'next-day': true,          // 翻页声（进入下一天）
   // --- 买卖 Token ---
@@ -29,25 +24,14 @@ const SOUND_ENABLED: Record<string, boolean> = {
   'drink-coffee': true,      // （喝咖啡）
   'write-blog': true,        // （写博客）
   'pay-rent': true,          // （交房租）
-  // --- 事件通知 ---
-  'event-positive': false,    // 好消息上行音
-  'event-negative': false,    // 坏消息音
-  'spirit-crash': false,      // 精神崩溃音
-  // --- 游戏结束 ---
-  'game-over': false,         // 游戏结束钟声
 };
 
 // 音效名称到文件路径的映射
 const SOUND_MAP: Record<string, string> = {
   // 场所进入音效
-  'site-market': '/sounds/site-market.mp3',       // 推门声（API商城/闲鱼，siteId 0,1）
-  'site-outsource': '/sounds/site-outsource.mp3', // 嘈杂人声（外包广场/猎头，siteId 2,3）
+  'site-outsource': '/sounds/site-outsource.mp3', // 键盘声（外包广场/猎头，siteId 2,3）
   'site-twitter': '/sounds/site-twitter.mp3',     // 手机通知音（siteId 4）
   'site-apartment': '/sounds/site-apartment.mp3', // 钥匙开锁声（siteId 5）
-  'site-coffee': '/sounds/site-coffee.mp3',       // 咖啡机声（siteId 6）
-  'site-zhihu': '/sounds/site-zhihu.mp3',         // 打字声（siteId 7）
-  'site-achievement': '/sounds/site-achievement.mp3', // 号角庆典音（siteId 8）
-  'site-retirement': '/sounds/site-retirement.mp3',   // 海浪声（siteId 9）
   // 下一天
   'next-day': '/sounds/next-day.mp3',
   // 交互音效
@@ -58,24 +42,14 @@ const SOUND_MAP: Record<string, string> = {
   'drink-coffee': '/sounds/drink-coffee.mp3',
   'write-blog': '/sounds/write-blog.mp3',
   'pay-rent': '/sounds/pay-rent.mp3',
-  'event-positive': '/sounds/event-positive.mp3',
-  'event-negative': '/sounds/event-negative.mp3',
-  'game-over': '/sounds/game-over.mp3',
-  'spirit-crash': '/sounds/spirit-crash.mp3',
 };
 
 // siteId 到音效名的映射
 const SITE_SOUND_MAP: Record<number, string> = {
-  0: 'site-market',
-  1: 'site-market',
   2: 'site-outsource',
   3: 'site-outsource',
   4: 'site-twitter',
   5: 'site-apartment',
-  6: 'site-coffee',
-  7: 'site-zhihu',
-  8: 'site-achievement',
-  9: 'site-retirement',
 };
 
 const MUTE_STORAGE_KEY = 'game-audio-muted';

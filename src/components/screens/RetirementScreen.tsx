@@ -322,7 +322,7 @@ export function RetirementScreen() {
   const progressPct = Math.min(100, (currentWeek / Math.max(weeksAlive, 1)) * 100);
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-[#0c0a09] text-amber-50">
+    <div className="relative w-full overflow-hidden bg-[#0c0a09] text-amber-50" style={{ minHeight: 'var(--app-height, 100vh)' }}>
       {/* 暮色基底 */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute inset-0 bg-gradient-to-b from-[#1c1410] via-[#0c0a09] to-black" />

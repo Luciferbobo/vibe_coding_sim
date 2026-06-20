@@ -1,7 +1,5 @@
 // 事件通知 - 简洁队列式弹窗
-import { useEffect } from 'react';
 import { useGameStore } from '../../stores/gameStore';
-import { audioManager } from '../../utils/audioManager';
 
 const NEGATIVE_KEYWORDS = [
   '损失', '扣', '崩', '砸', '坏', '盗', '差', '亏', '没了', '蓝屏',
@@ -43,24 +41,7 @@ const TONE = {
 export function EventNotification() {
   const pendingMessages = useGameStore((s) => s.pendingMessages);
   const dismissMessage = useGameStore((s) => s.dismissMessage);
-
-  // 首条消息变化时根据事件类型播放音效
-  const currentMsg = pendingMessages[0];
-  useEffect(() => {
-    if (!currentMsg) return;
-    const tone = classify(currentMsg);
-    // 精神崩溃专用音效：包含“躺”“强制”“躺平”之类关键词
-    if (currentMsg.includes('强制休息') || currentMsg.includes('强制躺平') || currentMsg.includes('精神崩溃')) {
-      audioManager.play('spirit-crash');
-      return;
-    }
-    if (tone === 'positive') {
-      audioManager.play('event-positive');
-    } else if (tone === 'negative') {
-      audioManager.play('event-negative');
-    }
-  }, [currentMsg]);
-
+  
   if (pendingMessages.length === 0) return null;
 
   const msg = pendingMessages[0];
