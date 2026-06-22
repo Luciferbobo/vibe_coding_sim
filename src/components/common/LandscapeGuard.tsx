@@ -46,11 +46,11 @@ export function LandscapeGuard() {
       </div>
 
       <h2 className="text-xl font-bold text-emerald-400">请横屏游玩</h2>
-      <p className="mt-3 max-w-xs text-center text-sm text-gray-400 leading-relaxed">
-        为了获得最佳体验，请将手机旋转至横屏模式
+      <p className="mt-2 text-sm text-gray-400">
+        PC 体验最佳
       </p>
-      <p className="mt-3 max-w-xs text-center text-sm text-gray-400 leading-relaxed">
-        若微信中无法旋转，请用Chrome浏览器打开
+      <p className="mt-4 text-xs text-gray-500">
+        微信无法旋转？请用 Chrome 浏览器打开
       </p>
 
       <p className="mt-6 text-xs text-gray-600">
