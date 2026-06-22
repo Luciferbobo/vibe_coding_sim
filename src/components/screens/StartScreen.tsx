@@ -29,7 +29,6 @@ export function StartScreen() {
     <div className="w-full bg-gray-900 text-gray-100 flex flex-col overflow-hidden" style={{ height: 'var(--app-height, 100vh)' }}>
       <header className="px-4 sm:px-6 md:px-10 py-4 md:py-5 flex items-center justify-between border-b border-gray-800 shrink-0">
         <div className="flex items-center gap-2.5">
-          <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
           <span className="text-sm font-medium text-gray-300">
             Vibe Coding 模拟器
           </span>
@@ -97,6 +96,17 @@ export function StartScreen() {
         <p className="text-center">
           据说公元21世纪，人类还需亲手敲下每一行代码、亲手在凌晨三点解决bug——他们管那段日子叫"青春"
         </p>
+
+        <div className="mt-2 flex items-center justify-center">
+          <a
+            href="https://vibecodingsim.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-gray-500 hover:text-emerald-400 transition-colors font-mono tracking-wide"
+          >
+            vibecodingsim.com
+          </a>
+        </div>
 
         <div className="mt-1 flex justify-end sm:hidden">
           <span className="text-gray-600">PC端体验更佳</span>

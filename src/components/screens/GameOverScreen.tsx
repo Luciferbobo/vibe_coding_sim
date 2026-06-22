@@ -1,5 +1,6 @@
 // 结束画面 - 简洁终局结算
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
+import html2canvas from 'html2canvas';
 import { useGameStore } from '../../stores/gameStore';
 import { calculateGpuDepreciationValue } from '../../stores/gameStore';
 import type { PortfolioHistoryPoint } from '../../stores/gameStore';
@@ -84,15 +85,44 @@ export function GameOverScreen() {
       : null;
   }, [tokenUsageCount]);
 
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [screenshotting, setScreenshotting] = useState(false);
+
+  const handleScreenshot = async () => {
+    if (!contentRef.current || screenshotting) return;
+    setScreenshotting(true);
+    try {
+      const canvas = await html2canvas(contentRef.current, {
+        backgroundColor: '#111827',
+        scale: 2,
+        useCORS: true,
+        logging: false,
+      });
+      const link = document.createElement('a');
+      link.download = `vibe-coding-sim-${formatDay(day)}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (e) {
+      console.error('Screenshot failed:', e);
+    } finally {
+      setScreenshotting(false);
+    }
+  };
+
   return (
     <div className="w-full overflow-y-auto overflow-x-hidden bg-gray-900 text-gray-200" style={{ height: 'var(--app-height, 100vh)' }}>
       <div className="mx-auto max-w-4xl px-4 sm:px-6 md:px-8 py-8 md:py-12">
+        <div ref={contentRef} className="pb-8 px-2 sm:px-4">
         {/* 顶部状态 */}
         <div className="flex items-center justify-between text-xs text-gray-500">
-          <span className="inline-flex items-center gap-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-red-400" />
-            SESSION TERMINATED
-          </span>
+          <a
+            href="https://vibecodingsim.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-mono text-gray-500 hover:text-emerald-400 transition-colors tracking-wide"
+          >
+            vibecodingsim.com
+          </a>
           <span className="font-mono">
             {new Date().toISOString().slice(0, 10)}
           </span>
@@ -217,11 +247,19 @@ export function GameOverScreen() {
 
         {/* 深刻话语：全局收束，沉淀性收尾 */}
         <blockquote className="mt-5 rounded-xl bg-gray-800/60 border border-gray-700/60 px-6 py-7 text-center text-base italic leading-relaxed text-gray-300">
-          “{quote}”
+          "{quote}"
         </blockquote>
-
-        {/* 重开 */}
+        </div>
+        
+        {/* 重开 + 截图 */}
         <div className="mt-10 flex flex-col sm:flex-row items-center justify-end gap-4">
+          <button
+            onClick={handleScreenshot}
+            disabled={screenshotting}
+            className="px-6 py-2.5 rounded-lg border border-gray-600 hover:border-gray-500 bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {screenshotting ? '生成中…' : '一键截图'}
+          </button>
           <button
             onClick={startNewGame}
             className="px-8 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium shadow-lg shadow-emerald-900/30 transition-colors"
@@ -229,6 +267,7 @@ export function GameOverScreen() {
             再来一局
           </button>
         </div>
+
       </div>
     </div>
   );
