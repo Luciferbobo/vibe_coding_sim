@@ -1,5 +1,5 @@
 // 横屏提示遮罩 — 竖屏 + 小屏设备时全屏提示用户旋转手机
-// 纯 CSS media query 实现，无需 JS 监听
+// 纯 CSS media query 控制显隐
 
 export function LandscapeGuard() {
   return (
@@ -49,6 +49,10 @@ export function LandscapeGuard() {
       <p className="mt-3 max-w-xs text-center text-sm text-gray-400 leading-relaxed">
         为了获得最佳体验，请将手机旋转至横屏模式
       </p>
+      <p className="mt-3 max-w-xs text-center text-sm text-gray-400 leading-relaxed">
+        若微信中无法旋转，请用Chrome浏览器打开
+      </p>
+
       <p className="mt-6 text-xs text-gray-600">
         Vibe Coding 模拟器
       </p>
