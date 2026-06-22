@@ -50,7 +50,7 @@ export function LandscapeGuard() {
         PC 体验最佳
       </p>
       <p className="mt-4 text-xs text-gray-500">
-        微信无法旋转？请用 Chrome 浏览器打开
+        如果无法旋转，请用 Chrome 浏览器打开
       </p>
 
       <p className="mt-6 text-xs text-gray-600">
