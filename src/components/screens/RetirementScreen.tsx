@@ -497,7 +497,17 @@ export function RetirementScreen() {
                   故事结束
                 </h2>
                 <p className="mt-3 text-sm text-amber-100/60 italic max-w-md mx-auto leading-relaxed">
-                  你坚持了 {weeksAlive} 周，约 {weeksAlive * 7} 天。
+                  你坚持了 {(() => {
+                    const totalDays = weeksAlive * 7;
+                    const years = Math.floor(totalDays / 360);
+                    const months = Math.floor((totalDays % 360) / 30);
+                    const days = totalDays % 30;
+                    let parts: string[] = [];
+                    if (years > 0) parts.push(`${years}年`);
+                    if (months > 0) parts.push(`${months}个月`);
+                    if (days > 0 || parts.length === 0) parts.push(`${days}天`);
+                    return parts.join('');
+                  })()}。
                   现在，是时候翻到下一页了。
                 </p>
                 <button

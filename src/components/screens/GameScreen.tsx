@@ -49,6 +49,8 @@ export function GameScreen() {
   const currentSiteId = useGameStore((s) => s.currentSiteId);
   const showGpuUnlockModal = useGameStore((s) => s.showGpuUnlockModal);
   const dismissGpuUnlockModal = useGameStore((s) => s.dismissGpuUnlockModal);
+  const showGpuHintModal = useGameStore((s) => s.showGpuHintModal);
+  const dismissGpuHintModal = useGameStore((s) => s.dismissGpuHintModal);
   const showRentDeadlineModal = useGameStore((s) => s.showRentDeadlineModal);
   const dismissRentDeadlineModal = useGameStore((s) => s.dismissRentDeadlineModal);
   const showForcedLiquidationModal = useGameStore((s) => s.showForcedLiquidationModal);
@@ -109,6 +111,27 @@ export function GameScreen() {
                 className="mt-6 w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-lg transition-colors"
               >
                 确认
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* GPU预告弹窗（50万神秘场所提示） */}
+      {showGpuHintModal && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+          <div className="bg-gray-800 border border-purple-500/60 rounded-xl p-6 w-full max-w-md shadow-2xl">
+            <div className="text-center">
+              <span className="text-4xl">🔒</span>
+              <h2 className="text-xl font-bold text-purple-400 mt-3">神秘场所出现了……</h2>
+              <p className="text-sm text-gray-300 mt-3">
+                侧边栏出现了一个神秘的场所，总资产达到 <span className="font-mono font-bold text-purple-300">200万</span> 时开放。
+              </p>
+              <button
+                onClick={dismissGpuHintModal}
+                className="mt-6 w-full bg-purple-600 hover:bg-purple-500 text-white font-semibold py-3 rounded-lg transition-colors"
+              >
+                知道了
               </button>
             </div>
           </div>

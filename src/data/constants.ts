@@ -151,12 +151,12 @@ export const SELL_TAX_TIERS: SellTaxTier[] = [
     headlineMessage:
       '📢 Token 深度订单簿持续萎缩，大额抛售难以承接。每笔卖出实际到账仅两成',
   },
-  // 第 4 档：2亿 / 95%——火热时代终结（设计天花板）
+  // 第 4 档：5亿 / 95%——火热时代终结（设计天花板）
   {
-    threshold: 200_000_000,
+    threshold: 1000_000_000,
     multiplier: 0.05,
     taxPct: 95,
-    thresholdLabel: '2亿',
+    thresholdLabel: '10亿',
     modalEmoji: '🪦',
     modalTitle: '火热时代的结束',
     headlineMessage:

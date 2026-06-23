@@ -520,6 +520,7 @@ interface GameState {
   gpus: GPUInstance[];
   gpuNextId: number;
   gpuUnlockDay: number;
+  showGpuHintModal: boolean;
   showGpuUnlockModal: boolean;
 
   // 量子计算机原型机：全世界仅有一台，售出即不可再购（即使卖回收价也不能再买）
@@ -566,6 +567,7 @@ interface GameState {
   buyGpu: (gpuTierId: number) => boolean;
   configureGpuOutput: (gpuInstanceId: number, tokenId: number) => void;
   sellGpu: (gpuInstanceId: number) => void;
+  dismissGpuHintModal: () => void;
   dismissGpuUnlockModal: () => void;
   dismissRentDeadlineModal: () => void;
   dismissForcedLiquidationModal: () => void;
@@ -636,6 +638,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   gpus: [],
   gpuNextId: 0,
   gpuUnlockDay: 0,
+  showGpuHintModal: false,
   showGpuUnlockModal: false,
   quantumComputerSold: false,
   gpuInflationActivated: false,
@@ -1182,7 +1185,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       // 50万预告
       if (!gpuHintShown && totalAssets >= 500_000) {
         gpuHintShown = true;
-        messages.push('🔒 侧边栏出现了一个神秘场所……资产达到200万时解锁。');
+        set({ showGpuHintModal: true });
       }
       // 200万解锁
       if (totalAssets >= GPU_CENTER_UNLOCK_THRESHOLD) {
@@ -2132,6 +2135,11 @@ export const useGameStore = create<GameState>((set, get) => ({
   // 关闭GPU解锁弹窗
   dismissGpuUnlockModal: () => {
     set({ showGpuUnlockModal: false });
+  },
+
+  // 关闭GPU预告弹窗
+  dismissGpuHintModal: () => {
+    set({ showGpuHintModal: false });
   },
 
   // 关闭房租最后期限警告弹窗
