@@ -1847,7 +1847,16 @@ export const useGameStore = create<GameState>((set, get) => ({
     const taxNote = tokenTax > 0
       ? `（Token 卖出税 ${sellTaxPct}%，扣除 ¥${Math.round(tokenTax).toLocaleString()}）`
       : '';
-    const reason = `你选择了退休。变卖了所有资产${taxNote}，带着¥${totalCash.toLocaleString()}的积蓄躺平了。你坚持了${weeksAlive}周（${daysAlive}天）`;
+    const totalSurvivalDays = state.day + daysAlive;
+    const _years = Math.floor(totalSurvivalDays / 360);
+    const _months = Math.floor((totalSurvivalDays % 360) / 30);
+    const _days = totalSurvivalDays % 30;
+    let survivalParts: string[] = [];
+    if (_years > 0) survivalParts.push(`${_years}年`);
+    if (_months > 0) survivalParts.push(`${_months}月`);
+    if (_days > 0 || survivalParts.length === 0) survivalParts.push(`${_days}天`);
+    const survivalLabel = survivalParts.join('');
+    const reason = `你选择了退休。变卖了所有资产${taxNote}，带着¥${totalCash.toLocaleString()}的积蓄躺平了。你坚持了${survivalLabel}`;
 
     set({
       cash: 0,
@@ -1878,7 +1887,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       ),
       pendingMessages: [
         ...state.pendingMessages,
-        `🏖️ 你按下了退休按钮。带着¥${totalCash.toLocaleString()}坚持了${weeksAlive}周。`,
+        `🏖️ 你按下了退休按钮。带着¥${totalCash.toLocaleString()}坚持了${survivalLabel}。`,
         ...(tokenTax > 0
           ? [`💸 退休清算扣除 Token 卖出税 ${sellTaxPct}%：-¥${Math.round(tokenTax).toLocaleString()}`]
           : []),
