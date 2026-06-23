@@ -51,6 +51,8 @@ export function GameScreen() {
   const dismissGpuUnlockModal = useGameStore((s) => s.dismissGpuUnlockModal);
   const showRentDeadlineModal = useGameStore((s) => s.showRentDeadlineModal);
   const dismissRentDeadlineModal = useGameStore((s) => s.dismissRentDeadlineModal);
+  const showForcedLiquidationModal = useGameStore((s) => s.showForcedLiquidationModal);
+  const dismissForcedLiquidationModal = useGameStore((s) => s.dismissForcedLiquidationModal);
   const showTradingTaxModal = useGameStore((s) => s.showTradingTaxModal);
   const dismissTradingTaxModal = useGameStore((s) => s.dismissTradingTaxModal);
   const sellTaxTierReached = useGameStore((s) => s.sellTaxTierReached);
@@ -166,6 +168,30 @@ export function GameScreen() {
           </div>
         );
       })()}
+
+      {/* 强制清算弹窗（资产变卖抵租后强制确认） */}
+      {showForcedLiquidationModal && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+          <div className="bg-gray-800 border border-red-500/60 rounded-xl p-6 w-full max-w-md shadow-2xl">
+            <div className="text-center">
+              <p className="text-4xl">💀</p>
+              <h3 className="mt-3 text-xl font-bold text-red-400">现金流断裂！</h3>
+              <p className="mt-3 text-sm text-gray-300">
+                你被迫变卖了所有资产来交房租。也许在这个时代无法继续赚钱时，一键退休是更好的选择....
+              </p>
+              <p className="mt-2 text-xs text-gray-500">
+                当前现金：¥{cash.toLocaleString()}
+              </p>
+              <button
+                onClick={dismissForcedLiquidationModal}
+                className="mt-6 w-full bg-red-600 hover:bg-red-500 text-white font-semibold py-3 rounded-lg transition-colors"
+              >
+                我知道了
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

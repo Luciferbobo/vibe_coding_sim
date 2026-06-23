@@ -532,6 +532,9 @@ interface GameState {
   // 房租最后期限警告弹窗
   showRentDeadlineModal: boolean;
 
+  // 强制清算弹窗（资产变卖抵租后必须确认）
+  showForcedLiquidationModal: boolean;
+
   // 交易税首次激活强制确认弹窗
   showTradingTaxModal: boolean;
 
@@ -565,6 +568,7 @@ interface GameState {
   sellGpu: (gpuInstanceId: number) => void;
   dismissGpuUnlockModal: () => void;
   dismissRentDeadlineModal: () => void;
+  dismissForcedLiquidationModal: () => void;
   dismissTradingTaxModal: () => void;
 }
 
@@ -637,6 +641,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   gpuInflationActivated: false,
   gpuInflationStartDay: 0,
   showRentDeadlineModal: false,
+  showForcedLiquidationModal: false,
   showTradingTaxModal: false,
   electricityOverRentTipShown: false,
   totalRentPaid: 0,
@@ -732,6 +737,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       gpuInflationActivated: false,
       gpuInflationStartDay: 0,
       showRentDeadlineModal: false,
+      showForcedLiquidationModal: false,
       showTradingTaxModal: false,
       electricityOverRentTipShown: false,
       totalRentPaid: 0,
@@ -922,7 +928,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
 
     // 3.8 推进 GPU 寿命
-    const { active: newGpus, scrapped: scrappedGpus } = advanceGpuLifespan(gpusAfterOutput);
+    let { active: newGpus, scrapped: scrappedGpus } = advanceGpuLifespan(gpusAfterOutput);
     if (scrappedGpus.length > 0) {
       for (const sg of scrappedGpus) {
         const sgDef = GPUS[sg.gpuTierId];
@@ -995,7 +1001,45 @@ export const useGameStore = create<GameState>((set, get) => ({
         // 现金不足，进入宽限期
         newRentOverdueDays += 1;
         if (newRentOverdueDays > 2) {
-          rentGameOver = true;
+          // === 强制清算逻辑：尝试变卖所有资产抵租 ===
+          const valuationPricesForRent = getValuationPrices(newPrices, generateXianYuPrices(newPrices));
+
+          // 1. Token 估值（咸鱼Cursor不可卖，直接丢弃）
+          let tokenGrossValue = 0;
+          for (const batch of inventoryCopy) {
+            if (batch.tokenId === 6) continue;
+            const price = valuationPricesForRent[batch.tokenId] || 0;
+            tokenGrossValue += batch.count * price;
+          }
+          // 应用阶梯交易税
+          const forceTaxRate = state.sellTaxTierReached >= 0
+            ? 1 - SELL_TAX_TIERS[state.sellTaxTierReached].multiplier
+            : 0;
+          const tokenTax = tokenGrossValue * forceTaxRate;
+          const tokenNetValue = tokenGrossValue - tokenTax;
+
+          // 2. GPU 回收价值
+          const gpuRecycleValue = calculateGpuDepreciationValue(newGpus);
+
+          // 3. 清算后总现金
+          const liquidatedCash = newCash + tokenNetValue + gpuRecycleValue;
+
+          if (liquidatedCash >= totalRentCost) {
+            // 清算后够交租 → 强制变卖并继续游戏
+            newCash = liquidatedCash - totalRentCost;
+            rentJustPaid = state.rentAmount;
+            inventoryCopy.length = 0;
+            newGpus = [];
+            newRentDay = state.nextRentDay + RENT_CYCLE;
+            newRentAmount = state.rentAmount + RENT_INCREASE;
+            newRentOverdueDays = 0;
+            newConsecutiveEarlyRents = 0;
+            messages.push(`💀 现金流断裂！你被迫变卖了所有资产来交房租。`);
+            set({ showForcedLiquidationModal: true });
+          } else {
+            // 清算后仍不够 → 真正 Game Over
+            rentGameOver = true;
+          }
         } else {
           const remaining = 2 - newRentOverdueDays + 1;
           messages.push(`⚠️ 现金不足以支付房租 ¥${state.rentAmount}！宽限期还剩 ${remaining} 天，再不交钱房东就要换锁了`);
@@ -2093,6 +2137,11 @@ export const useGameStore = create<GameState>((set, get) => ({
   // 关闭房租最后期限警告弹窗
   dismissRentDeadlineModal: () => {
     set({ showRentDeadlineModal: false });
+  },
+
+  // 关闭强制清算弹窗
+  dismissForcedLiquidationModal: () => {
+    set({ showForcedLiquidationModal: false });
   },
 
   // 关闭交易税弹窗
