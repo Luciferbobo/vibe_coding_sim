@@ -27,21 +27,23 @@ const SOUND_ENABLED: Record<string, boolean> = {
 };
 
 // 音效名称到文件路径的映射
+const soundPath = (filename: string) => `${import.meta.env.BASE_URL}sounds/${filename}`;
+
 const SOUND_MAP: Record<string, string> = {
   // 场所进入音效
-  'site-outsource': '/sounds/site-outsource.mp3', // 键盘声（外包广场/猎头，siteId 2,3）
-  'site-twitter': '/sounds/site-twitter.mp3',     // 手机通知音（siteId 4）
-  'site-apartment': '/sounds/site-apartment.mp3', // 钥匙开锁声（siteId 5）
+  'site-outsource': soundPath('site-outsource.mp3'), // 键盘声（外包广场/猎头，siteId 2,3）
+  'site-twitter': soundPath('site-twitter.mp3'),     // 手机通知音（siteId 4）
+  'site-apartment': soundPath('site-apartment.mp3'), // 钥匙开锁声（siteId 5）
   // 下一天
-  'next-day': '/sounds/next-day.mp3',
+  'next-day': soundPath('next-day.mp3'),
   // 交互音效
-  'buy-token': '/sounds/buy-token.mp3',
-  'sell-token': '/sounds/sell-token.mp3',
-  'task-success': '/sounds/task-success.mp3',
-  'task-fail': '/sounds/task-fail.mp3',
-  'drink-coffee': '/sounds/drink-coffee.mp3',
-  'write-blog': '/sounds/write-blog.mp3',
-  'pay-rent': '/sounds/pay-rent.mp3',
+  'buy-token': soundPath('buy-token.mp3'),
+  'sell-token': soundPath('sell-token.mp3'),
+  'task-success': soundPath('task-success.mp3'),
+  'task-fail': soundPath('task-fail.mp3'),
+  'drink-coffee': soundPath('drink-coffee.mp3'),
+  'write-blog': soundPath('write-blog.mp3'),
+  'pay-rent': soundPath('pay-rent.mp3'),
 };
 
 // siteId 到音效名的映射
@@ -56,7 +58,7 @@ const MUTE_STORAGE_KEY = 'game-audio-muted';
 const PLAY_DEBOUNCE_MS = 200;
 
 // BGM 配置
-const BGM_PATH = '/sounds/Frank Dang - Shattered Paths_H.mp3';
+const BGM_PATH = soundPath('Frank Dang - Shattered Paths_H.mp3');
 const BGM_DEFAULT_VOLUME = 0.35;
 
 class AudioManager {
