@@ -15,7 +15,7 @@ export function RentDialog() {
   const gpus = useGameStore((s) => s.gpus);
   const currentPrices = useGameStore((s) => s.currentPrices);
 
-  // 电费随通胀上涨：以 Claude(tokenId=0) 当前价 / 基础价 为准
+  // 电费随通胀上涨：以 Claude Opus 12.0(tokenId=0) 当前价 / 基础价 为准
   const inflationRatio = TOKENS[0].basePrice > 0
     ? (currentPrices[0] || 0) / TOKENS[0].basePrice
     : 1;

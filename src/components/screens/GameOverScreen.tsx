@@ -116,7 +116,7 @@ export function GameOverScreen() {
         {/* 顶部状态 */}
         <div className="flex items-center justify-between text-xs text-gray-500">
           <a
-            href="https://vibecodingsim.com"
+            href="https://thatbobo.com/vibe_coding_sim/"
             target="_blank"
             rel="noopener noreferrer"
             className="font-mono text-gray-500 hover:text-emerald-400 transition-colors tracking-wide"

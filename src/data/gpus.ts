@@ -21,12 +21,12 @@ export const GPUS: GPUDef[] = [
 
 // 5090基础每日产出量（M/天）- 其他GPU按outputMultiplier乘
 export const GPU_BASE_DAILY_OUTPUT: Record<number, number> = {
-  0: 130,      // Claude Opus 4.8
-  1: 135,      // GPT-5.5
-  2: 460,      // Gemini 3.5
-  3: 3_000,    // DeepSeek v4
-  4: 4_000,    // Qwen 3.7 Max
-  5: 8_500,    // Kimi K2.6
+  0: 130,      // Claude Opus 12.0
+  1: 135,      // GPT-8.5
+  2: 460,      // Gemini 9.1 Pro
+  3: 3_000,    // DeepSeek v19
+  4: 4_000,    // Qwen 6.8 Max
+  5: 8_500,    // Kimi K8
   // tokenId 6 (咸鱼Cursor) 不可产出
 };
 
@@ -41,7 +41,7 @@ export interface GPUInstance {
   purchasePrice: number;
   lifespan: number;
   usedDays: number;
-  selectedTokenId: number; // -1 = 未配置（默认买入即设为 0 = Claude）
+  selectedTokenId: number; // -1 = 未配置（默认买入即设为 0 = Claude Opus 12.0）
   active: boolean;
   totalOutput: number; // 累计产出的Token总价值（按产出时的市场价计算）
 }

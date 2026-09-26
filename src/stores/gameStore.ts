@@ -917,7 +917,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       ? { day: state.day, amount: state.todayEarnings }
       : state.bestEarningDay;
 
-    // 3.6 通胀系数：以 Claude(tokenId=0) 为基准（GPU 售价固定，仅电费随通胀上涨）
+    // 3.6 通胀系数：以 Claude Opus 12.0(tokenId=0) 为基准（GPU 售价固定，仅电费随通胀上涨）
     const inflationRatio = TOKENS[0].basePrice > 0 ? newPrices[0] / TOKENS[0].basePrice : 1;
 
     // 3.7 GPU 产出Token（在 Token 保质期清理之前生成，用当前价格累加totalOutput）
@@ -2088,7 +2088,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       purchasePrice: currentPrice,
       lifespan: gpuDef.lifespan,
       usedDays: 0,
-      selectedTokenId: 0, // 默认产出 Claude Opus 4.8，避免买回来空转
+      selectedTokenId: 0, // 默认产出 Claude Opus 12.0，避免买回来空转
       active: true,
       totalOutput: 0,
     };

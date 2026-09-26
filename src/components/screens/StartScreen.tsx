@@ -99,7 +99,7 @@ export function StartScreen() {
 
         <div className="mt-2 flex items-center justify-center">
           <a
-            href="https://vibecodingsim.com"
+            href="https://thatbobo.com/vibe_coding_sim/"
             target="_blank"
             rel="noopener noreferrer"
             className="text-gray-500 hover:text-emerald-400 transition-colors font-mono tracking-wide"

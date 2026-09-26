@@ -12,14 +12,14 @@ export interface GameEvent {
 
 export const EVENTS: GameEvent[] = [
   // 利好 - 降价（10%/15%/20%三档）
-  { id: 0, type: 'price_down', message: 'OpenAI服务器故障，GPT Token下跌10%！', probability: 0.06, tokenId: 0, multiplier: 0.9 },
-  { id: 1, type: 'price_down', message: 'Anthropic被反垄断调查，Claude Token降价15%！', probability: 0.05, tokenId: 1, multiplier: 0.85 },
-  { id: 2, type: 'price_down', message: 'Google I/O发布新模型，Gemini老版降价20%！', probability: 0.05, tokenId: 2, multiplier: 0.8 },
-  { id: 3, type: 'price_down', message: 'DeepSeek完成新一轮融资，Token降价15%！', probability: 0.05, tokenId: 3, multiplier: 0.85 },
+  { id: 0, type: 'price_down', message: 'OpenAI服务器故障，GPT-8.5 Token下跌10%！', probability: 0.06, tokenId: 0, multiplier: 0.9 },
+  { id: 1, type: 'price_down', message: 'Anthropic被反垄断调查，Claude Opus 12.0 Token降价15%！', probability: 0.05, tokenId: 1, multiplier: 0.85 },
+  { id: 2, type: 'price_down', message: 'Google I/O发布新模型，Gemini 9.1 Pro降价20%！', probability: 0.05, tokenId: 2, multiplier: 0.8 },
+  { id: 3, type: 'price_down', message: 'DeepSeek v19完成新一轮融资，Token降价15%！', probability: 0.05, tokenId: 3, multiplier: 0.85 },
 
   // 利好 - 赠送
-  { id: 4, type: 'gift_token', message: '阿里开源新模型，白送你 5M Qwen Token！', probability: 0.04, tokenId: 4, amount: 5 },
-  { id: 5, type: 'gift_token', message: '你中了 GitHub 抽奖，获得 0.5M GPT Token！', probability: 0.03, tokenId: 0, amount: 0.5 },
+  { id: 4, type: 'gift_token', message: '阿里开源新模型，白送你 5M Qwen 6.8 Max Token！', probability: 0.04, tokenId: 4, amount: 5 },
+  { id: 5, type: 'gift_token', message: '你中了 GitHub 抽奖，获得 0.5M GPT-8.5 Token！', probability: 0.03, tokenId: 0, amount: 0.5 },
   { id: 6, type: 'gift_token', message: '朋友送你 5 个咸鱼Cursor试用号！', probability: 0.06, tokenId: 6, amount: 5 },
 
   // 利好 - 精神
@@ -27,8 +27,8 @@ export const EVENTS: GameEvent[] = [
   { id: 8, type: 'spirit_change', message: '一个初学者在评论区感谢了你3年前写的博客，你感到温暖', probability: 0.06, amount: 15 },
 
   // 利空 - 涨价
-  { id: 9, type: 'price_up', message: 'Claude又涨价了！Anthropic宣布API价格上调30%！', probability: 0.06, tokenId: 1, multiplier: 1.3 },
-  { id: 10, type: 'price_up', message: 'GPT-5.5需求暴增，OpenAI紧急提价！', probability: 0.05, tokenId: 0, multiplier: 1.35 },
+  { id: 9, type: 'price_up', message: 'Claude Opus 12.0又涨价了！Anthropic宣布API价格上调30%！', probability: 0.06, tokenId: 1, multiplier: 1.3 },
+  { id: 10, type: 'price_up', message: 'GPT-8.5需求暴增，OpenAI紧急提价！', probability: 0.05, tokenId: 0, multiplier: 1.35 },
   { id: 11, type: 'price_up', message: 'AI监管新规出台，所有Token集体涨价10%！', probability: 0.04, multiplier: 1.1 },
 
   // 利空 - 损失Token

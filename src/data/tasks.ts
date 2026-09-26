@@ -49,7 +49,7 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
 export const LOW_SPIRIT_MESSAGES = [
   '冒泡排序都不会写了哥，你感到失去AI就失去了一切',
   '你盯着屏幕上的for循环，忘记了i应该从0开始还是从1开始',
-  '你尝试手写一个useEffect，三秒后你打开了ChatGPT',
+  '你尝试手写一个useEffect，三秒后你打开了GPT-8.5',
   '这个需求你3年前能1小时写完，现在你连文档都看不懂了',
   '你打开了VS Code，光标闪烁了五分钟，一个字也敲不出来',
   '你试图回忆Promise的用法，脑子里却只有async/await...等等那也不对',

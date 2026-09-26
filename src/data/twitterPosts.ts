@@ -15,7 +15,7 @@ export const TWITTER_POST_TEMPLATES: TwitterPostTemplate[] = [
   {
     user: '@Token倒爷',
     avatar: '🦊',
-    text: '兄弟们，刚把仓里 GPT-5.5 全清了，等下午回调再低吸。这才是真正的 vibe trading。',
+    text: '兄弟们，刚把仓里 GPT-8.5 全清了，等下午回调再低吸。这才是真正的 vibe trading。',
     tag: 'TRADER',
   },
   {
@@ -33,7 +33,7 @@ export const TWITTER_POST_TEMPLATES: TwitterPostTemplate[] = [
   {
     user: '@闲鱼Token贩子',
     avatar: '🐟',
-    text: '出全新 Claude Opus 5 万 Token，原价 350，3 折包邮，私聊别问能不能再低，问就是再低你买不到。',
+    text: '出全新 Claude Opus 12.0 5 万 Token，原价 350，3 折包邮，私聊别问能不能再低，问就是再低你买不到。',
     tag: 'HUSTLE',
   },
   {
@@ -75,19 +75,19 @@ export const TWITTER_POST_TEMPLATES: TwitterPostTemplate[] = [
   {
     user: '@裁员幸存者',
     avatar: '📉',
-    text: '今天部门又裁了 5 个人，传闻下次轮到我。\n组里只剩我和 GPT-5 了，但 GPT-5 不会请病假。',
+    text: '今天部门又裁了 5 个人，传闻下次轮到我。\n组里只剩我和 GPT-8.5 了，但 GPT-8.5 不会请病假。',
     tag: 'EMO',
   },
   {
     user: '@小红书技术博主',
     avatar: '💖',
-    text: '姐妹们！分享一个超绝的 Vibe Coding 工作流：早上 Cursor、中午 Claude、晚上 ChatGPT，一周躺赚 3 万～足不出户。',
+    text: '姐妹们！分享一个超绝的 Vibe Coding 工作流：早上 Cursor、中午 Claude Opus 12.0、晚上 GPT-8.5，一周躺赚 3 万～足不出户。',
     tag: 'VIBE',
   },
   {
     user: '@量化交易员',
     avatar: '📊',
-    text: '写了个 Token 套利机器人，今天 GPT 涨了 30%，我赚了一倍。\n然后 OpenAI 一封邮件，机器人账号被封了，钱也没了。',
+    text: '写了个 Token 套利机器人，今天 GPT-8.5 涨了 30%，我赚了一倍。\n然后 OpenAI 一封邮件，机器人账号被封了，钱也没了。',
     tag: 'TRADER',
   },
   {
@@ -105,7 +105,7 @@ export const TWITTER_POST_TEMPLATES: TwitterPostTemplate[] = [
   {
     user: '@CSDN老司机',
     avatar: '📝',
-    text: '我的博客《如何 0 基础学 AI 编程》今天又涨了 1000 阅读。\n评论区第一条："楼主这是 ChatGPT 写的吧"——我心虚地点了赞。',
+    text: '我的博客《如何 0 基础学 AI 编程》今天又涨了 1000 阅读。\n评论区第一条："楼主这是 GPT-8.5 写的吧"——我心虚地点了赞。',
     tag: 'VIBE',
   },
   {
@@ -129,13 +129,13 @@ export const TWITTER_POST_TEMPLATES: TwitterPostTemplate[] = [
   {
     user: '@国产大模型粉',
     avatar: '🐉',
-    text: '终于不用爬墙了！国产大模型已经在 78% 的场景下追平 GPT-4。\n剩下的 22%，是用户的需求。',
+    text: '终于不用爬墙了！国产大模型已经在 78% 的场景下追平 GPT-8.5。\n剩下的 22%，是用户的需求。',
     tag: 'VIBE',
   },
   {
     user: '@隔壁老王',
     avatar: '👨',
-    text: '相亲对象问我做什么的，我说"AI 工程师"，她眼睛一亮。\n我又说"其实就是会用 ChatGPT"。\n然后她说她忘了喂猫。',
+    text: '相亲对象问我做什么的，我说"AI 工程师"，她眼睛一亮。\n我又说"其实就是会用 GPT-8.5"。\n然后她说她忘了喂猫。',
     tag: 'EMO',
   },
   {
@@ -147,7 +147,7 @@ export const TWITTER_POST_TEMPLATES: TwitterPostTemplate[] = [
   {
     user: '@AI陪聊重度患者',
     avatar: '🌸',
-    text: '今天 ChatGPT 又记错了我的生日，我跟它生气了 5 分钟。\n然后它说"对不起亲爱的"。\n我们和好了。',
+    text: '今天 GPT-8.5 又记错了我的生日，我跟它生气了 5 分钟。\n然后它说"对不起亲爱的"。\n我们和好了。',
     tag: 'EMO',
   },
   {
@@ -159,7 +159,7 @@ export const TWITTER_POST_TEMPLATES: TwitterPostTemplate[] = [
   {
     user: '@牛客刷题狗',
     avatar: '📚',
-    text: '刷了 800 道算法题准备面试。结果面试官都在问使用Claude Code的技巧。',
+    text: '刷了 800 道算法题准备面试。结果面试官都在问使用 Claude Opus 12.0 的技巧。',
     tag: 'JOB',
   },
   {
@@ -213,7 +213,7 @@ export const TWITTER_POST_TEMPLATES: TwitterPostTemplate[] = [
   {
     user: '@Token矿工',
     avatar: '⛏',
-    text: '屯了 200 万 Claude Token，本以为能用到明年。\n结果 Anthropic 更新了计价规则，200 万变 20 万了。',
+    text: '屯了 200 万 Claude Opus 12.0 Token，本以为能用到明年。\n结果 Anthropic 更新了计价规则，200 万变 20 万了。',
     tag: 'TRADER',
   },
   {
@@ -223,9 +223,9 @@ export const TWITTER_POST_TEMPLATES: TwitterPostTemplate[] = [
     tag: 'JOB',
   },
   {
-    user: '@GPT股东',
+    user: '@GPT-8.5股东',
     avatar: '📈',
-    text: 'GPT-6 发布当天 Token 涨了 400%，我直接梭哈。\n第二天 GPT-6.1 发布，手里的 Token 原地蒸发😭。',
+    text: 'GPT-8.5 发布当天 Token 涨了 400%，我直接梭哈。\n第二天 GPT-8.5 更新，手里的 Token 原地蒸发😭。',
     tag: 'TRADER',
   },
   {
@@ -261,7 +261,7 @@ export const TWITTER_POST_TEMPLATES: TwitterPostTemplate[] = [
   {
     user: '@Token期货大师',
     avatar: '🎰',
-    text: '做空 Gemini Token 赚了一笔，结果 Google 发布会当天直接反弹 200%。\n血亏。教训：永远不要做空大厂。',
+    text: '做空 Gemini 9.1 Pro Token 赚了一笔，结果 Google 发布会当天直接反弹 200%。\n血亏。教训：永远不要做空大厂。',
     tag: 'TRADER',
   },
   {
@@ -279,7 +279,7 @@ export const TWITTER_POST_TEMPLATES: TwitterPostTemplate[] = [
   {
     user: '@闲鱼二道贩子',
     avatar: '🐟',
-    text: '收 Cursor Pro 剩余天数，35 一天。\n出 Claude 3.5 二手 Token，8 折走量。\n不议价，议价拉黑。',
+    text: '收 Cursor Pro 剩余天数，35 一天。\n出 Claude Opus 12.0 二手 Token，8 折走量。\n不议价，议价拉黑。',
     tag: 'HUSTLE',
   },
   {
@@ -297,7 +297,7 @@ export const TWITTER_POST_TEMPLATES: TwitterPostTemplate[] = [
   {
     user: '@全栈独狼',
     avatar: '🐺',
-    text: '一个人写前端、后端、运维、测试、产品、设计。\n朋友问："你公司有多少人？"\n我说："两个。我和 Claude。"',
+    text: '一个人写前端、后端、运维、测试、产品、设计。\n朋友问："你公司有多少人？"\n我说："两个。我和 Claude Opus 12.0。"',
     tag: 'VIBE',
   },
   {
@@ -313,9 +313,9 @@ export const TWITTER_POST_TEMPLATES: TwitterPostTemplate[] = [
     tag: 'CLIENT',
   },
   {
-    user: '@GPT情感导师',
+    user: '@GPT-8.5情感导师',
     avatar: '💝',
-    text: '女朋友说我不够浪漫，我让 ChatGPT 写了一首情诗。\n她感动哭了，说："你什么时候变得这么有才华？"\n我没敢说话。',
+    text: '女朋友说我不够浪漫，我让 GPT-8.5 写了一首情诗。\n她感动哭了，说："你什么时候变得这么有才华？"\n我没敢说话。',
     tag: 'EMO',
   },
   {
@@ -361,9 +361,9 @@ export const TWITTER_POST_TEMPLATES: TwitterPostTemplate[] = [
     tag: 'JOB',
   },
   {
-    user: '@Claude信徒',
+    user: '@Claude Opus 12.0信徒',
     avatar: '🙏',
-    text: 'Claude 是神。\n你说它不是？那是因为你的 Prompt 不够虔诚。',
+    text: 'Claude Opus 12.0 是神。\n你说它不是？那是因为你的 Prompt 不够虔诚。',
     tag: 'VIBE',
   },
   {
@@ -483,7 +483,7 @@ export const TWITTER_POST_TEMPLATES: TwitterPostTemplate[] = [
   {
     user: '@编程鄙视链底层',
     avatar: '🪜',
-    text: '以前的鄙视链：C > Java > Python > PHP。\n现在的鄙视链：会写 Agent > 会用 Cursor > 会用 ChatGPT > 会用百度。\n我在最底层：只会用百度。',
+    text: '以前的鄙视链：C > Java > Python > PHP。\n现在的鄙视链：会写 Agent > 会用 Cursor > 会用 GPT-8.5 > 会用百度。\n我在最底层：只会用百度。',
     tag: 'VIBE',
   },
   {
@@ -519,7 +519,7 @@ export const TWITTER_POST_TEMPLATES: TwitterPostTemplate[] = [
   {
     user: '@产品运营小白',
     avatar: '📱',
-    text: '老板说："用 AI 做个 App，下周上线。"\n我说我不会写代码。\n他说："ChatGPT 会啊。"\n一周后上线了，用户 3 个：我、老板、和测试。',
+    text: '老板说："用 AI 做个 App，下周上线。"\n我说我不会写代码。\n他说："GPT-8.5 会啊。"\n一周后上线了，用户 3 个：我、老板、和测试。',
     tag: 'VIBE',
   },
   {
@@ -543,7 +543,7 @@ export const TWITTER_POST_TEMPLATES: TwitterPostTemplate[] = [
   {
     user: '@LinkedIn装X专家',
     avatar: '🤵',
-    text: '刚在 LinkedIn 更新了状态：\n"Thrilled to announce my new role as Chief AI Strategy Officer"\n其实就是公司买了个 ChatGPT Plus 账号让我管。',
+    text: '刚在 LinkedIn 更新了状态：\n"Thrilled to announce my new role as Chief AI Strategy Officer"\n其实就是公司买了个 GPT-8.5 Plus 账号让我管。',
     tag: 'GLOAT',
   },
   {

@@ -3,7 +3,7 @@
 import { GPUS, GPU_BASE_DAILY_OUTPUT, GPUInstance } from '../data/gpus';
 
 // 注意：GPU 售价已固定为 basePrice，不再随通胀变动；保留此函数仅为兼容。
-// inflationRatio = currentClaudePrice / baseClaudePrice
+// inflationRatio = currentModelPrice / baseModelPrice
 export function getGpuCurrentPrices(inflationRatio: number): number[] {
   return GPUS.map(gpu => Math.round(gpu.basePrice * inflationRatio));
 }
