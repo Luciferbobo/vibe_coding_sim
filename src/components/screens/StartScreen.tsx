@@ -13,6 +13,7 @@ const RULES: Array<{ title: string; desc: string }> = [
 
 export function StartScreen() {
   const startNewGame = useGameStore((s) => s.startNewGame);
+  const language = useGameStore((s) => s.language);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0); // 0-100
 
@@ -30,7 +31,7 @@ export function StartScreen() {
       <header className="px-4 sm:px-6 md:px-10 py-4 md:py-5 flex items-center justify-between border-b border-gray-800 shrink-0">
         <div className="flex items-center gap-2.5">
           <span className="text-sm font-medium text-gray-300">
-            Vibe Coding 模拟器
+            {language === 'en' ? 'Vibe Coding Simulator' : 'Vibe Coding 模拟器'}
           </span>
         </div>
       </header>
@@ -43,9 +44,9 @@ export function StartScreen() {
               Vibe Coding Simulator
             </p>
             <h1 className="mt-2 text-4xl sm:text-5xl font-bold tracking-tight text-gray-50">
-              在 AI 取代一切的时代
+              {language === 'en' ? 'In an age where AI replaces everything' : '在 AI 取代一切的时代'}
               <br />
-              <span className="text-emerald-400">你还能活多久？</span>
+              <span className="text-emerald-400">{language === 'en' ? 'How long can you survive?' : '你还能活多久？'}</span>
             </h1>
           </div>
 
@@ -60,7 +61,13 @@ export function StartScreen() {
                   {r.title}
                 </p>
                 <p className="mt-1 text-sm text-gray-300 leading-snug">
-                  {r.desc}
+                  {language === 'en' ? ({
+                    '购买token，使用vibe coding接单赚钱': 'Buy tokens, use vibe coding, and earn from freelance jobs',
+                    '或许...token也是一种可以倒卖的商品？': 'Maybe tokens are a commodity you can resell, too?',
+                    '健康的精神状态很重要': 'A healthy state of mind matters',
+                    '程序员的信誉是宝贵的财富，请努力维护': 'A programmer\'s reputation is precious. Protect it.',
+                    '每7天交一次房租': 'Rent is due every seven days',
+                  } as Record<string, string>)[r.desc] : r.desc}
                 </p>
               </div>
             ))}
@@ -73,7 +80,7 @@ export function StartScreen() {
                 onClick={handleStart}
                 className="px-10 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-base font-medium shadow-lg shadow-emerald-900/30 transition-colors"
               >
-                开始游戏
+                {language === 'en' ? 'Start game' : '开始游戏'}
               </button>
             ) : (
               <div className="w-full max-w-xs flex flex-col items-center gap-2">
@@ -84,7 +91,7 @@ export function StartScreen() {
                   />
                 </div>
                 <p className="text-xs text-gray-400">
-                  加载资源中… {progress}%
+                  {language === 'en' ? 'Loading assets…' : '加载资源中…'} {progress}%
                 </p>
               </div>
             )}
@@ -94,7 +101,9 @@ export function StartScreen() {
 
       <footer className="px-4 sm:px-6 md:px-10 py-4 md:py-5 border-t border-gray-800 text-xs text-gray-500 shrink-0">
         <p className="text-center">
-          据说公元21世纪，人类还需亲手敲下每一行代码、亲手在凌晨三点解决bug——他们管那段日子叫"青春"
+          {language === 'en'
+            ? 'They say that in the 21st century, humans still had to type every line of code and fix bugs at 3 a.m. They called those days “youth.”'
+            : '据说公元21世纪，人类还需亲手敲下每一行代码、亲手在凌晨三点解决bug——他们管那段日子叫"青春"'}
         </p>
 
         <div className="mt-2 flex items-center justify-center">
@@ -109,7 +118,7 @@ export function StartScreen() {
         </div>
 
         <div className="mt-1 flex justify-end sm:hidden">
-          <span className="text-gray-600">PC端体验更佳</span>
+          <span className="text-gray-600">{language === 'en' ? 'Best on desktop' : 'PC端体验更佳'}</span>
         </div>
       </footer>
     </div>

@@ -4,8 +4,9 @@ import { useGameStore } from '../../stores/gameStore';
 import { TOKENS } from '../../data/tokens';
 import { BuyDialog } from './BuyDialog';
 import { SellDialog } from './SellDialog';
-import { formatToken } from '../../utils/format';
+import { formatToken, formatPrice } from '../../utils/format';
 import { SELL_TAX_TIERS } from '../../data/constants';
+import { localizeToken } from '../../i18n';
 
 const TIER_COLOR: Record<string, string> = {
   S: 'bg-violet-500/15 text-violet-300',
@@ -27,17 +28,18 @@ export function TokenMarket() {
   const tradingTaxActivated = useGameStore((s) => s.tradingTaxActivated);
   const sellTaxTierReached = useGameStore((s) => s.sellTaxTierReached);
   const sellTaxPct = sellTaxTierReached >= 0 ? SELL_TAX_TIERS[sellTaxTierReached].taxPct : 25;
+  const language = useGameStore((s) => s.language);
 
   const [buyToken, setBuyToken] = useState<number | null>(null);
   const [sellToken, setSellToken] = useState<number | null>(null);
 
   const isXianyu = currentSiteId === 1;
   const title = isXianyu
-    ? '闲鱼二手区 · 野生 Token 集市'
-    : 'API 商城 · 官方源';
+    ? (language === 'en' ? 'Xianyu Resale · Wild Token Market' : '闲鱼二手区 · 野生 Token 集市')
+    : (language === 'en' ? 'API Marketplace · Official Source' : 'API 商城 · 官方源');
   const subtitle = isXianyu
-    ? '二手交易，价格随缘浮动，有惊喜也有坑'
-    : '官方供应，价格每天只涨不跌';
+    ? (language === 'en' ? 'Second-hand trades: bargain surprises and hidden traps' : '二手交易，价格随缘浮动，有惊喜也有坑')
+    : (language === 'en' ? 'Official supply; prices only go up each day' : '官方供应，价格每天只涨不跌');
 
   // 当前市场使用的价格
   const activePrices = isXianyu ? xianYuPrices : currentPrices;
@@ -65,7 +67,7 @@ export function TokenMarket() {
             <p className="mt-1 text-sm text-gray-400">{subtitle}</p>
           </div>
           <div className="text-right">
-            <p className="text-xs text-gray-500">今日通胀率</p>
+            <p className="text-xs text-gray-500">{language === 'en' ? "Today's inflation" : '今日通胀率'}</p>
             <p
               className={`mt-0.5 font-mono text-lg font-semibold tabular ${
                 avgInflation >= 0 ? 'text-red-400' : 'text-emerald-400'
@@ -84,14 +86,15 @@ export function TokenMarket() {
           <div className="grid grid-cols-[32px_minmax(80px,2fr)_42px_minmax(72px,1fr)_minmax(58px,1fr)_minmax(72px,1fr)_140px] gap-x-2.5 px-4 py-2.5 border-b border-gray-700/60 text-xs font-medium text-gray-500 uppercase tracking-wider">
             <span>#</span>
             <span>Token</span>
-            <span className="text-center">级</span>
-            <span className="text-right">价格</span>
-            <span className="text-right">涨跌</span>
-            <span className="text-right">持有</span>
-            <span className="text-center">操作</span>
+            <span className="text-center">{language === 'en' ? 'Tier' : '级'}</span>
+            <span className="text-right">{language === 'en' ? 'Price' : '价格'}</span>
+            <span className="text-right">{language === 'en' ? 'Change' : '涨跌'}</span>
+            <span className="text-right">{language === 'en' ? 'Held' : '持有'}</span>
+            <span className="text-center">{language === 'en' ? 'Actions' : '操作'}</span>
           </div>
 
-          {visibleTokens.map((token) => {
+          {visibleTokens.map((rawToken) => {
+            const token = localizeToken(rawToken, language);
             const isXy = token.id === 6;
             const realPrice = activePrices[token.id];
             const delta =
@@ -106,10 +109,10 @@ export function TokenMarket() {
             const urgencyDot = !hasHolding
               ? null
               : minDaysLeft <= 1
-              ? { cls: 'bg-red-500 animate-pulse', label: `${minDaysLeft}天后过期` }
+              ? { cls: 'bg-red-500 animate-pulse', label: language === 'en' ? `Expires in ${minDaysLeft}d` : `${minDaysLeft}天后过期` }
               : minDaysLeft <= 3
-              ? { cls: 'bg-amber-400', label: `${minDaysLeft}天后过期` }
-              : { cls: 'bg-emerald-500', label: `还有 ${minDaysLeft} 天` };
+              ? { cls: 'bg-amber-400', label: language === 'en' ? `Expires in ${minDaysLeft}d` : `${minDaysLeft}天后过期` }
+              : { cls: 'bg-emerald-500', label: language === 'en' ? `${minDaysLeft}d left` : `还有 ${minDaysLeft} 天` };
             const up = delta >= 0;
             const isOutOfStock = outOfStock.includes(token.id);
 
@@ -125,7 +128,7 @@ export function TokenMarket() {
                       className="text-red-500 font-bold text-lg border-2 border-red-500 px-2 py-0.5 rounded"
                       style={{ transform: 'rotate(-15deg)' }}
                     >
-                      缺货
+                      {language === 'en' ? 'OUT OF STOCK' : '缺货'}
                     </span>
                   </div>
                 )}
@@ -147,9 +150,9 @@ export function TokenMarket() {
                   {token.tier}
                 </span>
                 <span className={`font-mono text-right font-semibold tabular whitespace-nowrap ${isOutOfStock ? 'text-gray-500' : 'text-amber-400'}`}>
-                  ¥{realPrice.toFixed(2)}
+                  {formatPrice(realPrice, language)}
                   <span className="ml-0.5 text-xs text-gray-500">
-                    {isXy ? '/个' : '/M'}
+                    {isXy ? (language === 'en' ? '/account' : '/个') : '/M'}
                   </span>
                 </span>
                 <span
@@ -171,7 +174,7 @@ export function TokenMarket() {
                       )}
                       <span>
                         {isXy
-                          ? `${totalCount} 个 (劣质${totalCount * 100}M)`
+                          ? `${totalCount} ${language === 'en' ? `accounts (${totalCount * 100}M low-grade)` : `个 (劣质${totalCount * 100}M)`}`
                           : formatToken(totalCount)}
                       </span>
                     </>
@@ -185,18 +188,18 @@ export function TokenMarket() {
                     onClick={() => setBuyToken(token.id)}
                     disabled={isOutOfStock}
                     className="px-3 py-1 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-emerald-600"
-                    title={isOutOfStock ? '市场缺货，无法购买' : undefined}
+                    title={isOutOfStock ? (language === 'en' ? 'Out of stock' : '市场缺货，无法购买') : undefined}
                   >
-                    买入
+                    {language === 'en' ? 'Buy' : '买入'}
                   </button>
                   {/* 卖出按钮：缺货不影响卖出（市场缺货反而有人愿意接手） */}
                   {isXy ? (
                     <button
                       disabled
                       className="px-3 py-1 rounded-md bg-gray-700 text-gray-500 text-xs font-medium cursor-not-allowed opacity-30"
-                      title="咸鱼Cursor账号不支持转卖"
+                      title={language === 'en' ? 'Xianyu Cursor accounts cannot be resold' : '咸鱼Cursor账号不支持转卖'}
                     >
-                      卖出
+                      {language === 'en' ? 'Sell' : '卖出'}
                     </button>
                   ) : (
                     <button
@@ -204,7 +207,7 @@ export function TokenMarket() {
                       disabled={!hasHolding}
                       className="px-3 py-1 rounded-md bg-gray-700 hover:bg-gray-600 text-gray-200 text-xs font-medium transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-gray-700"
                     >
-                      卖出
+                      {language === 'en' ? 'Sell' : '卖出'}
                     </button>
                   )}
                 </div>
@@ -214,11 +217,11 @@ export function TokenMarket() {
         </div>
 
         <p className="mt-4 text-xs text-gray-500">
-          Token 保质期 7 天，购入后请尽快使用
+          {language === 'en' ? 'Tokens last 7 days; use them soon after purchase.' : 'Token 保质期 7 天，购入后请尽快使用'}
         </p>
         {tradingTaxActivated && (
           <p className="mt-1 text-xs text-red-400 font-semibold">
-            现在Token卖出将征收 {sellTaxPct}% 交易税
+            {language === 'en' ? `Token sales now incur a ${sellTaxPct}% trading tax` : `现在Token卖出将征收 ${sellTaxPct}% 交易税`}
           </p>
         )}
         {isXianyu && (

@@ -14,6 +14,7 @@ export function RentDialog() {
   const consecutiveEarlyRents = useGameStore((s) => s.consecutiveEarlyRents);
   const gpus = useGameStore((s) => s.gpus);
   const currentPrices = useGameStore((s) => s.currentPrices);
+  const language = useGameStore((s) => s.language);
 
   // 电费随通胀上涨：以 Claude Opus 12.0(tokenId=0) 当前价 / 基础价 为准
   const inflationRatio = TOKENS[0].basePrice > 0
@@ -38,10 +39,10 @@ export function RentDialog() {
     <div className="flex h-full items-center justify-center px-4 py-4 md:px-6 md:py-6 overflow-y-auto">
       <div className="w-full max-w-2xl">
         <h2 className="text-xl md:text-2xl font-semibold text-gray-100">
-          🏠 公寓 · 你的 10 平米
+          {language === 'en' ? '🏠 Apartment · Your 10 m²' : '🏠 公寓 · 你的 10 平米'}
         </h2>
         <p className="mt-1 text-xs md:text-sm italic text-gray-400">
-          阳台朝北，下午光线刚好够你看清屏幕反光里的黑眼圈。
+          {language === 'en' ? 'The balcony faces north; afternoon light is just enough to see the dark circles reflected in your screen.' : '阳台朝北，下午光线刚好够你看清屏幕反光里的黑眼圈。'}
         </p>
 
         <div
@@ -53,14 +54,14 @@ export function RentDialog() {
         >
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-400">
-              {weeklyElectricity > 0 ? '每周房租+电费' : '每周房租'}
+              {language === 'en' ? (weeklyElectricity > 0 ? 'Weekly rent + electricity' : 'Weekly rent') : (weeklyElectricity > 0 ? '每周房租+电费' : '每周房租')}
             </p>
             <p
               className={`text-xs font-medium ${
                 isDue ? 'text-red-400' : 'text-gray-500'
               }`}
             >
-              {isDue ? '已到期' : `T-${daysToRent} 天`}
+              {isDue ? (language === 'en' ? 'Due now' : '已到期') : `T-${daysToRent}${language === 'en' ? 'd' : ' 天'}`}
             </p>
           </div>
 
@@ -69,36 +70,36 @@ export function RentDialog() {
               isDue ? 'text-red-400' : 'text-violet-400'
             }`}
           >
-            {formatMoney(totalRentCost)}<span className="text-base md:text-lg text-gray-500">/周</span>
+            {formatMoney(totalRentCost, language)}<span className="text-base md:text-lg text-gray-500">{language === 'en' ? '/week' : '/周'}</span>
           </p>
 
           {weeklyElectricity > 0 && (
             <p className="mt-1 text-xs text-gray-400">
-              房租 {formatMoney(rentAmount)} + 电费 {formatMoney(weeklyElectricity)}
+              {language === 'en' ? `Rent ${formatMoney(rentAmount, language)} + electricity ${formatMoney(weeklyElectricity, language)}` : `房租 ${formatMoney(rentAmount, language)} + 电费 ${formatMoney(weeklyElectricity, language)}`}
             </p>
           )}
 
           {weeklyElectricity > rentAmount && (
             <p className="mt-2 text-xs text-amber-400 italic">
-              "怎么这个月电费比房租都贵啊..."
+              {language === 'en' ? '“How is the electricity bill higher than rent this month…?”' : '"怎么这个月电费比房租都贵啊..."'}
             </p>
           )}
 
           <div className="mt-5 grid grid-cols-2 gap-2">
             <div className="rounded-lg bg-gray-900/60 border border-gray-700/50 px-3 py-2">
-              <p className="text-xs text-gray-500">下次交租日</p>
+              <p className="text-xs text-gray-500">{language === 'en' ? 'Next rent date' : '下次交租日'}</p>
               <p className="mt-0.5 font-mono text-sm font-semibold text-gray-200 tabular">
-                {formatDay(nextRentDay)}
+                {formatDay(nextRentDay, language)}
               </p>
             </div>
             <div className="rounded-lg bg-gray-900/60 border border-gray-700/50 px-3 py-2">
-              <p className="text-xs text-gray-500">交租后余额</p>
+              <p className="text-xs text-gray-500">{language === 'en' ? 'Balance after rent' : '交租后余额'}</p>
               <p
                 className={`mt-0.5 font-mono text-sm font-semibold tabular ${
                   cantPay ? 'text-red-400' : 'text-amber-400'
                 }`}
               >
-                {formatMoney(cash - totalRentCost)}
+                {formatMoney(cash - totalRentCost, language)}
               </p>
             </div>
           </div>
@@ -106,7 +107,7 @@ export function RentDialog() {
           {consecutiveEarlyRents > 0 && (
             <div className="mt-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 px-3 py-2">
               <p className="text-xs text-emerald-400">
-                🏆 连续提前交租：<span className="font-semibold">{consecutiveEarlyRents}</span> 次
+                {language === 'en' ? <>🏆 Early rent streak: <span className="font-semibold">{consecutiveEarlyRents}</span></> : <>🏆 连续提前交租：<span className="font-semibold">{consecutiveEarlyRents}</span> 次</>}
               </p>
             </div>
           )}
@@ -126,11 +127,11 @@ export function RentDialog() {
                     : 'bg-red-600 hover:bg-red-500 text-white'
                 }`}
               >
-                交租
+                {language === 'en' ? 'Pay rent' : '交租'}
               </button>
               {cantPay && (
                 <p className="mt-2 text-xs text-red-400">
-                  你的钱不够交房租……房东已经在敲门了。
+                  {language === 'en' ? 'You cannot afford rent… the landlord is knocking.' : '你的钱不够交房租……房东已经在敲门了。'}
                 </p>
               )}
             </>
@@ -149,20 +150,20 @@ export function RentDialog() {
                     : 'bg-emerald-600 hover:bg-emerald-500 text-white'
                 }`}
               >
-                提前交租
+                {language === 'en' ? 'Pay rent early' : '提前交租'}
               </button>
               {earlyBlockedByGpu && (
                 <p className="mt-2 text-xs text-amber-400">
-                  ⚡ 有GPU运行时无法提前交租（电费按实际天数计算）
+                  {language === 'en' ? '⚡ Early rent is disabled while GPUs run (electricity is charged by actual days).' : '⚡ 有GPU运行时无法提前交租（电费按实际天数计算）'}
                 </p>
               )}
               <div className="mt-3 rounded-lg bg-gray-900/40 border border-gray-700/50 p-3 text-sm leading-relaxed text-gray-400">
                 <p>
-                  <span className="text-emerald-400">·</span> 还有{' '}
+                  <span className="text-emerald-400">·</span> {language === 'en' ? 'Due in ' : '还有 '}
                   <span className="font-semibold text-emerald-400">
                     {daysToRent}
                   </span>{' '}
-                  天到期，房租到期日会自动扣除。
+                  {language === 'en' ? 'days; rent will be charged automatically on the due date.' : '天到期，房租到期日会自动扣除。'}
                 </p>
               </div>
             </>
@@ -170,7 +171,7 @@ export function RentDialog() {
         </div>
 
         <p className="mt-4 text-center text-xs text-gray-500">
-          房租是北漂的隐藏 boss
+          {language === 'en' ? 'Rent is the hidden boss of life in the big city.' : '房租是北漂的隐藏 boss'}
         </p>
       </div>
     </div>

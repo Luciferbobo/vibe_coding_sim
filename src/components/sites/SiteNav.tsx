@@ -2,6 +2,7 @@
 import { useGameStore } from '../../stores/gameStore';
 import { SITES } from '../../data/sites';
 import { audioManager } from '../../utils/audioManager';
+import { localizeSite, TYPE_TRANSLATIONS } from '../../i18n';
 
 const TYPE_LABEL: Record<string, string> = {
   market: '交易',
@@ -26,20 +27,21 @@ export function SiteNav() {
   const maxTasksPerDay = useGameStore((s) => s.maxTasksPerDay);
   const gpuUnlocked = useGameStore((s) => s.gpuUnlocked);
   const gpuHintShown = useGameStore((s) => s.gpuHintShown);
+  const language = useGameStore((s) => s.language);
 
   return (
     <nav className="flex h-full w-full flex-col overflow-hidden bg-gray-900">
       <div className="px-4 pt-4 pb-2">
         <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-          导航
+          {language === 'en' ? 'NAVIGATION' : '导航'}
         </p>
       </div>
 
       {restDaysLeft > 0 && (
         <div className="mx-4 mb-2 rounded-lg bg-red-500/10 border border-red-500/30 p-3 text-xs leading-snug text-red-300">
-          <p className="font-semibold text-red-400">强制休息中</p>
+          <p className="font-semibold text-red-400">{language === 'en' ? 'Forced rest' : '强制休息中'}</p>
           <p className="mt-1 text-red-300/80">
-            还需躺平 {restDaysLeft} 天，点击“进入下一天”恢复
+            {language === 'en' ? `${restDaysLeft} days left. Click “Next day” to recover.` : `还需躺平 ${restDaysLeft} 天，点击“进入下一天”恢复`}
           </p>
         </div>
       )}
@@ -49,7 +51,8 @@ export function SiteNav() {
           // GPU算力中心：解锁后显示，未解锁时用神秘场所占位
           if (site.id === 10 && !gpuUnlocked) return false;
           return true;
-        }).map((site) => {
+          }).map((rawSite) => {
+          const site = localizeSite(rawSite, language);
           const active = site.id === currentSiteId;
           const disabled = restDaysLeft > 0;
 
@@ -67,11 +70,11 @@ export function SiteNav() {
                       ???
                     </span>
                     <span className="block truncate text-xs text-gray-600">
-                      资产达到200万解锁
+                      {language === 'en' ? 'Unlocks at $200,000 in assets' : '资产达到200万解锁'}
                     </span>
                   </span>
                   <span className="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-700/50 text-gray-500">
-                    锁定
+                    {language === 'en' ? 'Locked' : '锁定'}
                   </span>
                 </div>
               )}
@@ -102,7 +105,7 @@ export function SiteNav() {
                 <span
                   className={`shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium ${TYPE_COLOR[site.type]}`}
                 >
-                  {TYPE_LABEL[site.type]}
+                  {language === 'en' ? TYPE_TRANSLATIONS[site.type] : TYPE_LABEL[site.type]}
                 </span>
               </button>
             </>
@@ -117,16 +120,16 @@ export function SiteNav() {
             audioManager.play('next-day');
             advanceDay();
           }}
-          title="进入下一天"
-          aria-label="进入下一天"
+          title={language === 'en' ? 'Next day' : '进入下一天'}
+          aria-label={language === 'en' ? 'Next day' : '进入下一天'}
           className="w-full flex items-center justify-center gap-1.5 px-4 py-3 rounded-lg bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white text-sm font-bold transition-all shadow-lg shadow-amber-900/30 hover:shadow-amber-800/40 whitespace-nowrap"
         >
           <span>☀️</span>
-          <span>进入下一天</span>
+          <span>{language === 'en' ? 'Next day' : '进入下一天'}</span>
         </button>
         <div className="mt-2 text-[11px] text-gray-500 leading-snug px-1">
-          <p>进入下一天：项目需求刷新，Token价格刷新。</p>
-          <p className="mt-0.5">今日已接 <span className="text-amber-400 font-semibold">{tasksCompletedToday}</span>/{maxTasksPerDay} 个需求</p>
+          <p>{language === 'en' ? 'Next day: jobs and token prices refresh.' : '进入下一天：项目需求刷新，Token价格刷新。'}</p>
+          <p className="mt-0.5">{language === 'en' ? 'Jobs accepted today: ' : '今日已接 '}<span className="text-amber-400 font-semibold">{tasksCompletedToday}</span>/{maxTasksPerDay} {language === 'en' ? 'jobs' : '个需求'}</p>
         </div>
       </div>
     </nav>

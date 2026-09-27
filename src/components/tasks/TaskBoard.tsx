@@ -6,6 +6,8 @@ import { LOW_REPUTATION_THRESHOLD } from '../../data/constants';
 import { TaskDialog } from './TaskDialog';
 import { randomChoice } from '../../utils/random';
 import { formatToken } from '../../utils/format';
+import { localizeTask, DIFFICULTY_TRANSLATIONS, translateDynamic } from '../../i18n';
+import { formatMoney } from '../../utils/format';
 
 const DIFF_LABEL: Record<string, string> = {
   easy: '简单',
@@ -28,6 +30,7 @@ export function TaskBoard() {
   const tasksCompletedToday = useGameStore((s) => s.tasksCompletedToday);
   const maxTasksPerDay = useGameStore((s) => s.maxTasksPerDay);
   const hasEverSoldToken = useGameStore((s) => s.hasEverSoldToken);
+  const language = useGameStore((s) => s.language);
 
   const [selected, setSelected] = useState<TaskTemplate | null>(null);
   const [rejected, setRejected] = useState<string | null>(null);
@@ -35,15 +38,15 @@ export function TaskBoard() {
   const isBoss = currentSiteId === 3;
   // 根据当前平台选取对应的需求列表
   const availableTasks = isBoss ? availableTasksMap.boss : availableTasksMap.niuke;
-  const title = isBoss ? '高端猎头' : '外包广场';
+  const title = isBoss ? (language === 'en' ? 'Executive Headhunters' : '高端猎头') : (language === 'en' ? 'Freelance Hub' : '外包广场');
   const subtitle = isBoss
-    ? 'Lv99高端需求，信誉不够进不了门'
-    : '什么都接，重在赚个恰饭钱';
+    ? (language === 'en' ? 'Lv99 projects; low reputation will not get you through the door' : 'Lv99高端需求，信誉不够进不了门')
+    : (language === 'en' ? 'A little of everything, as long as it pays the rent' : '什么都接，重在赚个恰饭钱');
 
   const handleAccept = (task: TaskTemplate) => {
     // 每日任务数限制
     if (tasksCompletedToday >= maxTasksPerDay) {
-      setRejected('今天已经做了3个项目了，该休息了。进入下一天刷新需求吧。');
+      setRejected('😫 今天已经做了3个项目了，该休息了。进入下一天刷新需求吧。');
       return;
     }
     if (
@@ -63,7 +66,7 @@ export function TaskBoard() {
         <h2 className="text-xl font-semibold text-gray-100">{title}</h2>
         <p className="mt-1 text-sm text-gray-400">{subtitle}</p>
         <p className="mt-2 text-xs text-gray-500">
-          当前信誉{' '}
+          {language === 'en' ? 'Reputation ' : '当前信誉 '}
           <span
             className={`font-semibold ${
               reputation < 20 ? 'text-red-400' : 'text-blue-400'
@@ -71,7 +74,7 @@ export function TaskBoard() {
           >
             {reputation}
           </span>{' '}
-          · 可见需求{' '}
+          · {language === 'en' ? 'Visible jobs ' : '可见需求 '}
           <span className="text-emerald-400 font-semibold">
             {availableTasks.length}
           </span>
@@ -84,16 +87,18 @@ export function TaskBoard() {
             <div className="text-center">
               <p className="text-5xl">🪹</p>
               <p className="mt-3 text-sm text-gray-400">
-                今天没有适合你的需求
+                {language === 'en' ? 'There are no jobs that fit you today' : '今天没有适合你的需求'}
               </p>
               <p className="mt-1 text-xs text-gray-500">
-                明天再来看看吧（切换日期会刷新需求池）
+                {language === 'en' ? 'Come back tomorrow; changing the day refreshes the job boards.' : '明天再来看看吧（切换日期会刷新需求池）'}
               </p>
             </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
-            {availableTasks.map((task) => (
+            {availableTasks.map((rawTask) => {
+              const task = localizeTask(rawTask, language);
+              return (
               <div
                 key={task.id}
                 className="rounded-xl bg-gray-800/60 border border-gray-700/60 p-4 hover:border-gray-600 transition-colors"
@@ -107,7 +112,7 @@ export function TaskBoard() {
                   <span
                     className={`shrink-0 px-2 py-0.5 rounded-md text-xs font-medium ${DIFF_COLOR[task.difficulty]}`}
                   >
-                    {DIFF_LABEL[task.difficulty]}
+                    {language === 'en' ? DIFFICULTY_TRANSLATIONS[task.difficulty] : DIFF_LABEL[task.difficulty]}
                   </span>
                 </div>
 
@@ -118,12 +123,12 @@ export function TaskBoard() {
                     accent="text-violet-400"
                   />
                   <Cell
-                    label="报酬"
-                    value={`¥${task.reward}`}
+                    label={language === 'en' ? 'Reward' : '报酬'}
+                    value={formatMoney(task.reward, language)}
                     accent="text-amber-400"
                   />
                   <Cell
-                    label="信誉要求"
+                    label={language === 'en' ? 'Reputation required' : '信誉要求'}
                     value={`≥ ${task.reputationRequired}`}
                     accent="text-blue-400"
                   />
@@ -133,10 +138,11 @@ export function TaskBoard() {
                   onClick={() => handleAccept(task)}
                   className="mt-3 w-full px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium transition-colors"
                 >
-                  接单
+                  {language === 'en' ? 'Accept job' : '接单'}
                 </button>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -152,16 +158,16 @@ export function TaskBoard() {
         >
           <div className="max-w-md rounded-xl bg-gray-800 border border-red-500/40 shadow-2xl p-6 animate-fade-in-up">
             <p className="text-xs font-medium text-red-400 uppercase tracking-wider">
-              访问被拒绝
+              {language === 'en' ? 'Access denied' : '访问被拒绝'}
             </p>
             <p className="mt-3 text-base text-gray-200 leading-relaxed">
-              {rejected}
+              {translateDynamic(rejected, language)}
             </p>
             <button
               onClick={() => setRejected(null)}
               className="mt-5 px-5 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-200 text-sm font-medium transition-colors"
             >
-              知道了
+              {language === 'en' ? 'Got it' : '知道了'}
             </button>
           </div>
         </div>
@@ -181,7 +187,7 @@ function Cell({
 }) {
   return (
     <div className="rounded-lg bg-gray-900/60 border border-gray-700/50 px-2.5 py-1.5">
-      <p className="text-xs text-gray-500">{label}</p>
+            <p className="text-xs text-gray-500">{label}</p>
       <p className={`mt-0.5 font-mono text-sm font-semibold tabular ${accent}`}>
         {value}
       </p>

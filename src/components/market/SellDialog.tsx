@@ -6,6 +6,8 @@ import { Modal } from '../common/Modal';
 import { formatMoney, formatToken } from '../../utils/format';
 import { audioManager } from '../../utils/audioManager';
 import { TRADING_TAX_RATE, SELL_TAX_TIERS } from '../../data/constants';
+import { localizeToken } from '../../i18n';
+import { formatPrice } from '../../utils/format';
 
 interface Props {
   tokenId: number;
@@ -21,8 +23,9 @@ export function SellDialog({ tokenId, onClose }: Props) {
   const sellTokenAction = useGameStore((s) => s.sellToken);
   const tradingTaxActivated = useGameStore((s) => s.tradingTaxActivated);
   const sellTaxTierReached = useGameStore((s) => s.sellTaxTierReached);
+  const language = useGameStore((s) => s.language);
 
-  const token = TOKENS[tokenId];
+  const token = localizeToken(TOKENS[tokenId], language);
   const isXianyu = tokenId === 6;
 
   // 聚合该 tokenId 的所有批次
@@ -84,25 +87,25 @@ export function SellDialog({ tokenId, onClose }: Props) {
 
   return (
     <Modal
-      title={`卖出 · ${token.name}`}
-      subtitle="倒卖 Token 会扣信誉，大量抛售扣得更狠"
+      title={`${language === 'en' ? 'Sell' : '卖出'} · ${token.name}`}
+      subtitle={language === 'en' ? 'Reselling tokens costs reputation; bulk dumping hurts even more.' : '倒卖 Token 会扣信誉，大量抛售扣得更狠'}
       onClose={onClose}
     >
       <div className="space-y-5">
         {/* 价格对比 */}
         <div className="grid grid-cols-3 gap-2 text-sm">
           <InfoBox
-            label="买入均价"
-            value={`¥${avgPrice.toFixed(2)}`}
+            label={language === 'en' ? 'Average buy price' : '买入均价'}
+            value={formatPrice(avgPrice, language)}
             accent="text-gray-200"
           />
           <InfoBox
-            label="当前市价"
-            value={`¥${price.toFixed(2)}`}
+            label={language === 'en' ? 'Current market price' : '当前市价'}
+            value={formatPrice(price, language)}
             accent="text-amber-400"
           />
           <InfoBox
-            label="浮动盈亏"
+            label={language === 'en' ? 'Unrealized P/L' : '浮动盈亏'}
             value={`${profitPct >= 0 ? '+' : ''}${profitPct.toFixed(1)}%`}
             accent={profitPct >= 0 ? 'text-emerald-400' : 'text-red-400'}
           />
@@ -112,10 +115,10 @@ export function SellDialog({ tokenId, onClose }: Props) {
         <div>
           <div className="flex items-center justify-between text-sm">
             <label className="text-gray-400">
-              数量 ({isXianyu ? '个数' : 'M tokens'})
+              {language === 'en' ? `Quantity (${isXianyu ? 'accounts' : 'M tokens'})` : `数量 (${isXianyu ? '个数' : 'M tokens'})`}
             </label>
             <span className="text-xs text-gray-500">
-              持有 {isXianyu ? `${max} 个` : formatToken(max)}
+              {language === 'en' ? 'Holding ' : '持有 '}{isXianyu ? `${max} ${language === 'en' ? 'accounts' : '个'}` : formatToken(max)}
             </span>
           </div>
           <div className="mt-2 flex flex-col gap-2 md:flex-row md:items-stretch">
@@ -138,7 +141,7 @@ export function SellDialog({ tokenId, onClose }: Props) {
                   onClick={() => setQuick(r)}
                   className="px-3 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-200 text-xs font-medium transition-colors"
                 >
-                  {r === 1 ? '全' : `${r * 100}%`}
+                  {r === 1 ? (language === 'en' ? 'All' : '全') : `${r * 100}%`}
                 </button>
               ))}
             </div>
@@ -148,60 +151,60 @@ export function SellDialog({ tokenId, onClose }: Props) {
         {/* 收入预览 */}
         <div className="rounded-lg bg-gray-900/60 border border-gray-700/60 p-3 md:p-4 space-y-1.5">
           <div className="flex items-baseline justify-between">
-            <span className="text-sm text-gray-400">预计收入</span>
+            <span className="text-sm text-gray-400">{language === 'en' ? 'Estimated income' : '预计收入'}</span>
             <span className="font-mono text-2xl font-bold text-amber-400 tabular">
-              +{formatMoney(netIncome)}
+              +{formatMoney(netIncome, language)}
             </span>
           </div>
           {tradingTaxActivated && (
             <div className="flex items-baseline justify-between text-xs">
-              <span className="text-red-400">交易税 ({sellTaxPct}%)</span>
+              <span className="text-red-400">{language === 'en' ? `Trading tax (${sellTaxPct}%)` : `交易税 (${sellTaxPct}%)`}</span>
               <span className="font-mono tabular text-red-400">
-                -{formatMoney(taxAmount)} <span className="text-gray-500">(毛收入 {formatMoney(total)})</span>
+                -{formatMoney(taxAmount, language)} <span className="text-gray-500">{language === 'en' ? `(gross ${formatMoney(total, language)})` : `(毛收入 ${formatMoney(total, language)})`}</span>
               </span>
             </div>
           )}
           <div className="flex items-baseline justify-between text-xs">
-            <span className="text-gray-500">本次盈亏</span>
+            <span className="text-gray-500">{language === 'en' ? 'P/L' : '本次盈亏'}</span>
             <span
               className={`font-mono tabular ${
                 netProfit >= 0 ? 'text-emerald-400' : 'text-red-400'
               }`}
             >
               {netProfit >= 0 ? '+' : ''}
-              {formatMoney(netProfit)}
+              {formatMoney(netProfit, language)}
             </span>
           </div>
         </div>
 
         {/* 信誉警告 */}
         <div className="rounded-lg bg-red-500/5 border border-red-500/30 p-3 text-sm leading-relaxed">
-          <p className="font-medium text-red-400">信誉影响</p>
+          <p className="font-medium text-red-400">{language === 'en' ? 'Reputation impact' : '信誉影响'}</p>
           <ul className="mt-1.5 space-y-0.5 text-xs text-gray-300">
             <li className="flex justify-between">
-              <span>基础倒卖</span>
+              <span>{language === 'en' ? 'Base reselling' : '基础倒卖'}</span>
               <span className="font-mono text-red-400 font-semibold tabular">-{baseRepLoss}</span>
             </li>
             {isBulk && (
               <li className="flex justify-between">
-                <span>大量抛售 (超 1B 每 1B 额外 -5)</span>
+                <span>{language === 'en' ? 'Bulk sale (−5 per extra 1B)' : '大量抛售 (超 1B 每 1B 额外 -5)'}</span>
                 <span className="font-mono text-red-400 font-semibold tabular">-{bulkPenalty}</span>
               </li>
             )}
             {sellsExpiring && (
               <li className="flex justify-between">
-                <span>临期 Token (最早批次剩 ≤1 天)</span>
+                <span>{language === 'en' ? 'Expiring tokens (≤1 day left)' : '临期 Token (最早批次剩 ≤1 天)'}</span>
                 <span className="font-mono text-red-400 font-semibold tabular">-{expiringRepLoss}</span>
               </li>
             )}
             <li className="flex justify-between border-t border-red-500/20 pt-1 mt-1">
-              <span className="text-red-300 font-medium">合计</span>
+              <span className="text-red-300 font-medium">{language === 'en' ? 'Total' : '合计'}</span>
               <span className="font-mono text-red-400 font-bold tabular">-{totalRepLoss}</span>
             </li>
           </ul>
           {batches.length > 0 && (
             <p className="mt-2 text-[11px] text-amber-300/80">
-              FIFO 优先出售最早过期的批次（最早过期仅剩 {earliestExpiresIn} 天）
+              {language === 'en' ? `FIFO sells the earliest-expiring batch first (${earliestExpiresIn} day${earliestExpiresIn === 1 ? '' : 's'} left).` : `FIFO 优先出售最早过期的批次（最早过期仅剩 ${earliestExpiresIn} 天）`}
             </p>
           )}
         </div>
@@ -211,14 +214,14 @@ export function SellDialog({ tokenId, onClose }: Props) {
             onClick={onClose}
             className="flex-1 px-4 py-2.5 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-200 font-medium transition-colors"
           >
-            取消
+            {language === 'en' ? 'Cancel' : '取消'}
           </button>
           <button
             onClick={handleConfirm}
             disabled={!canSell}
             className="flex-[2] px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-emerald-600"
           >
-            确认卖出
+            {language === 'en' ? 'Confirm sale' : '确认卖出'}
           </button>
         </div>
       </div>

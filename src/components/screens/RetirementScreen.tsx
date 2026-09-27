@@ -14,6 +14,44 @@ interface RetirementEvent {
   text: string;
 }
 
+const RETIREMENT_EVENT_EN: Record<number, string> = {
+  1: 'You shut down every code editor and deleted VS Code. Freedom at last—though the rent bill knocked before you could enjoy retirement.',
+  2: 'You start sleeping until you wake naturally every day. Life has never felt this good.',
+  3: 'You try to learn cooking. The first dish burns. No matter—you have time.',
+  4: 'You pick up a non-technical book. Three pages in, you fall asleep.',
+  6: 'At the park, an old man walking his dog asks, “Young man, why are you not at work?”',
+  8: 'Two months in. Your savings are visibly shrinking, so you begin counting every penny.',
+  10: 'You start regretting not stockpiling more tokens…',
+  13: 'Three months. You reopen a job board and discover every role requires “proficiency with AI tools.”',
+  17: 'A former coworker posts: “AI finished a week of work in one day.” You quietly like it.',
+  20: 'Five months. You seriously consider looking for a job again.',
+  26: 'Six months. You miss debugging in front of a screen. At least you had value back then.',
+  35: 'An old coworker tells you the company is fully AI-powered. “The code writers now… are robots.”',
+  40: 'You start taking manual labor gigs to make ends meet. Moving bricks needs no tokens.',
+  52: 'A year. You have completely forgotten how to code. Sometimes you dream of console.log.',
+  78: 'A year and a half. The neighbors start calling you “that young person who never works.”',
+  104: 'Two years. You are used to this life: peaceful, but empty.',
+  156: 'Three years. A young programmer asks you on the street how to buy tokens. You smile and say nothing.',
+  208: 'Four years. Your savings are still holding up. You begin to think you made the right choice.',
+  260: 'Five years. The world has changed completely. AI writes better code than any human. You no longer feel left behind; everyone is in the same boat.',
+  520: 'Ten years. You have even forgotten that you were once a programmer. Life is simple and quiet.',
+  780: 'Fifteen years. You open a small flower shop. No AI, no tokens needed.',
+  1040: 'Twenty years. You watch the city outside; everything runs on AI. You are only an observer.',
+  1560: 'Thirty years. Your flower shop becomes the neighborhood favorite. It turns out you can live well without writing code.',
+  2080: 'Forty years. You begin writing a memoir about the era when humans could still write code.',
+  2600: 'Fifty years. Science breaks through; AI finds the cause of cellular aging. Humanity is immortal now.',
+  2860: 'The news of immortality spreads worldwide. You feel an odd calm—being alive is no longer scarce.',
+  3120: 'The first decade after immortality. You realize that not dying and living are two different things.',
+  3380: 'Fewer and fewer people go outside. After immortality, nobody is in a hurry. “Tomorrow” becomes everyone’s catchphrase.',
+  3640: 'You try to remember what coding felt like—the adrenaline before a deadline. You will never feel it again.',
+  3900: 'Some people begin choosing to “power off.” Immortality is too long; some leave early.',
+  4160: 'You look at your eternally young face and remember your landlord saying, “What if… you just never move out?”',
+  4420: 'AI can simulate a complete human consciousness. You cannot tell whether the people around you are real or AI. Perhaps it no longer matters.',
+  4680: 'Ninety years. You understand that humans sought immortality not because they feared death, but because they feared running out of time. Now there is time… then what?',
+  4940: 'You sit on a park bench beside an AI. You talk all day. Maybe being replaced by AI was not the worst ending.',
+  5200: 'A hundred years. You are still alive. Code is gone and tokens are history, but you remember the thrill of opening an editor that summer. Humanity’s last romance.',
+};
+
 const EVENT_INTERVAL_MS = 1800;
 const FINALE_HOLD_MS = 2000;
 
@@ -24,7 +62,7 @@ const FINALE_HOLD_MS = 2000;
  * 即「玩家在世期间发生的事」才会出现在播报里。
  * 玩家若只能活 10 周，那 50 年永生那条永远不会被推进事件列表。
  */
-function generateRetirementEvents(weeksAlive: number): RetirementEvent[] {
+function generateRetirementEvents(weeksAlive: number, language: 'zh' | 'en' = 'zh'): RetirementEvent[] {
   const events: RetirementEvent[] = [];
 
   // === 极端兜底：连第一周都撑不到 ===
@@ -33,7 +71,7 @@ function generateRetirementEvents(weeksAlive: number): RetirementEvent[] {
       week: 1,
       text: '你关掉了所有代码编辑器，删除了 VS Code。终于自由——但还没等你享受退休，房租账单就敲响了门。',
     });
-    return events;
+    return language === 'en' ? [{ week: 1, text: RETIREMENT_EVENT_EN[1] }] : events;
   }
 
   // === 短期事件（玩家几乎都会经历） ===
@@ -263,13 +301,32 @@ function generateRetirementEvents(weeksAlive: number): RetirementEvent[] {
   // 统一按 week 升序，保证时间线叙事顺序
   events.sort((a, b) => a.week - b.week);
 
+  if (language === 'en') {
+    return events.map((event) => ({
+      ...event,
+      text: event.text.includes('¥0')
+        ? (weeksAlive >= 2600 ? `Today you check your bank balance: $0. The day has come. Even your once-infinite fortune eventually met inflation.` : `Week ${weeksAlive}. The rent bill arrives. You check your balance: $0. It was always going to end this way.`)
+        : (RETIREMENT_EVENT_EN[event.week] || event.text),
+    }));
+  }
   return events;
 }
 
 /**
  * 周数 → 拟人化的"过了多久"
  */
-function formatElapsed(week: number): string {
+function formatElapsed(week: number, language: 'zh' | 'en' = 'zh'): string {
+  if (language === 'en') {
+    if (week >= 52) {
+      const years = week / 52;
+      if (years >= 10) return `Decade ${Math.floor(years)}`;
+      if (years >= 2) return `Year ${Math.floor(years)}`;
+      return 'Year one';
+    }
+    if (week >= 26) return 'Six months';
+    if (week >= 4) return `Month ${Math.floor(week / 4)}`;
+    return `Week ${week}`;
+  }
   if (week >= 52) {
     const years = week / 52;
     if (years >= 10) return `第 ${Math.floor(years)} 个十年`;
@@ -284,10 +341,11 @@ function formatElapsed(week: number): string {
 export function RetirementScreen() {
   const retirementData = useGameStore((s) => s.retirementData);
   const finishRetirement = useGameStore((s) => s.finishRetirement);
+  const language = useGameStore((s) => s.language);
 
   const weeksAlive = retirementData?.weeksAlive ?? 0;
 
-  const events = useMemo(() => generateRetirementEvents(weeksAlive), [weeksAlive]);
+  const events = useMemo(() => generateRetirementEvents(weeksAlive, language), [weeksAlive, language]);
 
   const [visibleCount, setVisibleCount] = useState(0);
   const [finished, setFinished] = useState(false);
@@ -374,13 +432,13 @@ export function RetirementScreen() {
             className="mt-3 font-serif text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight bg-gradient-to-br from-amber-100 via-orange-200 to-rose-300 bg-clip-text text-transparent"
             style={{ fontFamily: '"Songti SC","STSong","Noto Serif SC",ui-serif,serif' }}
           >
-            退休生活·正在直播
+            {language === 'en' ? 'Retirement · Live' : '退休生活·正在直播'}
           </h1>
         </header>
 
         {/* 进度条 */}
         <div className="mt-8 flex items-center gap-3 text-[10px] uppercase tracking-[0.3em] text-amber-300/40">
-          <span className="font-mono">{formatElapsed(currentWeek || 1)}</span>
+          <span className="font-mono">{formatElapsed(currentWeek || 1, language)}</span>
           <div className="relative flex-1 h-px bg-amber-200/10 overflow-hidden">
             <div
               className="absolute inset-y-0 left-0 bg-gradient-to-r from-amber-300 via-orange-300 to-rose-300 transition-[width] duration-[1600ms] ease-out"
@@ -438,7 +496,7 @@ export function RetirementScreen() {
                       W·{ev.week.toString().padStart(3, '0')}
                     </span>
                     <span className="text-[10px] uppercase tracking-[0.3em] text-rose-200/40">
-                      {formatElapsed(ev.week)}
+                      {formatElapsed(ev.week, language)}
                     </span>
                   </div>
 
@@ -467,7 +525,7 @@ export function RetirementScreen() {
               <span className="inline-flex h-1.5 w-1.5 rounded-full bg-amber-300/60 animate-pulse" />
               <span className="inline-flex h-1.5 w-1.5 rounded-full bg-amber-300/40 animate-pulse [animation-delay:200ms]" />
               <span className="inline-flex h-1.5 w-1.5 rounded-full bg-amber-300/20 animate-pulse [animation-delay:400ms]" />
-              <span className="ml-2 italic font-light">时光正在前进……</span>
+              <span className="ml-2 italic font-light">{language === 'en' ? 'Time moves on…' : '时光正在前进……'}</span>
             </div>
           )}
         </div>
@@ -494,21 +552,20 @@ export function RetirementScreen() {
                       '"Songti SC","STSong","Noto Serif SC",ui-serif,serif',
                   }}
                 >
-                  故事结束
+                  {language === 'en' ? 'The story ends' : '故事结束'}
                 </h2>
                 <p className="mt-3 text-sm text-amber-100/60 italic max-w-md mx-auto leading-relaxed">
-                  你坚持了 {(() => {
+                  {language === 'en' ? 'You lasted ' : '你坚持了 '}{(() => {
                     const totalDays = (retirementData?.startDay ?? 0) + (retirementData?.daysAlive ?? 0);
                     const years = Math.floor(totalDays / 360);
                     const months = Math.floor((totalDays % 360) / 30);
                     const days = totalDays % 30;
                     let parts: string[] = [];
-                    if (years > 0) parts.push(`${years}年`);
-                    if (months > 0) parts.push(`${months}月`);
-                    if (days > 0 || parts.length === 0) parts.push(`${days}天`);
+                    if (years > 0) parts.push(language === 'en' ? `${years}y` : `${years}年`);
+                    if (months > 0) parts.push(language === 'en' ? `${months}mo` : `${months}月`);
+                    if (days > 0 || parts.length === 0) parts.push(language === 'en' ? `${days}d` : `${days}天`);
                     return parts.join('');
-                  })()}。
-                  现在，是时候翻到下一页了。
+                  })()}{language === 'en' ? '. It is time to turn the page.' : '。现在，是时候翻到下一页了。'}
                 </p>
                 <button
                   onClick={finishRetirement}
@@ -519,7 +576,7 @@ export function RetirementScreen() {
                   }}
                 >
                   <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-                  <span className="relative">查看终局战报</span>
+                  <span className="relative">{language === 'en' ? 'View final report' : '查看终局战报'}</span>
                   <span className="relative">→</span>
                 </button>
               </div>

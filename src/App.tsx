@@ -6,9 +6,16 @@ import { GameScreen } from './components/screens/GameScreen';
 import { GameOverScreen } from './components/screens/GameOverScreen';
 import { RetirementScreen } from './components/screens/RetirementScreen';
 import { LandscapeGuard } from './components/common/LandscapeGuard';
+import { LanguageToggle } from './components/common/LanguageToggle';
 
 function App() {
   const phase = useGameStore((s) => s.phase);
+  const language = useGameStore((s) => s.language);
+
+  useEffect(() => {
+    document.documentElement.lang = language === 'en' ? 'en' : 'zh-CN';
+    document.title = language === 'en' ? 'Vibe Coding Simulator' : 'Vibe Coding 模拟器';
+  }, [language]);
 
   // 动态视口高度追踪：解决手机浏览器地址栏/工具栏占位导致 100vh 超出可见区域的问题
   // 通过 visualViewport API 获取真实可见高度，写入 CSS 变量 --app-height
@@ -147,6 +154,7 @@ function App() {
   return (
     <>
       <LandscapeGuard />
+      <LanguageToggle />
       {screen}
     </>
   );
