@@ -1,10 +1,8 @@
 <div align="center">
 
-# Vibe Coding 模拟器
+# Vibe Coding 模拟器 
 
-### AI 时代，程序员如何生存？
-
-**[🎮 在线试玩](https://thatbobo.com/vibe_coding_sim/)**
+### AI 时代，程序员如何生存？ [🎮 在线试玩](https://thatbobo.com/vibe_coding_sim/)
 
 </div>
 
@@ -24,11 +22,11 @@ AI 浪潮袭来，你会被时代淘汰，还是逐步摸索出适合自己的�
 - ⭐ 信誉会影响接单机会
 - 🧘 精神状态同样重要，别让自己先撑不住
 
-## 在线试玩
+## Play it now
 
 无需安装，打开网页即可开始：**[开始游戏 →](https://thatbobo.com/vibe_coding_sim/)**
 
-## 本地运行
+## Local
 
 需要 Node.js 20 或更高版本。
 
@@ -45,7 +43,7 @@ npm run dev
 npm run build
 ```
 
-## 技术栈
+## Tech stack
 
 React · TypeScript · Vite · Zustand
 
