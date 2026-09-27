@@ -22,11 +22,7 @@ AI 浪潮袭来，你会被时代淘汰，还是逐步摸索出适合自己的�
 - ⭐ 信誉会影响接单机会
 - 🧘 精神状态同样重要，别让自己先撑不住
 
-## Play it now
-
-[🎮 开始游戏](https://thatbobo.com/vibe_coding_sim/)
-
-## Local
+## Local Deployment
 
 Need Node.js 20+。
 
