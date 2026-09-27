@@ -2,7 +2,7 @@
 
 # Vibe Coding 模拟器 
 
-### AI 时代，程序员如何生存？ [🎮 在线试玩](https://thatbobo.com/vibe_coding_sim/)
+### AI 时代，程序员如何生存？ [🎮 开始游戏](https://thatbobo.com/vibe_coding_sim/)
 
 </div>
 
@@ -24,22 +24,17 @@ AI 浪潮袭来，你会被时代淘汰，还是逐步摸索出适合自己的�
 
 ## Play it now
 
-无需安装，打开网页即可开始：**[开始游戏 →](https://thatbobo.com/vibe_coding_sim/)**
+[🎮 开始游戏](https://thatbobo.com/vibe_coding_sim/)
 
 ## Local
 
-需要 Node.js 20 或更高版本。
+Need Node.js 20+。
 
 ```bash
 git clone https://github.com/Luciferbobo/vibe_coding_sim.git
 cd vibe_coding_sim
 npm ci
 npm run dev
-```
-
-构建生产版本：
-
-```bash
 npm run build
 ```
 
