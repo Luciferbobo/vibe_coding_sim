@@ -10,7 +10,8 @@
 
 </div>
 
-![Vibe Coding Simulator screenshot](https://github.com/user-attachments/assets/3ee9b981-42d5-4ed6-8d5c-97742d2a37ef)
+<img width="2559" height="1281" alt="image" src="https://github.com/user-attachments/assets/a250dd57-18b2-4ddd-aa38-0e0e215a7883" />
+
 
 Vibe Coding Simulator is a browser game about making a living with AI-assisted programming. You start with **$500**, a laptop, and a growing list of obligations. Token prices keep moving, rent is due every seven days, and every decision affects how long you can stay in the game.
 
@@ -44,14 +45,6 @@ To create a production build and preview it locally:
 npm run build
 npm run preview
 ```
-
-## GitHub Pages
-
-Every push to `main` runs the GitHub Actions workflow in [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml). In a fork, enable **Settings → Pages → GitHub Actions** to publish the built `dist` directory.
-
-## Language support
-
-The game includes an **EN / 中文** switch in the top-right corner. The English interface uses dollar values converted from the Chinese game values at a 1:10 ratio, while the Chinese interface keeps the original RMB values.
 
 ## Tech stack
 
