@@ -45,19 +45,11 @@ npm run build
 npm run preview
 ```
 
-## GitHub Pages 部署
-
-每次推送到 `main` 分支都会触发 [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml)。如果你 Fork 了本项目，请在 **Settings → Pages → GitHub Actions** 中启用 GitHub Actions，工作流会自动发布 `dist` 目录。
-
-## 语言切换
-
-游戏右上角提供 **EN / 中文** 切换按钮。英文版会将中文界面的游戏金额按 1:10 换算为美元显示，中文版保留原始人民币数值。
-
 ## 技术栈
 
 React · TypeScript · Vite · Zustand · Tailwind CSS
 
-## 许可证
+## License
 
 本项目使用 [PolyForm Noncommercial License 1.0.0](LICENSE) 授权，禁止商业使用。
 
