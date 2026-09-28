@@ -13,13 +13,13 @@ export function setCurrentLanguage(language: Language) { currentLanguage = langu
 
 export const SITE_TRANSLATIONS: Record<number, { name: string; description: string }> = {
   0: { name: 'API Marketplace', description: 'Official token market' },
-  1: { name: 'Xianyu Resale', description: 'Wild, second-hand token market' },
+  1: { name: 'eBay Resale', description: 'Wild, second-hand token market' },
   2: { name: 'Freelance Hub', description: 'General freelance jobs' },
   3: { name: 'Executive Headhunters', description: 'High-end project board' },
   4: { name: 'Twitter', description: 'Market news and chatter' },
   5: { name: 'Apartment', description: 'Your place' },
   6: { name: 'Starbucks', description: 'Coffee for a little more focus' },
-  7: { name: 'Zhihu', description: 'Write tech posts to build reputation' },
+  7: { name: 'Quora', description: 'Write tech posts to build reputation' },
   8: { name: 'Hall of Achievements', description: 'Review your life milestones' },
   9: { name: 'Retirement', description: 'Liquidate everything' },
   10: { name: 'GPU Compute Center', description: 'Become a token capitalist' },
@@ -32,7 +32,7 @@ export const TOKEN_TRANSLATIONS: Record<number, { name: string; description: str
   3: { name: 'DeepSeek v19', description: 'A homegrown star with an approachable price' },
   4: { name: 'Qwen 6.8 Max', description: "Alibaba's model: dependable and unflashy" },
   5: { name: 'Kimi K8', description: 'Cheap, plentiful, and easy to burn through' },
-  6: { name: 'Xianyu Cursor account', description: 'A questionable bargain account: 100M tokens per account' },
+  6: { name: 'eBay Cursor account', description: 'A questionable bargain account: 100M tokens per account' },
 };
 
 export const GPU_TRANSLATIONS: Record<number, { name: string; description: string }> = {
@@ -53,7 +53,7 @@ export const ACHIEVEMENT_TRANSLATIONS: Record<string, { name: string; descriptio
   early_rent_10: { name: 'Landlord\'s Favorite', description: 'Pay rent early ten times in a row' },
   token_10b: { name: 'Token Whale', description: 'Hold 10B tokens of any model' },
   coffee_5days: { name: 'Caffeinated Wage Slave', description: 'Drink coffee five days in a row' },
-  zhihu_10days: { name: 'Coach, I Want to Learn This', description: 'Publish Zhihu articles ten days in a row' },
+  zhihu_10days: { name: 'Coach, I Want to Learn This', description: 'Publish Quora articles ten days in a row' },
   manual_3: { name: 'A Real Programmer', description: 'Complete three projects by hand' },
   sell_expiring: { name: 'The Good Samaritan', description: 'Sell tokens with only one day left' },
   arbitrage_5: { name: 'The Wealth Formula', description: 'Profit from cross-market arbitrage five times' },
@@ -144,7 +144,7 @@ export const EVENT_TRANSLATIONS: Record<string, string> = {
   'DeepSeek v19完成新一轮融资，Token降价15%！': 'DeepSeek v19 closed a new funding round; its tokens are 15% cheaper!',
   '阿里开源新模型，白送你 5M Qwen 6.8 Max Token！': 'Alibaba open-sourced a new model and gave you 5M Qwen 6.8 Max tokens!',
   '你中了 GitHub 抽奖，获得 0.5M GPT-8.5 Token！': 'You won a GitHub giveaway: 0.5M GPT-8.5 tokens!',
-  '朋友送你 5 个咸鱼Cursor试用号！': 'A friend gave you five Xianyu Cursor trial accounts!',
+  '朋友送你 5 个咸鱼Cursor试用号！': 'A friend gave you five eBay Cursor trial accounts!',
   '你在GitHub收到一个Star，感觉世界还需要你！': 'You got a GitHub star. The world still needs you!',
   '一个初学者在评论区感谢了你3年前写的博客，你感到温暖': 'A beginner thanked you for a blog post from three years ago. You feel seen.',
   'Claude Opus 12.0又涨价了！Anthropic宣布API价格上调30%！': 'Claude Opus 12.0 got more expensive again! Anthropic raised API prices 30%!',
@@ -159,7 +159,7 @@ export const EVENT_TRANSLATIONS: Record<string, string> = {
   '又一个AI产品上线了，你感到自己越来越没用': 'Another AI product launched. You feel more obsolete by the minute.',
   '前同事朋友圈晒offer，年薪是你10倍...': 'A former coworker posted a new offer: ten times your salary…',
   '刷到"6岁程序员何去何从"，你关上了手机': 'You see “Where does a six-year-old programmer go from here?” and put your phone away.',
-  '你在知乎写的技术文章上了热榜！信誉提升！': 'Your Zhihu tech article hit the trending list. Reputation up!',
+  '你在知乎写的技术文章上了热榜！信誉提升！': 'Your Quora tech article hit the trending list. Reputation up!',
   '有人在脉脉上说你接私活不靠谱（虽然不是你）': 'Someone on Maimai says you are unreliable for side gigs (it is not even you).',
 };
 
@@ -212,8 +212,8 @@ const EXACT_TRANSLATIONS: Record<string, string> = {
   '🎉 你的资产达到了200万！神秘场所已解锁：「GPU算力中心」（在早期请谨慎投资，token价格过低时购买gpu可能导致亏损）': '🎉 Your assets reached $200,000! The mysterious GPU Compute Center is unlocked. Invest carefully: buying GPUs while token prices are low can lose money.',
   '进入下一天·事件': 'Next day · event',
   '进入下一天': 'Next day',
-  '⚠️ 信誉值为 0，没人愿意把 Token 卖给你了…先去知乎写博客洗白吧。': '⚠️ Your reputation is zero; nobody will sell you tokens. Write a Zhihu post to rebuild it.',
-  '⚠️ 咸鱼Cursor账号不支持转卖': '⚠️ Xianyu Cursor accounts cannot be resold',
+  '⚠️ 信誉值为 0，没人愿意把 Token 卖给你了…先去知乎写博客洗白吧。': '⚠️ Your reputation is zero; nobody will sell you tokens. Write a Quora post to rebuild it.',
+  '⚠️ 咸鱼Cursor账号不支持转卖': '⚠️ eBay Cursor accounts cannot be resold',
   '你开始走上了倒卖Token的道路... 不知这对与错，但你知道你必须活下去。（倒卖Token会降低信誉值）': 'You have started reselling tokens. You do not know whether it is right, but you know you have to survive. (Reselling lowers reputation.)',
   '把只剩一天保质期的Token卖出，这种事你也干得出来？？（额外扣除 3 点信誉）': 'You sold tokens with one day left. You really did that? (Additional reputation −3.)',
   '💡 恭喜你发现了套利逻辑~': '💡 Congratulations—you found the arbitrage loop!',
@@ -276,7 +276,7 @@ const RUNTIME_EXACT_TRANSLATIONS: Record<string, string> = {
   '「DeepSeek v19」今天已经卖过一次了~（当日买入的品种当天只可出售一次）': '“DeepSeek v19” has already been sold once today. (A token bought today can only be sold once today.)',
   '「Qwen 6.8 Max」今天已经卖过一次了~（当日买入的品种当天只可出售一次）': '“Qwen 6.8 Max” has already been sold once today. (A token bought today can only be sold once today.)',
   '「Kimi K8」今天已经卖过一次了~（当日买入的品种当天只可出售一次）': '“Kimi K8” has already been sold once today. (A token bought today can only be sold once today.)',
-  '「咸鱼Cursor账号」今天已经卖过一次了~（当日买入的品种当天只可出售一次）': '“Xianyu Cursor account” has already been sold once today. (A token bought today can only be sold once today.)',
+  '「咸鱼Cursor账号」今天已经卖过一次了~（当日买入的品种当天只可出售一次）': '“eBay Cursor account” has already been sold once today. (A token bought today can only be sold once today.)',
   '⚠️ 8 × H200 已报废（使用15天）。通过该GPU累计产出价值 ¥0，净利润 ¥-1,000,000': '⚠️ 8 × H200 has been scrapped after 15 days. Lifetime output was $0; net profit: −$100,000.',
 };
 
@@ -448,7 +448,7 @@ export function translateDynamic(text: string, language: Language = currentLangu
   result = result.replace(/(.+?)连续输出了5000行注释，一行有效代码都没有/, '$1 output 5,000 lines of comments and not one useful line of code.');
   result = result.replace(/(.+?)把你的Python代码翻译成了古诗/, '$1 translated your Python into classical poetry.');
   result = result.replace(/(.+?)生成的代码跑起来了！然后它删除了你的数据库/, '$1 code ran! Then it deleted your database.');
-  result = result.replace(/咸鱼的Cursor账号又挂了！愤怒的你点击了退款/, 'The Xianyu Cursor account died again. Furious, you clicked Refund.');
+  result = result.replace(/咸鱼的Cursor账号又挂了！愤怒的你点击了退款/, 'The eBay Cursor account died again. Furious, you clicked Refund.');
   result = result.replace(/Cursor弹窗："账号已封禁" 你联系卖家，发现已被拉黑/, 'Cursor says: “Account banned.” You contact the seller and find yourself blocked.');
   result = result.replace(/你买的账号里还残留着上个人的coding记录，你看得正起劲时，账号被ban了/, 'The account still has its previous owner’s coding history. Just as it gets interesting, the account is banned.');
   result = result.replace(/账号能用，但每生成 (\d+) 行代码就要重新登录一次，你放弃了"(.+?)"/, 'The account works, but it makes you log in after every $1 lines. You give up on “$2.”');

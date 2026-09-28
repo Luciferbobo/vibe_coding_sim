@@ -44,7 +44,7 @@ export function StartScreen() {
               Vibe Coding Simulator
             </p>
             <h1 className="mt-2 text-4xl sm:text-5xl font-bold tracking-tight text-gray-50">
-              {language === 'en' ? 'In an age where AI replaces everything' : '在 AI 取代一切的时代'}
+              {language === 'en' ? 'When AI replaces everything' : '在 AI 取代一切的时代'}
               <br />
               <span className="text-emerald-400">{language === 'en' ? 'How long can you survive?' : '你还能活多久？'}</span>
             </h1>

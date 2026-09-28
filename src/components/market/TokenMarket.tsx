@@ -35,7 +35,7 @@ export function TokenMarket() {
 
   const isXianyu = currentSiteId === 1;
   const title = isXianyu
-    ? (language === 'en' ? 'Xianyu Resale · Wild Token Market' : '闲鱼二手区 · 野生 Token 集市')
+    ? (language === 'en' ? 'eBay Resale · Wild Token Market' : '闲鱼二手区 · 野生 Token 集市')
     : (language === 'en' ? 'API Marketplace · Official Source' : 'API 商城 · 官方源');
   const subtitle = isXianyu
     ? (language === 'en' ? 'Second-hand trades: bargain surprises and hidden traps' : '二手交易，价格随缘浮动，有惊喜也有坑')
@@ -197,7 +197,7 @@ export function TokenMarket() {
                     <button
                       disabled
                       className="px-3 py-1 rounded-md bg-gray-700 text-gray-500 text-xs font-medium cursor-not-allowed opacity-30"
-                      title={language === 'en' ? 'Xianyu Cursor accounts cannot be resold' : '咸鱼Cursor账号不支持转卖'}
+                      title={language === 'en' ? 'eBay Cursor accounts cannot be resold' : '咸鱼Cursor账号不支持转卖'}
                     >
                       {language === 'en' ? 'Sell' : '卖出'}
                     </button>
