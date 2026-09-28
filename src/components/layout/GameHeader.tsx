@@ -87,7 +87,7 @@ export function GameHeader() {
       </div>
 
       {/* 右侧全部内容 */}
-      <div className="flex-1 flex items-center justify-end gap-5">
+      <div className="flex-1 flex items-center justify-end gap-5 pr-20">
         {restDaysLeft > 0 && (
           <span className="px-2.5 py-1 rounded-md bg-red-500/15 text-red-400 text-xs font-medium border border-red-500/30 whitespace-nowrap">
             {language === 'en' ? `Forced rest · ${restDaysLeft} days` : `强制躺平 ${restDaysLeft} 天`}

@@ -1,15 +1,15 @@
 // English localization for the Twitter feed. Entries are index-aligned with
 // TWITTER_POST_TEMPLATES so the original deck and randomness remain unchanged.
 export const TWITTER_EN_USERS = [
-  '@TokenTrader', '@AIReplacementTheorist', '@35yoCoder', '@XianyuTokenDealer', '@IndieDevLi', '@PMKitty', '@OpenAIOfficial', '@HRXiaomei', '@AllInStudent', '@InvestorHenry',
+  '@TokenTrader', '@AIReplacementTheorist', '@35yoCoder', '@eBayTokenDealer', '@IndieDevLi', '@PMKitty', '@OpenAIOfficial', '@HRXiaomei', '@AllInStudent', '@InvestorHenry',
   '@LayoffSurvivor', '@LittleRedBookTech', '@QuantTrader', '@CafeRegular', '@OutsourceWang', '@CSDNOldTimer', '@OfficeDroneLi', '@GitHubMillionStar', '@AIEvangelist', '@HomegrownModelFan',
   '@NextDoorWang', '@MetaverseElder', '@AICompanionAddict', '@AntiHustleClub', '@NiukeGrinder', '@GradJobSeekerSnake', '@CloudNativeCastaway', '@CryptoBagholder', '@DataLabeler', '@DomesticAPIProxy', '@FrontendIsDeadClub',
-  '@CursorDependent', '@ClientBoss', '@TokenMiner', '@RetiredProgrammer', '@GPT85Shareholder', '@SideHustlePro', '@InterviewerQiang', '@CaffeineOverdose', '@ZhihuTopAnswer', '@SecondTierGrad',
-  '@TokenFuturesMaster', '@TechLeadZhang', '@LateNightEmo', '@XianyuReseller', '@FailedFounder3x', '@AIArtist', '@FullStackLoneWolf', '@InternChen', '@CTOSeenNoReply', '@GPT85LoveCoach',
+  '@CursorDependent', '@ClientBoss', '@TokenMiner', '@RetiredProgrammer', '@GPT85Shareholder', '@SideHustlePro', '@InterviewerQiang', '@CaffeineOverdose', '@QuoraTopAnswer', '@SecondTierGrad',
+  '@TokenFuturesMaster', '@TechLeadZhang', '@LateNightEmo', '@eBayReseller', '@FailedFounder3x', '@AIArtist', '@FullStackLoneWolf', '@InternChen', '@CTOSeenNoReply', '@GPT85LoveCoach',
   '@PromptCourseKing', '@DayTwoAfterLayoff', '@QAEngineer', '@Web3Dinosaur', '@TechMediaEditor', '@DroppedTheDB', '@ThermosGoji', '@ClaudeOpusBeliever', '@DailyFounder', '@ClientPaymentTracker',
-  '@CopilotVictim', '@CourierToCoder', '@RetiredArchitect', '@ShenzhenBayWalker', '@TokenAdvisor', '@BricklayerBot', '@BigTechReferralHero', '@DailyTechBlog', '@ProductManagerGoneMad', '@XianyuGhostwriter',
+  '@CopilotVictim', '@CourierToCoder', '@RetiredArchitect', '@ShenzhenBayWalker', '@TokenAdvisor', '@BricklayerBot', '@BigTechReferralHero', '@DailyTechBlog', '@ProductManagerGoneMad', '@eBayGhostwriter',
   '@FinancialFreedomDreamer', '@OpenSourceContributor', '@EcommerceToAI', '@AIFearPatient', '@RemoteWorkSlacker', '@TokenCrashWitness', '@UIDesigner', '@ProgrammingSnobBottom', '@WinterCoder', '@WeekendTechShare',
-  '@DebugGod', '@BeijingDrifterYearFive', '@AIpartner', '@ProductOpsNewbie', '@XianyuClearanceKing', '@YearEndReviewTemplate', '@CodePurist', '@LinkedInFlexExpert', '@TechInterviewer', '@AllInAIBro',
+  '@DebugGod', '@BeijingDrifterYearFive', '@AIpartner', '@ProductOpsNewbie', '@eBayClearanceKing', '@YearEndReviewTemplate', '@CodePurist', '@LinkedInFlexExpert', '@TechInterviewer', '@AllInAIBro',
   '@OnlyHumanOnTeam', '@CivilServiceWinner', '@ShortVideoTeacher', '@MeetingProfessional', '@FreeQuotaSheep', '@SciFiWriter', '@LeaseExpired', '@PPTEngineer', '@MidnightDeployer', '@TokenBottomPicker',
   '@FreshGradDiary',
 ];
@@ -116,7 +116,7 @@ export const TWITTER_EN_TEXTS = [
   'Boss asked me to make an AI strategy deck. I used AI to make an AI strategy deck. Boss asked if I made it. I said yes. “Great,” he said. “It looks even more AI-made than AI’s.”',
   'Deployed at 2 a.m. AI said the code was fine. Service crashed in production. I asked why. AI: “Production and test environments differ. How would I know?”',
   'When others are fearful, I am greedy. When others are greedy, I am greedier. They got trapped halfway up the mountain; I got trapped at the summit.',
-  'Day 1: Got an offer, so happy!\nDay 30: Company adopted AI and downsized the role.\nDay 60: Told probation failed.\nDay 61: Selling my employee badge on Xianyu.',
+  'Day 1: Got an offer, so happy!\nDay 30: Company adopted AI and downsized the role.\nDay 60: Told probation failed.\nDay 61: Selling my employee badge on eBay.',
 ];
 
 export function getEnglishTwitterPost(index: number, fallback: { user: string; text: string }) {

@@ -13,7 +13,7 @@ export function ZhihuBlog() {
   return (
     <div className="flex h-full flex-col">
       <div className="border-b border-gray-800 px-4 py-3 md:px-6 md:py-5">
-        <h2 className="text-lg md:text-xl font-semibold text-gray-100">{language === 'en' ? '✍️ Zhihu · Tech blog' : '✍️ 知乎 · 技术博客'}</h2>
+        <h2 className="text-lg md:text-xl font-semibold text-gray-100">{language === 'en' ? '✍️ Quora · Tech blog' : '✍️ 知乎 · 技术博客'}</h2>
         <p className="mt-1 text-xs md:text-sm text-gray-400">
           {language === 'en' ? 'Write a technical post to rebuild your industry reputation' : '写一篇技术博客，恢复你在业界的信誉'}
         </p>
@@ -60,7 +60,7 @@ export function ZhihuBlog() {
               {language === 'en' ? '“A post called How to write hello world will do…”' : '"水一篇《如何写hello world》也是可以的..."'}
             </p>
             <p className="text-xs text-gray-600 italic">
-              {language === 'en' ? '“Remember: on Zhihu, confidence is wealth.”' : '"记住：在知乎，自信就是财富"'}
+              {language === 'en' ? '“Remember: on Quora, confidence is wealth.”' : '"记住：在知乎，自信就是财富"'}
             </p>
           </div>
         </div>
