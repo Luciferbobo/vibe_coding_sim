@@ -15,8 +15,7 @@
 
 Vibe Coding Simulator is a browser game about making a living with AI-assisted programming. You start with **$500**, a laptop, and a growing list of obligations. Token prices keep moving, rent is due every seven days, and every decision affects how long you can stay in the game.
 
-Buy AI tokens, use them to complete freelance jobs, trade them across markets, or invest in GPU infrastructure to produce tokens of your own. Protect your cash flow, spirit, and reputation long enough to build a fortune—or find out how quickly the AI economy can replace you.
-
+Buy AI tokens, use them to complete freelance jobs, trade them across markets, or invest in GPU infrastructure to produce tokens of your own. Protect your cash flow, spirit, and reputation long enough to build a fortune. Our goal is to reach financial independence as quickly as possible. FIRE! 
 ## How to play
 
 - **Buy tokens and take jobs.** Choose a model, accept projects, and balance cost, quality, and completion risk.
