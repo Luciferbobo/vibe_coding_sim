@@ -8,6 +8,8 @@ import { randomChoice } from '../../utils/random';
 import { formatToken } from '../../utils/format';
 import { getCompletionRate } from '../../engine/taskEngine';
 import { audioManager } from '../../utils/audioManager';
+import { localizeTask, localizeToken, DIFFICULTY_TRANSLATIONS, translateDynamic } from '../../i18n';
+import { formatMoney } from '../../utils/format';
 
 interface Props {
   task: TaskTemplate;
@@ -33,6 +35,8 @@ export function TaskDialog({ task, onClose }: Props) {
   const inventory = useGameStore((s) => s.inventory);
   const spirit = useGameStore((s) => s.spirit);
   const acceptTask = useGameStore((s) => s.acceptTask);
+  const language = useGameStore((s) => s.language);
+  const displayTask = localizeTask(task, language);
 
   const [choice, setChoice] = useState<number | 'manual' | null>(null);
   const lowSpirit = spirit < task.spiritCostIfManual;
@@ -54,34 +58,35 @@ export function TaskDialog({ task, onClose }: Props) {
 
   return (
     <Modal
-      title={`接单 · ${task.name}`}
-      subtitle={task.description}
+      title={`${language === 'en' ? 'Accept job' : '接单'} · ${displayTask.name}`}
+      subtitle={displayTask.description}
       onClose={onClose}
       width="max-w-2xl"
     >
       <div className="space-y-5">
         {/* 需求详情 */}
         <div className="grid grid-cols-4 gap-2 text-sm">
-          <Info label="难度" value={DIFF_LABEL[task.difficulty]} accent="text-amber-400" />
+          <Info label={language === 'en' ? 'Difficulty' : '难度'} value={language === 'en' ? DIFFICULTY_TRANSLATIONS[task.difficulty] : DIFF_LABEL[task.difficulty]} accent="text-amber-400" />
           <Info label="Token" value={formatToken(task.tokenCost)} accent="text-violet-400" />
-          <Info label="报酬" value={`¥${task.reward}`} accent="text-amber-400" />
+          <Info label={language === 'en' ? 'Reward' : '报酬'} value={formatMoney(task.reward, language)} accent="text-amber-400" />
           <Info
-            label="手写消耗"
-            value={`-${task.spiritCostIfManual} 精神`}
+            label={language === 'en' ? 'Hand-written cost' : '手写消耗'}
+            value={language === 'en' ? `-${task.spiritCostIfManual} SPIRIT` : `-${task.spiritCostIfManual} 精神`}
             accent="text-violet-400"
           />
         </div>
 
         {/* 完成方式 */}
         <div>
-          <p className="text-sm text-gray-400">完成方式</p>
+          <p className="text-sm text-gray-400">{language === 'en' ? 'How to complete' : '完成方式'}</p>
 
           {/* AI Token 列表 */}
           <p className="mt-3 text-xs text-emerald-400">
-            使用 AI Token（按 token tier 抽卡判定完成率）
+            {language === 'en' ? 'Use an AI token (draw against its tier-based completion rate)' : '使用 AI Token（按 token tier 抽卡判定完成率）'}
           </p>
           <div className="mt-2 grid grid-cols-2 gap-2">
-            {TOKENS.map((t) => {
+            {TOKENS.map((rawToken) => {
+              const t = localizeToken(rawToken, language);
               const owned = getTotalTokenCount(inventory, t.id);
               // 咸鱼Cursor账号特殊处理：按个数消耗
               const isXianyu = t.id === 6;
@@ -117,7 +122,7 @@ export function TaskDialog({ task, onClose }: Props) {
                         enough ? 'text-emerald-400' : 'text-red-400'
                       }`}
                     >
-                      {isXianyu ? `${owned}个(需${requiredCount}个)` : formatToken(owned)}
+                      {isXianyu ? `${owned} ${language === 'en' ? `(need ${requiredCount})` : `个(需${requiredCount}个)`}` : formatToken(owned)}
                     </span>
                     <span className="block text-xs text-gray-500">
                       {(getCompletionRate(task, t) * 100).toFixed(0)}%
@@ -130,7 +135,7 @@ export function TaskDialog({ task, onClose }: Props) {
 
           {/* 自己写代码 */}
           <p className="mt-4 text-xs text-violet-400">
-            自己写代码（100% 完成，但很累）
+            {language === 'en' ? 'Write it yourself (100% success, but exhausting)' : '自己写代码（100% 完成，但很累）'}
           </p>
           <button
             disabled={lowSpirit}
@@ -144,14 +149,14 @@ export function TaskDialog({ task, onClose }: Props) {
             }`}
           >
             <div className="flex items-center justify-between">
-              <span className="font-medium">手写代码 · 100% 完成</span>
+              <span className="font-medium">{language === 'en' ? 'Hand-written code · 100% success' : '手写代码 · 100% 完成'}</span>
               <span className="font-mono text-xs text-violet-400 tabular">
                 -{task.spiritCostIfManual} SPIRIT
               </span>
             </div>
             {lowSpirit && (
               <p className="mt-1 text-xs italic text-red-400 leading-snug">
-                "{lowSpiritMsg}"
+                "{language === 'en' ? translateDynamic(lowSpiritMsg, language) : lowSpiritMsg}"
               </p>
             )}
           </button>
@@ -163,14 +168,14 @@ export function TaskDialog({ task, onClose }: Props) {
             onClick={onClose}
             className="flex-1 px-4 py-2.5 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-200 font-medium transition-colors"
           >
-            放弃
+            {language === 'en' ? 'Cancel' : '放弃'}
           </button>
           <button
             onClick={handleConfirm}
             disabled={choice === null}
             className="flex-[2] px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-emerald-600"
           >
-            确认接单
+            {language === 'en' ? 'Accept job' : '确认接单'}
           </button>
         </div>
       </div>

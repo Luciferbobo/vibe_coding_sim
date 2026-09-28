@@ -1,5 +1,6 @@
 // 通用模态框 - 简洁圆角卡片
 import { ReactNode, useEffect } from 'react';
+import { useGameStore } from '../../stores/gameStore';
 
 interface ModalProps {
   title: string;
@@ -18,6 +19,7 @@ export function Modal({
   width = 'max-w-lg',
   children,
 }: ModalProps) {
+  const language = useGameStore((s) => s.language);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && closable && onClose) onClose();
@@ -52,7 +54,7 @@ export function Modal({
           {closable && onClose && (
             <button
               onClick={onClose}
-              aria-label="关闭"
+              aria-label={language === 'en' ? 'Close' : '关闭'}
               className="shrink-0 -mt-1 -mr-2 h-8 w-8 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-gray-100 transition-colors flex items-center justify-center"
             >
               <svg

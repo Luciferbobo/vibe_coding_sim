@@ -1,5 +1,6 @@
 // 事件通知 - 简洁队列式弹窗
 import { useGameStore } from '../../stores/gameStore';
+import { translateDynamic } from '../../i18n';
 
 const NEGATIVE_KEYWORDS = [
   '损失', '扣', '崩', '砸', '坏', '盗', '差', '亏', '没了', '蓝屏',
@@ -41,12 +42,17 @@ const TONE = {
 export function EventNotification() {
   const pendingMessages = useGameStore((s) => s.pendingMessages);
   const dismissMessage = useGameStore((s) => s.dismissMessage);
+  const language = useGameStore((s) => s.language);
   
   if (pendingMessages.length === 0) return null;
 
   const msg = pendingMessages[0];
+  const displayMsg = translateDynamic(msg, language);
   const tone = classify(msg);
   const style = TONE[tone];
+  const toneLabel = language === 'en'
+    ? { positive: 'Good news', negative: 'Bad news', neutral: 'Event' }[tone]
+    : style.label;
 
   return (
     <div
@@ -62,7 +68,7 @@ export function EventNotification() {
 
         {/* 头部 */}
         <div className="flex items-center justify-between px-4 md:px-6 pt-4 md:pt-5 pb-3">
-          <p className={`text-xs font-medium ${style.text}`}>{style.label}</p>
+          <p className={`text-xs font-medium ${style.text}`}>{toneLabel}</p>
           {pendingMessages.length > 1 && (
             <span className="text-xs text-gray-500">
               1 / {pendingMessages.length}
@@ -75,7 +81,7 @@ export function EventNotification() {
           <p
             className={`whitespace-pre-line text-sm md:text-base leading-relaxed ${style.text}`}
           >
-            {msg}
+            {displayMsg}
           </p>
         </div>
 
@@ -83,14 +89,14 @@ export function EventNotification() {
         <div className="border-t border-gray-700/60 px-4 md:px-6 py-3 flex items-center justify-between gap-3">
           {pendingMessages.length > 1 && (
             <span className="text-xs text-gray-500">
-              还有 {pendingMessages.length - 1} 条事件等待
+              {language === 'en' ? `${pendingMessages.length - 1} more events waiting` : `还有 ${pendingMessages.length - 1} 条事件等待`}
             </span>
           )}
           <button
             onClick={dismissMessage}
             className="ml-auto px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium transition-colors"
           >
-            知道了
+            {language === 'en' ? 'Got it' : '知道了'}
           </button>
         </div>
       </div>

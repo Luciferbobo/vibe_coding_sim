@@ -10,15 +10,23 @@ const VIBES = [
   '美式刚到嘴边，多巴胺先到了。',
   '空调把你冻得清醒，你又开始焦虑了。',
 ];
+const VIBES_EN = [
+  'You open your MacBook and pretend to code. You pretend to be busy.',
+  'The old man at the next table debates which AI stock could go 10x.',
+  'Two hoodie-clad founders passionately gesture about product-market fit.',
+  'The Americano reaches your lips; the dopamine arrives first.',
+  'The air conditioning freezes you awake. The anxiety starts again.',
+];
 
 export function CoffeeShop() {
   const cash = useGameStore((s) => s.cash);
   const spirit = useGameStore((s) => s.spirit);
   const drinkCoffee = useGameStore((s) => s.drinkCoffee);
   const coffeeUsedToday = useGameStore((s) => s.coffeeUsedToday);
+  const language = useGameStore((s) => s.language);
 
   const canBuy = cash >= COFFEE_COST;
-  const vibe = VIBES[Math.floor(Math.random() * VIBES.length)];
+  const vibe = (language === 'en' ? VIBES_EN : VIBES)[Math.floor(Math.random() * VIBES.length)];
   const isFull = spirit >= 100;
 
   return (
@@ -26,7 +34,7 @@ export function CoffeeShop() {
       <div className="w-full max-w-2xl">
         <div className="mb-4 md:mb-6">
           <h2 className="text-xl md:text-2xl font-semibold text-gray-100">
-            ☕ 星巴克 · 国贸店
+            {language === 'en' ? '☕ Starbucks · CBD store' : '☕ 星巴克 · 国贸店'}
           </h2>
           <p className="mt-1 text-xs md:text-sm italic text-gray-400">{vibe}</p>
         </div>
@@ -34,31 +42,31 @@ export function CoffeeShop() {
         <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-4">
           {/* 菜单 */}
           <div className="rounded-xl bg-gray-800/60 border border-gray-700/60 p-4 md:p-5">
-            <p className="text-xs text-gray-500">今日菜单</p>
+            <p className="text-xs text-gray-500">{language === 'en' ? "Today's menu" : '今日菜单'}</p>
             <div className="mt-3 flex items-end justify-between border-b border-gray-700/50 pb-4">
               <div>
-                <h3 className="text-lg font-semibold text-gray-100">美式咖啡</h3>
+                <h3 className="text-lg font-semibold text-gray-100">{language === 'en' ? 'Americano' : '美式咖啡'}</h3>
                 <p className="mt-1 text-sm text-gray-400 leading-snug">
-                  没什么花活，但能让你再撑一会儿
+                  {language === 'en' ? 'Nothing fancy, but it keeps you going a little longer.' : '没什么花活，但能让你再撑一会儿'}
                 </p>
                 <p className="mt-1 text-xs text-emerald-400">
-                  +{COFFEE_SPIRIT_GAIN}精神值
+                  +{COFFEE_SPIRIT_GAIN} {language === 'en' ? 'SPIRIT' : '精神值'}
                 </p>
               </div>
               <p className="font-mono text-2xl font-bold text-amber-400 tabular">
-                ¥{COFFEE_COST}
+                {language === 'en' ? `$${COFFEE_COST / 10}` : `¥${COFFEE_COST}`}
               </p>
             </div>
 
             <div className="mt-4 grid grid-cols-2 gap-2">
               <div className="rounded-lg bg-gray-900/60 border border-gray-700/50 px-3 py-2">
-                <p className="text-xs text-gray-500">饮前精神</p>
+                <p className="text-xs text-gray-500">{language === 'en' ? 'Spirit before' : '饮前精神'}</p>
                 <p className="mt-0.5 font-mono text-sm font-semibold text-gray-200 tabular">
                   {spirit}/100
                 </p>
               </div>
               <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/30 px-3 py-2">
-                <p className="text-xs text-emerald-300/80">饮后精神</p>
+                <p className="text-xs text-emerald-300/80">{language === 'en' ? 'Spirit after' : '饮后精神'}</p>
                 <p className="mt-0.5 font-mono text-sm font-semibold text-emerald-300 tabular">
                   {Math.min(100, spirit + COFFEE_SPIRIT_GAIN)}/100
                 </p>
@@ -73,26 +81,26 @@ export function CoffeeShop() {
               disabled={!canBuy || isFull || coffeeUsedToday}
               className="mt-4 w-full px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-emerald-600"
             >
-              {coffeeUsedToday ? '今日已饮用' : '来一杯'}
+              {coffeeUsedToday ? (language === 'en' ? 'Had today' : '今日已饮用') : (language === 'en' ? 'Order one' : '来一杯')}
             </button>
             {!canBuy && !coffeeUsedToday && (
               <p className="mt-2 text-xs text-red-400">
-                · 余额不足，连咖啡都喝不起了
+                {language === 'en' ? '· Not enough cash for coffee' : '· 余额不足，连咖啡都喝不起了'}
               </p>
             )}
             {isFull && canBuy && (
               <p className="mt-2 text-xs text-gray-500">
-                · 你精神满血，再喝就睡不着了
+                {language === 'en' ? '· You are fully rested; another one will keep you up' : '· 你精神满血，再喝就睡不着了'}
               </p>
             )}
           </div>
 
           {/* 旁注 */}
           <div className="space-y-2.5 text-sm leading-relaxed">
-            <SideNote color="violet" title="店员提示">
-              “先生，您的中杯美式，请慢用”
+            <SideNote color="violet" title={language === 'en' ? 'Barista note' : '店员提示'}>
+              {language === 'en' ? '“Here is your medium Americano. Enjoy.”' : '“先生，您的中杯美式，请慢用”'}
               <br />
-              每天只能喝一杯哦~
+              {language === 'en' ? 'One cup per day~' : '每天只能喝一杯哦~'}
             </SideNote>
           </div>
         </div>

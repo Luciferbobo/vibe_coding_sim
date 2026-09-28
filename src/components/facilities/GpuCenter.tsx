@@ -8,6 +8,8 @@ import {
 } from '../../data/gpus';
 import { TOKENS } from '../../data/tokens';
 import { audioManager } from '../../utils/audioManager';
+import { localizeGpu, localizeToken } from '../../i18n';
+import { formatMoney } from '../../utils/format';
 
 // 计算某 GPU 档位选用某 Token 时的日产值（产出量 × 当前价）
 function calcDailyValue(
@@ -83,6 +85,7 @@ export default function GpuCenter() {
   const quantumComputerSold = useGameStore((s) => s.quantumComputerSold);
   const gpuInflationActivated = useGameStore((s) => s.gpuInflationActivated);
   const gpuInflationStartDay = useGameStore((s) => s.gpuInflationStartDay);
+  const language = useGameStore((s) => s.language);
 
   // 电费通胀系数
   const inflationRatio = TOKENS[0].basePrice > 0
@@ -101,16 +104,16 @@ export default function GpuCenter() {
         <div className="flex items-end justify-between gap-3 md:gap-4 flex-wrap">
           <div>
             <h2 className="text-lg md:text-xl font-semibold text-gray-100">
-              ⚛️ GPU算力中心
+              {language === 'en' ? '⚛️ GPU Compute Center' : '⚛️ GPU算力中心'}
             </h2>
             <p className="mt-1 text-xs md:text-sm italic text-gray-400">
-              购买GPU服务器，让Token自动流入你的钱包
+              {language === 'en' ? 'Buy GPU servers and let tokens flow into your wallet automatically' : '购买GPU服务器，让Token自动流入你的钱包'}
             </p>
           </div>
           <div className="text-right">
-            <p className="text-xs text-gray-500">运行中</p>
+            <p className="text-xs text-gray-500">{language === 'en' ? 'Running' : '运行中'}</p>
             <p className="mt-0.5 font-mono text-base md:text-lg font-semibold tabular text-emerald-300">
-              {gpus.length} 台
+              {gpus.length} {language === 'en' ? 'units' : '台'}
             </p>
           </div>
         </div>
@@ -122,9 +125,9 @@ export default function GpuCenter() {
         <section>
           <div className="flex items-baseline justify-between mb-3">
             <h3 className="text-base md:text-lg font-semibold text-gray-100">
-              📦 我的GPU
+              {language === 'en' ? '📦 My GPUs' : '📦 我的GPU'}
               <span className="ml-2 text-xs text-gray-500 font-normal">
-                ({gpus.length} 台运行中)
+                ({gpus.length} {language === 'en' ? 'running' : '台运行中'})
               </span>
             </h3>
           </div>
@@ -132,7 +135,7 @@ export default function GpuCenter() {
           {gpus.length === 0 ? (
             <div className="rounded-lg border border-dashed border-gray-700/60 bg-gray-800/40 px-5 py-8 text-center">
               <p className="text-sm text-gray-400">
-                还没有GPU服务器，去商城看看吧 ↓
+                {language === 'en' ? 'No GPU servers yet. Browse the shop below ↓' : '还没有GPU服务器，去商城看看吧 ↓'}
               </p>
             </div>
           ) : (
@@ -143,6 +146,7 @@ export default function GpuCenter() {
                   gpu={gpu}
                   currentPrices={currentPrices}
                   inflationRatio={inflationRatio}
+                  language={language}
                   onConfigure={(tid) => configureGpuOutput(gpu.id, tid)}
                   onSell={() => sellGpu(gpu.id)}
                 />
@@ -154,14 +158,15 @@ export default function GpuCenter() {
         {/* GPU 商城 */}
         <section>
           <div className="flex items-baseline justify-between mb-3 gap-2">
-            <h3 className="text-base md:text-lg font-semibold text-gray-100">🛒 GPU商城</h3>
+            <h3 className="text-base md:text-lg font-semibold text-gray-100">{language === 'en' ? '🛒 GPU shop' : '🛒 GPU商城'}</h3>
             <p className="text-[10px] md:text-xs text-gray-500 text-right">
-              售价固定，电费随Token通胀上涨，同时只能持有三台
+              {language === 'en' ? 'Fixed prices; electricity rises with token inflation. You can own three at most.' : '售价固定，电费随Token通胀上涨，同时只能持有三台'}
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-            {GPUS.map((g) => {
+            {GPUS.map((rawGpu) => {
+              const g = localizeGpu(rawGpu, language);
               const price = Math.round(g.basePrice * gpuInflationMult);
               const currentDailyElectricity = Math.round(g.dailyElectricity * inflationRatio);
               // 量子计算机原型机（id=4）全世界仅一台，购买后永久禁用
@@ -190,27 +195,27 @@ export default function GpuCenter() {
 
                   <div className="mt-3">
                     <p className="font-mono text-xl font-semibold text-amber-400 tabular">
-                      ¥{price.toLocaleString()}
+                      {formatMoney(price, language)}
                     </p>
                   </div>
 
                   <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                     <div className="rounded bg-gray-900/60 border border-gray-700/50 px-2 py-1.5">
-                      <p className="text-gray-500">产出倍率</p>
+                      <p className="text-gray-500">{language === 'en' ? 'Output multiplier' : '产出倍率'}</p>
                       <p className="mt-0.5 font-mono font-semibold text-emerald-300 tabular">
                         ×{g.outputMultiplier}
                       </p>
                     </div>
                     <div className="rounded bg-gray-900/60 border border-gray-700/50 px-2 py-1.5">
-                      <p className="text-gray-500">日电费</p>
+                      <p className="text-gray-500">{language === 'en' ? 'Daily electricity' : '日电费'}</p>
                       <p className="mt-0.5 font-mono font-semibold text-red-300 tabular">
-                        ¥{currentDailyElectricity.toLocaleString()}
+                        {formatMoney(currentDailyElectricity, language)}
                       </p>
                     </div>
                   </div>
 
                   <p className="mt-2 text-[11px] text-gray-500">
-                    寿命 {g.lifespan} 天 · 报废前可回收 {Math.round(GPU_RECYCLE_RATE * 100)}%
+                    {language === 'en' ? `Lifespan ${g.lifespan} days · ${Math.round(GPU_RECYCLE_RATE * 100)}% recoverable before scrap` : `寿命 ${g.lifespan} 天 · 报废前可回收 ${Math.round(GPU_RECYCLE_RATE * 100)}%`}
                   </p>
 
                   <button
@@ -222,12 +227,12 @@ export default function GpuCenter() {
                     className="mt-3 w-full px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-emerald-600"
                   >
                     {isQuantumSoldOut
-                      ? '全世界仅有一台的原型机已售出'
+                      ? (language === 'en' ? 'The one-of-a-kind prototype is sold' : '全世界仅有一台的原型机已售出')
                       : cash < price
-                        ? '余额不足'
+                        ? (language === 'en' ? 'Not enough cash' : '余额不足')
                         : isAtCapacity
-                          ? '最多持有三台服务器'
-                          : '购买'}
+                          ? (language === 'en' ? 'Maximum three servers' : '最多持有三台服务器')
+                          : (language === 'en' ? 'Buy' : '购买')}
                   </button>
                 </div>
               );
@@ -238,9 +243,9 @@ export default function GpuCenter() {
         {/* 运营提示：与 GPU 商城副标题一致的灰色小字 */}
         <section>
           <p className="text-xs text-gray-500 leading-relaxed">
-            GPU 寿命 15 天，期间每天自动产出所选 Token（保质期 7 天）
+            {language === 'en' ? 'GPUs last 15 days and automatically produce the selected token each day (tokens last 7 days)' : 'GPU 寿命 15 天，期间每天自动产出所选 Token（保质期 7 天）'}
             <br />
-            电费随每周房租一并扣除，余额不足会跟房租一起进入宽限期
+            {language === 'en' ? 'Electricity is charged with weekly rent; insufficient cash puts both into the grace period' : '电费随每周房租一并扣除，余额不足会跟房租一起进入宽限期'}
           </p>
         </section>
       </div>
@@ -256,6 +261,7 @@ interface GpuInstanceCardProps {
   inflationRatio: number;
   onConfigure: (tokenId: number) => void;
   onSell: () => void;
+  language: 'zh' | 'en';
 }
 
 function GpuInstanceCard({
@@ -264,8 +270,9 @@ function GpuInstanceCard({
   inflationRatio,
   onConfigure,
   onSell,
+  language,
 }: GpuInstanceCardProps) {
-  const def = GPUS[gpu.gpuTierId];
+  const def = localizeGpu(GPUS[gpu.gpuTierId], language);
   const remaining = gpu.lifespan - gpu.usedDays;
   const remainingRatio = remaining / gpu.lifespan;
   const barColor = lifeBarColor(remaining);
@@ -278,7 +285,7 @@ function GpuInstanceCard({
   const dailyValue = hasOutput
     ? calcDailyValue(gpu.gpuTierId, gpu.selectedTokenId, currentPrices)
     : 0;
-  const tokenName = hasOutput ? TOKENS[gpu.selectedTokenId].name : null;
+  const tokenName = hasOutput ? localizeToken(TOKENS[gpu.selectedTokenId], language).name : null;
 
   // 量子计算原型机使用黑金色主题
   const isQuantum = gpu.gpuTierId === 3;
@@ -304,8 +311,8 @@ function GpuInstanceCard({
           {/* 运行状态脱冲点：按剩余天数变色 */}
           <span
             className="relative shrink-0 inline-flex h-2 w-2"
-            title={status.label}
-            aria-label={status.label}
+            title={language === 'en' ? ({ '正常运行': 'Running normally', '寿命告警': 'Lifespan warning', '即将报废': 'Scrapping soon' } as Record<string, string>)[status.label] : status.label}
+            aria-label={language === 'en' ? ({ '正常运行': 'Running normally', '寿命告警': 'Lifespan warning', '即将报废': 'Scrapping soon' } as Record<string, string>)[status.label] : status.label}
           >
             <span
               className={`absolute inline-flex h-full w-full rounded-full ${status.color} opacity-60 animate-ping`}
@@ -317,7 +324,7 @@ function GpuInstanceCard({
           </span>
         </div>
         <p className="font-mono text-[11px] text-gray-400 tabular shrink-0">
-          {gpu.usedDays}/{gpu.lifespan}天
+          {gpu.usedDays}/{gpu.lifespan}{language === 'en' ? 'd' : '天'}
         </p>
       </div>
 
@@ -331,43 +338,43 @@ function GpuInstanceCard({
 
       {/* 当前产出 */}
       <div className="relative mt-3 rounded-lg border border-cyan-500/20 bg-cyan-500/5 px-2.5 py-1.5">
-        <p className="text-[10px] uppercase tracking-wider text-cyan-300/70">当前产出</p>
+        <p className="text-[10px] uppercase tracking-wider text-cyan-300/70">{language === 'en' ? 'Current output' : '当前产出'}</p>
         {hasOutput ? (
           <p className="mt-0.5 text-sm">
             <span className="font-semibold text-cyan-200">{tokenName}</span>
             <span className="ml-1.5 font-mono text-[11px] text-gray-400 tabular">
-              {dailyOutput.toFixed(0)}M/天
+              {dailyOutput.toFixed(0)}M/{language === 'en' ? 'day' : '天'}
             </span>
           </p>
         ) : (
-          <p className="mt-0.5 text-sm font-medium text-amber-300">请选择产出Token</p>
+          <p className="mt-0.5 text-sm font-medium text-amber-300">{language === 'en' ? 'Choose an output token' : '请选择产出Token'}</p>
         )}
       </div>
 
       {/* 4 宫格数据 */}
       <div className="relative mt-2 grid grid-cols-2 gap-1.5">
         <div className="rounded bg-gray-900/60 border border-gray-700/50 px-2 py-1.5">
-          <p className="text-[10px] text-gray-500">日产值</p>
+          <p className="text-[10px] text-gray-500">{language === 'en' ? 'Daily value' : '日产值'}</p>
           <p className="mt-0.5 font-mono font-semibold text-amber-400 tabular text-sm">
-            {hasOutput ? `¥${Math.round(dailyValue).toLocaleString()}` : '—'}
+            {hasOutput ? formatMoney(Math.round(dailyValue), language) : '—'}
           </p>
         </div>
         <div className="rounded bg-gray-900/60 border border-gray-700/50 px-2 py-1.5">
-          <p className="text-[10px] text-gray-500">日电费</p>
+          <p className="text-[10px] text-gray-500">{language === 'en' ? 'Daily electricity' : '日电费'}</p>
           <p className="mt-0.5 font-mono font-semibold text-red-300 tabular text-sm">
-            ¥{currentDailyElectricity.toLocaleString()}
+            {formatMoney(currentDailyElectricity, language)}
           </p>
         </div>
         <div className="rounded bg-gray-900/60 border border-gray-700/50 px-2 py-1.5">
-          <p className="text-[10px] text-gray-500">累计产出</p>
+          <p className="text-[10px] text-gray-500">{language === 'en' ? 'Lifetime output' : '累计产出'}</p>
           <p className="mt-0.5 font-mono font-semibold text-emerald-300 tabular text-sm">
-            ¥{Math.round(gpu.totalOutput).toLocaleString()}
+            {formatMoney(Math.round(gpu.totalOutput), language)}
           </p>
         </div>
         <div className="rounded bg-gray-900/60 border border-gray-700/50 px-2 py-1.5">
-          <p className="text-[10px] text-gray-500">回收价</p>
+          <p className="text-[10px] text-gray-500">{language === 'en' ? 'Recycle value' : '回收价'}</p>
           <p className="mt-0.5 font-mono font-semibold text-amber-300 tabular text-sm">
-            ¥{recyclePrice.toLocaleString()}
+            {formatMoney(recyclePrice, language)}
           </p>
         </div>
       </div>
@@ -381,7 +388,7 @@ function GpuInstanceCard({
         >
           {!hasOutput && (
             <option value={-1} disabled>
-              请选择产出Token…
+              {language === 'en' ? 'Choose output token…' : '请选择产出Token…'}
             </option>
           )}
           {OUTPUT_TOKEN_IDS.map((tid) => {
@@ -390,8 +397,7 @@ function GpuInstanceCard({
               (GPU_BASE_DAILY_OUTPUT[tid] || 0) * GPUS[gpu.gpuTierId].outputMultiplier;
             return (
               <option key={tid} value={tid}>
-                {TOKENS[tid].name} · {out.toFixed(0)}M/天 · ¥
-                {Math.round(v).toLocaleString()}
+                {localizeToken(TOKENS[tid], language).name} · {out.toFixed(0)}M/{language === 'en' ? 'day' : '天'} · {formatMoney(Math.round(v), language)}
               </option>
             );
           })}
@@ -400,7 +406,7 @@ function GpuInstanceCard({
           onClick={onSell}
           className="w-full px-3 py-1.5 rounded-md bg-gray-700/80 hover:bg-gray-600 text-gray-200 text-xs font-medium transition-colors"
         >
-          卖出回收
+          {language === 'en' ? 'Sell for recycle value' : '卖出回收'}
         </button>
       </div>
     </div>

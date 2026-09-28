@@ -1,7 +1,9 @@
-// 横屏提示遮罩 — 竖屏 + 小屏设备时全屏提示用户旋转手机
+// Portrait-mode prompt for small screens.
+import { useGameStore } from '../../stores/gameStore';
 // 纯 CSS media query 控制显隐
 
 export function LandscapeGuard() {
+  const language = useGameStore((s) => s.language);
   return (
     <div className="landscape-guard fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-gray-900 text-gray-200">
       {/* 旋转手机动画图标 */}
@@ -45,16 +47,16 @@ export function LandscapeGuard() {
         </svg>
       </div>
 
-      <h2 className="text-xl font-bold text-emerald-400">请横屏游玩</h2>
+      <h2 className="text-xl font-bold text-emerald-400">{language === 'en' ? 'Please play in landscape' : '请横屏游玩'}</h2>
       <p className="mt-2 text-sm text-gray-400">
-        PC 体验最佳
+        {language === 'en' ? 'Best experienced on a computer' : 'PC 体验最佳'}
       </p>
       <p className="mt-4 text-xs text-gray-500">
-        如果无法旋转，请用 Chrome 浏览器打开
+        {language === 'en' ? 'If you cannot rotate, open the game in Chrome' : '如果无法旋转，请用 Chrome 浏览器打开'}
       </p>
 
       <p className="mt-6 text-xs text-gray-600">
-        Vibe Coding 模拟器
+        {language === 'en' ? 'Vibe Coding Simulator' : 'Vibe Coding 模拟器'}
       </p>
     </div>
   );

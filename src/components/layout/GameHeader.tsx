@@ -3,14 +3,12 @@ import { useState } from 'react';
 import { useGameStore } from '../../stores/gameStore';
 import { SITES } from '../../data/sites';
 import { audioManager } from '../../utils/audioManager';
+import { localizeSite } from '../../i18n';
+import { formatDay, formatMoney } from '../../utils/format';
 
 /**
  * 格式化游戏内天数显示：第N天
  */
-function formatGameDay(day: number): string {
-  return `第${day}天`;
-}
-
 function HeaderBar({
   label,
   value,
@@ -49,8 +47,10 @@ export function GameHeader() {
   const restDaysLeft = useGameStore((s) => s.restDaysLeft);
   const spirit = useGameStore((s) => s.spirit);
   const reputation = useGameStore((s) => s.reputation);
+  const language = useGameStore((s) => s.language);
 
-  const site = SITES.find((s) => s.id === currentSiteId);
+  const rawSite = SITES.find((s) => s.id === currentSiteId);
+  const site = rawSite ? localizeSite(rawSite, language) : undefined;
   const daysToRent = Math.max(0, nextRentDay - day);
   const rentUrgent = daysToRent <= 3;
 
@@ -81,7 +81,7 @@ export function GameHeader() {
             {site?.name ?? '未知场所'}
           </p>
           <p className="text-xs text-gray-500 truncate leading-tight">
-            vibe coding 模拟器
+            {language === 'en' ? 'Vibe Coding Simulator' : 'vibe coding 模拟器'}
           </p>
         </div>
       </div>
@@ -90,39 +90,39 @@ export function GameHeader() {
       <div className="flex-1 flex items-center justify-end gap-5">
         {restDaysLeft > 0 && (
           <span className="px-2.5 py-1 rounded-md bg-red-500/15 text-red-400 text-xs font-medium border border-red-500/30 whitespace-nowrap">
-            强制躺平 {restDaysLeft} 天
+            {language === 'en' ? `Forced rest · ${restDaysLeft} days` : `强制躺平 ${restDaysLeft} 天`}
           </span>
         )}
 
         {/* 天数 */}
         <span className="font-mono text-base font-semibold text-gray-100 tabular">
-          {formatGameDay(day)}
+          {formatDay(day, language)}
         </span>
 
         <div className="h-6 w-px bg-gray-800" />
 
         {/* 精神 + 信誉 */}
         <div className="flex items-center gap-4">
-          <HeaderBar label="精神" value={spirit} max={100} barColor={spiritBar} textColor={spiritText} />
-          <HeaderBar label="信誉" value={reputation} max={100} barColor={repBar} textColor={repText} />
+          <HeaderBar label={language === 'en' ? 'Spirit' : '精神'} value={spirit} max={100} barColor={spiritBar} textColor={spiritText} />
+          <HeaderBar label={language === 'en' ? 'Rep' : '信誉'} value={reputation} max={100} barColor={repBar} textColor={repText} />
         </div>
 
         <div className="h-6 w-px bg-gray-800" />
 
         {/* 房租 */}
         <div className="flex items-center gap-1.5">
-          <span className="text-xs text-gray-500">下次房租</span>
+          <span className="text-xs text-gray-500">{language === 'en' ? 'Next rent' : '下次房租'}</span>
           <span
             className="font-mono text-sm font-semibold tabular text-red-400"
           >
-            ¥{rentAmount.toLocaleString()}
+            {formatMoney(rentAmount, language)}
           </span>
           <span
             className={`text-xs ${
               rentUrgent ? 'text-red-400' : 'text-gray-500'
             }`}
           >
-            · {daysToRent}天后
+            · {language === 'en' ? `${daysToRent}d` : `${daysToRent}天后`}
           </span>
         </div>
 
@@ -132,8 +132,8 @@ export function GameHeader() {
         <button
           onClick={toggleMute}
           className="inline-flex items-center justify-center h-9 w-9 rounded-md text-gray-300 hover:text-gray-100 hover:bg-gray-800 transition-colors"
-          title={isMuted ? '取消静音' : '静音'}
-          aria-label={isMuted ? '取消静音' : '静音'}
+          title={isMuted ? (language === 'en' ? 'Unmute' : '取消静音') : (language === 'en' ? 'Mute' : '静音')}
+          aria-label={isMuted ? (language === 'en' ? 'Unmute' : '取消静音') : (language === 'en' ? 'Mute' : '静音')}
         >
           {isMuted ? (
             <svg

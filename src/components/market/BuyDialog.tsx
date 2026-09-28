@@ -5,6 +5,8 @@ import { TOKENS } from '../../data/tokens';
 import { Modal } from '../common/Modal';
 import { formatMoney, formatToken } from '../../utils/format';
 import { audioManager } from '../../utils/audioManager';
+import { localizeToken } from '../../i18n';
+import { formatPrice } from '../../utils/format';
 
 interface Props {
   tokenId: number;
@@ -17,10 +19,11 @@ export function BuyDialog({ tokenId, onClose }: Props) {
   const xianYuPrices = useGameStore((s) => s.xianYuPrices);
   const currentSiteId = useGameStore((s) => s.currentSiteId);
   const buyToken = useGameStore((s) => s.buyToken);
+  const language = useGameStore((s) => s.language);
 
-  const token = TOKENS[tokenId];
+  const token = localizeToken(TOKENS[tokenId], language);
   const isXianyu = tokenId === 6;
-  const priceUnit = isXianyu ? '/个' : '/M';
+  const priceUnit = isXianyu ? (language === 'en' ? '/account' : '/个') : '/M';
   const activePrices = currentSiteId === 1 ? xianYuPrices : currentPrices;
   const price = activePrices[tokenId];
   const step = isXianyu ? 1 : 0.1;
@@ -50,19 +53,19 @@ export function BuyDialog({ tokenId, onClose }: Props) {
   };
 
   return (
-    <Modal title={`买入 · ${token.name}`} subtitle={token.description} onClose={onClose}>
+    <Modal title={`${language === 'en' ? 'Buy' : '买入'} · ${token.name}`} subtitle={token.description} onClose={onClose}>
       <div className="space-y-5">
         {/* 元数据 */}
         <div className="grid grid-cols-3 gap-2 text-sm">
-          <InfoBox label="级别" value={token.tier} accent="text-violet-400" />
+          <InfoBox label={language === 'en' ? 'Tier' : '级别'} value={token.tier} accent="text-violet-400" />
           <InfoBox
-            label="价格"
-            value={`¥${price.toFixed(2)}${priceUnit}`}
+            label={language === 'en' ? 'Price' : '价格'}
+            value={`${formatPrice(price, language)}${priceUnit}`}
             accent="text-amber-400"
           />
           <InfoBox
-            label="最多"
-            value={isXianyu ? `${max} 个` : formatToken(max)}
+            label={language === 'en' ? 'Max' : '最多'}
+            value={isXianyu ? `${max} ${language === 'en' ? 'accounts' : '个'}` : formatToken(max)}
             accent="text-emerald-400"
           />
         </div>
@@ -70,7 +73,7 @@ export function BuyDialog({ tokenId, onClose }: Props) {
         {/* 数量输入 */}
         <div>
           <label className="text-sm text-gray-400">
-            数量 ({isXianyu ? '个数' : 'M tokens'})
+            {language === 'en' ? `Quantity (${isXianyu ? 'accounts' : 'M tokens'})` : `数量 (${isXianyu ? '个数' : 'M tokens'})`}
           </label>
           <div className="mt-2 flex flex-col gap-2 md:flex-row md:items-stretch">
             <input
@@ -92,7 +95,7 @@ export function BuyDialog({ tokenId, onClose }: Props) {
                   onClick={() => setQuick(r)}
                   className="px-3 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-200 text-xs font-medium transition-colors"
                 >
-                  {r === 1 ? '全' : `${r * 100}%`}
+                  {r === 1 ? (language === 'en' ? 'All' : '全') : `${r * 100}%`}
                 </button>
               ))}
             </div>
@@ -102,34 +105,34 @@ export function BuyDialog({ tokenId, onClose }: Props) {
         {/* 合计 */}
         <div className="rounded-lg bg-gray-900/60 border border-gray-700/60 p-3 md:p-4 space-y-1.5">
           <div className="flex items-baseline justify-between">
-            <span className="text-sm text-gray-400">合计支出</span>
+            <span className="text-sm text-gray-400">{language === 'en' ? 'Total cost' : '合计支出'}</span>
             <span className="font-mono text-2xl font-bold text-amber-400 tabular">
-              {formatMoney(total)}
+              {formatMoney(total, language)}
             </span>
           </div>
           <div className="flex items-baseline justify-between text-xs">
-            <span className="text-gray-500">余额</span>
+            <span className="text-gray-500">{language === 'en' ? 'Balance' : '余额'}</span>
             <span className="font-mono text-gray-300 tabular">
-              {formatMoney(cash)}
+              {formatMoney(cash, language)}
             </span>
           </div>
           <div className="flex items-baseline justify-between text-xs">
-            <span className="text-gray-500">交易后余额</span>
+            <span className="text-gray-500">{language === 'en' ? 'Balance after trade' : '交易后余额'}</span>
             <span
               className={`font-mono tabular ${
                 cash - total < 0 ? 'text-red-400' : 'text-gray-300'
               }`}
             >
-              {formatMoney(cash - total)}
+              {formatMoney(cash - total, language)}
             </span>
           </div>
         </div>
 
         {/* 保质期警告 */}
         <div className="rounded-lg bg-amber-500/5 border border-amber-500/30 p-3 text-xs leading-relaxed">
-          <p className="font-medium text-amber-400">⚠️ 保质期提醒</p>
+          <p className="font-medium text-amber-400">{language === 'en' ? '⚠️ Shelf-life reminder' : '⚠️ 保质期提醒'}</p>
           <p className="mt-1 text-gray-300">
-            购入的 Token 有效期为 <span className="font-semibold text-amber-300">7 天</span>，过期会被自动清空，请按需购买。
+            {language === 'en' ? <>Purchased tokens last <span className="font-semibold text-amber-300">7 days</span> and are cleared when they expire. Buy only what you need.</> : <>购入的 Token 有效期为 <span className="font-semibold text-amber-300">7 天</span>，过期会被自动清空，请按需购买。</>}
           </p>
         </div>
 
@@ -139,14 +142,14 @@ export function BuyDialog({ tokenId, onClose }: Props) {
             onClick={onClose}
             className="flex-1 px-4 py-2.5 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-200 font-medium transition-colors"
           >
-            取消
+            {language === 'en' ? 'Cancel' : '取消'}
           </button>
           <button
             onClick={handleConfirm}
             disabled={!canBuy}
             className="flex-[2] px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-emerald-600"
           >
-            确认买入
+            {language === 'en' ? 'Confirm purchase' : '确认买入'}
           </button>
         </div>
       </div>

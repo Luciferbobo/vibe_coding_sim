@@ -7,37 +7,50 @@
 import { useGameStore } from '../../stores/gameStore';
 import { TWITTER_TAG_COLOR } from '../../data/twitterPosts';
 import type { TwitterFeedItem } from '../../stores/gameStore';
+import { getEnglishTwitterPost } from '../../data/twitterPostsEn';
 
-function formatPostTime(item: TwitterFeedItem, currentDay: number): string {
-  if (item.postedDay >= currentDay) return item.todayTimeLabel;
+function formatPostTime(item: TwitterFeedItem, currentDay: number, language: 'zh' | 'en'): string {
+  if (item.postedDay >= currentDay) {
+    if (language === 'zh') return item.todayTimeLabel;
+    const map: Record<string, string> = {
+      '刚刚': 'Just now', '3 分钟前': '3m ago', '5 分钟前': '5m ago', '10 分钟前': '10m ago',
+      '15 分钟前': '15m ago', '25 分钟前': '25m ago', '半小时前': '30m ago', '45 分钟前': '45m ago',
+      '1 小时前': '1h ago', '2 小时前': '2h ago', '3 小时前': '3h ago', '5 小时前': '5h ago',
+      '今天上午': 'This morning', '今天': 'Today',
+    };
+    return map[item.todayTimeLabel] || item.todayTimeLabel;
+  }
   const diff = currentDay - item.postedDay;
-  return `${diff} 天前`;
+  return language === 'en' ? `${diff}d ago` : `${diff} 天前`;
 }
 
 export function InfoFeed() {
   const day = useGameStore((s) => s.day);
   const feed = useGameStore((s) => s.twitterFeed);
   const likeTwitterPost = useGameStore((s) => s.likeTwitterPost);
+  const language = useGameStore((s) => s.language);
 
   return (
     <div className="flex h-full flex-col">
       <div className="border-b border-gray-800 px-6 py-5">
         <h2 className="text-xl font-semibold text-gray-100">
-          📱 Twitter · 行情广场
+          {language === 'en' ? '📱 Twitter · Market feed' : '📱 Twitter · 行情广场'}
         </h2>
         <p className="mt-1 text-sm text-gray-400">
-          下拉刷新 · 看别人都和你一样焦虑，奇怪地有点欣慰
+          {language === 'en' ? 'Pull to refresh · Seeing everyone else anxious is oddly comforting' : '下拉刷新 · 看别人都和你一样焦虑，奇怪地有点欣慰'}
         </p>
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 py-4">
         {feed.length === 0 ? (
           <p className="mt-10 text-center text-sm text-gray-500">
-            暂无新动态 · 世界安静得有点反常
+            {language === 'en' ? 'No new posts · The world is suspiciously quiet' : '暂无新动态 · 世界安静得有点反常'}
           </p>
         ) : (
           <div className="space-y-3">
-            {feed.map((p) => (
+            {feed.map((p) => {
+              const post = language === 'en' ? getEnglishTwitterPost(p.templateIndex, p) : p;
+              return (
               <article
                 key={p.id}
                 className="rounded-xl bg-gray-800/60 border border-gray-700/60 p-4 hover:border-gray-600 transition-colors"
@@ -49,7 +62,7 @@ export function InfoFeed() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-semibold text-gray-100 text-sm">
-                        {p.user}
+                        {post.user}
                       </span>
                       <span
                         className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${TWITTER_TAG_COLOR[p.tag] || 'bg-gray-500/15 text-gray-300'}`}
@@ -57,11 +70,11 @@ export function InfoFeed() {
                         {p.tag}
                       </span>
                       <span className="ml-auto text-xs text-gray-500">
-                        {formatPostTime(p, day)}
+                        {formatPostTime(p, day, language)}
                       </span>
                     </div>
                     <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-gray-200">
-                      {p.text}
+                      {post.text}
                     </p>
                     <div className="mt-2.5 flex gap-5 text-xs text-gray-500">
                       <button
@@ -83,12 +96,13 @@ export function InfoFeed() {
                   </div>
                 </div>
               </article>
-            ))}
+              );
+            })}
           </div>
         )}
 
         <p className="mt-6 text-center text-xs text-gray-500">
-          已加载全部 · 现实仍在加载中
+          {language === 'en' ? 'Everything loaded · Reality is still loading' : '已加载全部 · 现实仍在加载中'}
         </p>
       </div>
     </div>

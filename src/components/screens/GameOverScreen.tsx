@@ -10,6 +10,7 @@ import { ACHIEVEMENTS } from '../../data/achievements';
 import { calculateScore, getTitle, getDayComment } from '../../engine/scoreEngine';
 import { formatMoney, formatDay, formatDayDetailed } from '../../utils/format';
 import { randomChoice } from '../../utils/random';
+import { ACHIEVEMENT_TRANSLATIONS, GAME_OVER_QUOTE_TRANSLATIONS, SCORE_COMMENT_TRANSLATIONS, SCORE_TITLE_TRANSLATIONS, localizeToken, translateDynamic } from '../../i18n';
 
 export function GameOverScreen() {
   const day = useGameStore((s) => s.day);
@@ -32,6 +33,7 @@ export function GameOverScreen() {
   const gpus = useGameStore((s) => s.gpus);
   const unlockedAchievements = useGameStore((s) => s.unlockedAchievements);
   const achievementUnlockDays = useGameStore((s) => s.achievementUnlockDays);
+  const language = useGameStore((s) => s.language);
 
   const tokenValue = useMemo(
     () =>
@@ -46,19 +48,21 @@ export function GameOverScreen() {
   const gpuValue = useMemo(() => calculateGpuDepreciationValue(gpus), [gpus]);
 
   const score = calculateScore(cash, tokenValue + gpuValue, day, rentAmount);
-  const title = getTitle(day);
-  const dayComment = getDayComment(day);
+  const titleZh = getTitle(day);
+  const dayCommentZh = getDayComment(day);
+  const title = language === 'en' ? (SCORE_TITLE_TRANSLATIONS[titleZh] || titleZh) : titleZh;
+  const dayComment = language === 'en' ? (SCORE_COMMENT_TRANSLATIONS[dayCommentZh] || dayCommentZh) : dayCommentZh;
 
   const repLabel =
     reputation >= 80
-      ? '业内楷模'
+      ? (language === 'en' ? 'Industry role model' : '业内楷模')
       : reputation >= 50
-      ? '路人甲'
+      ? (language === 'en' ? 'Average Joe' : '路人甲')
       : reputation >= 20
-      ? '臭名在外'
-      : '人人喊打';
+      ? (language === 'en' ? 'Notorious' : '臭名在外')
+      : (language === 'en' ? 'Public enemy' : '人人喊打');
 
-  const [quote] = useState(() => {
+  const quote = useMemo(() => {
     let pool;
     if (day >= 365 * 50) pool = GAME_OVER_QUOTES_50Y;
     else if (day >= 365 * 20) pool = GAME_OVER_QUOTES_20Y;
@@ -67,8 +71,10 @@ export function GameOverScreen() {
     else if (day >= 365 * 2) pool = GAME_OVER_QUOTES_2Y;
     else if (day >= 365) pool = GAME_OVER_QUOTES_1Y;
     else pool = GAME_OVER_QUOTES_SHORT;
-    return randomChoice(pool).replace('{days}', formatDay(day));
-  });
+    const quoteZh = randomChoice(pool);
+    const translated = language === 'en' ? (GAME_OVER_QUOTE_TRANSLATIONS[quoteZh] || translateDynamic(quoteZh, language)) : quoteZh;
+    return translated.replace('{days}', formatDay(day, language));
+  }, [day, language]);
 
   // 计算最爱的模型（被使用次数最多的 Token）
   const favoriteModel = useMemo(() => {
@@ -81,9 +87,9 @@ export function GameOverScreen() {
       }
     }
     return bestIdx >= 0 && bestIdx < TOKENS.length
-      ? { name: TOKENS[bestIdx].name, count: bestCount }
+      ? { name: localizeToken(TOKENS[bestIdx], language).name, count: bestCount }
       : null;
-  }, [tokenUsageCount]);
+  }, [tokenUsageCount, language]);
 
   const contentRef = useRef<HTMLDivElement>(null);
   const [screenshotting, setScreenshotting] = useState(false);
@@ -99,7 +105,7 @@ export function GameOverScreen() {
         logging: false,
       });
       const link = document.createElement('a');
-      link.download = `vibe-coding-sim-${formatDay(day)}.png`;
+      link.download = `vibe-coding-sim-${formatDay(day, language)}.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
     } catch (e) {
@@ -134,32 +140,32 @@ export function GameOverScreen() {
             {dayComment}
           </h1>
           <p className="mt-3 md:mt-4 text-xs md:text-sm tracking-[0.25em] uppercase text-gray-500">
-            <span className="font-mono text-amber-400">{formatDay(day)}</span> · 游戏结束
+            <span className="font-mono text-amber-400">{formatDay(day, language)}</span> · {language === 'en' ? 'Game over' : '游戏结束'}
           </p>
         </div>
 
         {/* 引言：结局描述（quote 已移至页面最下方作为收束） */}
         {gameOverReason && (
           <blockquote className="mt-6 md:mt-8 rounded-xl bg-gradient-to-br from-amber-900/30 to-rose-900/20 border border-amber-500/30 px-4 md:px-6 py-4 md:py-5 text-sm md:text-base leading-relaxed text-amber-100">
-            🏖️ {gameOverReason}
+            🏖️ {gameOverReason ? translateDynamic(gameOverReason, language) : null}
           </blockquote>
         )}
 
         {/* 数据卡片 */}
         <div className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <StatCard label="存活时长" value={formatDay(day)} accent="text-emerald-400" />
+          <StatCard label={language === 'en' ? 'Survival' : '存活时长'} value={formatDay(day, language)} accent="text-emerald-400" />
           <StatCard
-            label="最终现金"
-            value={formatMoney(cash)}
+            label={language === 'en' ? 'Final cash' : '最终现金'}
+            value={formatMoney(cash, language)}
             accent={cash >= 0 ? 'text-amber-400' : 'text-red-400'}
           />
           <StatCard
-            label="库存折现"
-            value={formatMoney(tokenValue)}
+            label={language === 'en' ? 'Token liquidation' : '库存折现'}
+            value={formatMoney(tokenValue, language)}
             accent="text-violet-400"
           />
           <StatCard
-            label="信誉"
+            label={language === 'en' ? 'Reputation' : '信誉'}
             value={`${reputation} · ${repLabel}`}
             accent={reputation >= 50 ? 'text-blue-400' : 'text-red-400'}
           />
@@ -172,7 +178,7 @@ export function GameOverScreen() {
           </p>
           <p className="mt-2 text-2xl md:text-3xl font-bold text-amber-300">{title}</p>
           <p className="mt-2 text-sm text-gray-400">
-            综合得分{' '}
+            {language === 'en' ? 'Score ' : '综合得分 '}
             <span className="font-mono font-semibold text-amber-300">
               {score.toLocaleString()}
             </span>
@@ -183,53 +189,54 @@ export function GameOverScreen() {
         <AchievementWall
           unlocked={unlockedAchievements}
           unlockDays={achievementUnlockDays}
+          language={language}
         />
 
         {/* 人生收益曲线 */}
-        <LifeCurve history={portfolioHistory} />
+        <LifeCurve history={portfolioHistory} language={language} />
 
         {/* 人生报告 */}
         <div className="mt-6 rounded-xl bg-gray-800/60 border border-gray-700/60 p-6">
           <h3 className="text-sm font-semibold tracking-[0.25em] uppercase text-gray-400">
-            人生报告 · Life Report
+            {language === 'en' ? 'Life report' : '人生报告 · Life Report'}
           </h3>
           <div className="mt-5 space-y-2.5 text-base leading-relaxed text-gray-200">
             <p>
-              你这辈子接了{' '}
-              <span className="font-mono font-semibold text-emerald-400">{totalTasksCompleted}</span>{' '}个项目，喝了{' '}
-              <span className="font-mono font-semibold text-amber-400">{totalCoffeeDrunk}</span>{' '}杯咖啡，写了{' '}
-              <span className="font-mono font-semibold text-violet-400">{totalBlogsWritten}</span>{' '}次博客。
+              {language === 'en' ? 'You accepted ' : '你这辈子接了 '}
+              <span className="font-mono font-semibold text-emerald-400">{totalTasksCompleted}</span>{language === 'en' ? ' jobs, drank ' : ' 个项目，喝了 '}
+              <span className="font-mono font-semibold text-amber-400">{totalCoffeeDrunk}</span>{language === 'en' ? ' coffees, and wrote ' : ' 杯咖啡，写了 '}
+              <span className="font-mono font-semibold text-violet-400">{totalBlogsWritten}</span>{language === 'en' ? ' blog posts.' : ' 次博客。'}
             </p>
             {favoriteModel ? (
               <p>
-                你最爱的模型是{' '}
+                {language === 'en' ? 'Your favorite model was ' : '你最爱的模型是 '}
                 <span className="font-semibold text-cyan-400">{favoriteModel.name}</span>{' '}
                 <span className="text-gray-400">
-                  （用了 <span className="font-mono">{favoriteModel.count}</span> 次）
+                  {language === 'en' ? `(used ${favoriteModel.count} times)` : <>（用了 <span className="font-mono">{favoriteModel.count}</span> 次）</>}
                 </span>
               </p>
             ) : (
-              <p className="text-gray-500">你这辈子从没用 AI 写过一行代码。</p>
+              <p className="text-gray-500">{language === 'en' ? 'You never used AI to write a single line of code.' : '你这辈子从没用 AI 写过一行代码。'}</p>
             )}
             <p>
-              你倒卖 Token 共计{' '}
-              <span className="font-mono font-semibold text-rose-400">{totalSellCount}</span>{' '}次。
+              {language === 'en' ? 'You resold tokens ' : '你倒卖 Token 共计 '}
+              <span className="font-mono font-semibold text-rose-400">{totalSellCount}</span>{language === 'en' ? ' times.' : ' 次。'}
             </p>
             {bestEarningDay.amount > 0 ? (
               <p>
-                你赚钱最多的一天是{' '}
-                <span className="font-mono text-amber-300">{formatDay(bestEarningDay.day)}</span>，这一天到账{' '}
+                {language === 'en' ? 'Your best earning day was ' : '你赚钱最多的一天是 '}
+                <span className="font-mono text-amber-300">{formatDay(bestEarningDay.day, language)}</span>{language === 'en' ? ', bringing in ' : '，这一天到账 '}
                 <span className="font-mono font-semibold text-amber-400">
-                  {formatMoney(bestEarningDay.amount)}
+                  {formatMoney(bestEarningDay.amount, language)}
                 </span>
               </p>
             ) : (
-              <p className="text-gray-500">你这辈子，没有什么“高光时刻”。</p>
+              <p className="text-gray-500">{language === 'en' ? 'There was no “highlight” in your life.' : '你这辈子，没有什么“高光时刻”。'}</p>
             )}
             <p>
-              你被通胀蚕食的总价值：{' '}
+              {language === 'en' ? 'Value eaten by inflation: ' : '你被通胀蚕食的总价值： '}
               <span className="font-mono font-semibold text-red-400">
-                {formatMoney(inflationLossTotal)}
+                {formatMoney(inflationLossTotal, language)}
               </span>
             </p>
           </div>
@@ -258,13 +265,13 @@ export function GameOverScreen() {
             disabled={screenshotting}
             className="px-6 py-2.5 rounded-lg border border-gray-600 hover:border-gray-500 bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {screenshotting ? '生成中…' : '一键截图'}
+            {screenshotting ? (language === 'en' ? 'Generating…' : '生成中…') : (language === 'en' ? 'Take screenshot' : '一键截图')}
           </button>
           <button
             onClick={startNewGame}
             className="px-8 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium shadow-lg shadow-emerald-900/30 transition-colors"
           >
-            再来一局
+            {language === 'en' ? 'Play again' : '再来一局'}
           </button>
         </div>
 
@@ -273,7 +280,7 @@ export function GameOverScreen() {
   );
 }
 
-function LifeCurve({ history }: { history: PortfolioHistoryPoint[] }) {
+function LifeCurve({ history, language }: { history: PortfolioHistoryPoint[]; language: 'zh' | 'en' }) {
   // 找到退休点（如有），曲线截止到该点
   const retireIdx = history.findIndex((p) => p.eventType === 'retire');
   const points = retireIdx >= 0 ? history.slice(0, retireIdx + 1) : history;
@@ -282,10 +289,10 @@ function LifeCurve({ history }: { history: PortfolioHistoryPoint[] }) {
     return (
       <div className="mt-6 rounded-xl bg-gray-800/60 border border-gray-700/60 p-6">
         <h3 className="text-sm font-semibold tracking-[0.25em] uppercase text-gray-400">
-          人生收益 · Life Curve
+          {language === 'en' ? 'Life curve' : '人生收益 · Life Curve'}
         </h3>
         <p className="mt-6 text-center text-sm text-gray-500">
-          数据点不足，无法绘制曲线
+          {language === 'en' ? 'Not enough data points to draw a curve' : '数据点不足，无法绘制曲线'}
         </p>
       </div>
     );
@@ -341,12 +348,12 @@ function LifeCurve({ history }: { history: PortfolioHistoryPoint[] }) {
     <div className="mt-6 rounded-xl bg-gray-800/60 border border-gray-700/60 p-6">
       <div className="flex items-baseline justify-between gap-3">
         <h3 className="text-sm font-semibold tracking-[0.25em] uppercase text-gray-400">
-          人生收益 · Life Curve
+          {language === 'en' ? 'Life curve' : '人生收益 · Life Curve'}
         </h3>
         <div className="text-right text-xs text-gray-500">
-          <span>峰值 </span>
+          <span>{language === 'en' ? 'Peak ' : '峰值 '}</span>
           <span className="font-mono font-semibold text-amber-300">
-            {formatMoney(peakValue)}
+            {formatMoney(peakValue, language)}
           </span>
         </div>
       </div>
@@ -356,7 +363,7 @@ function LifeCurve({ history }: { history: PortfolioHistoryPoint[] }) {
         viewBox={`0 0 ${width} ${height}`}
         preserveAspectRatio="none"
         role="img"
-        aria-label="人生收益曲线"
+        aria-label={language === 'en' ? 'Life earnings curve' : '人生收益曲线'}
       >
         <defs>
           <linearGradient id="lifeCurveArea" x1="0" x2="0" y1="0" y2="1">
@@ -430,10 +437,10 @@ function LifeCurve({ history }: { history: PortfolioHistoryPoint[] }) {
             >
               {isRetireTick ? (
                 <>
-                  🏖️ <span className="font-mono">{formatDay(tick.day)}</span> · 退休
+                  🏖️ <span className="font-mono">{formatDay(tick.day, language)}</span> · {language === 'en' ? 'Retired' : '退休'}
                 </>
               ) : (
-                formatDay(tick.day)
+                formatDay(tick.day, language)
               )}
             </span>
           );
@@ -473,9 +480,11 @@ function StatCard({
 function AchievementWall({
   unlocked,
   unlockDays,
+  language,
 }: {
   unlocked: string[];
   unlockDays: Record<string, number>;
+  language: 'zh' | 'en';
 }) {
   const total = ACHIEVEMENTS.length;
   const count = unlocked.length;
@@ -484,7 +493,8 @@ function AchievementWall({
   const items = useMemo(() => {
     return unlocked
       .map((id, idx) => {
-        const meta = ACHIEVEMENTS.find((a) => a.id === id);
+        const rawMeta = ACHIEVEMENTS.find((a) => a.id === id);
+        const meta = rawMeta ? { ...rawMeta, ...(language === 'en' ? ACHIEVEMENT_TRANSLATIONS[rawMeta.id] : {}) } : null;
         if (!meta) return null;
         const day = unlockDays[id] ?? 0;
         return { id, meta, day, idx };
@@ -494,18 +504,18 @@ function AchievementWall({
           v !== null
       )
       .sort((a, b) => (a.day - b.day) || (a.idx - b.idx));
-  }, [unlocked, unlockDays]);
+  }, [unlocked, unlockDays, language]);
 
   return (
     <div className="mt-6 rounded-xl bg-gray-800/60 border border-gray-700/60 p-6">
       <div className="flex items-baseline justify-between gap-3">
         <div>
           <h3 className="text-sm font-semibold tracking-[0.25em] uppercase text-gray-400">
-            成就墙 · Achievements
+            {language === 'en' ? 'Achievement wall' : '成就墙 · Achievements'}
           </h3>
         </div>
         <div className="text-right text-xs text-gray-500">
-          已获得{' '}
+          {language === 'en' ? 'Earned ' : '已获得 '}
           <span className="font-mono text-base font-semibold text-amber-300">
             {count}
           </span>
@@ -517,7 +527,7 @@ function AchievementWall({
         <div className="mt-6 rounded-lg border border-dashed border-gray-700/60 px-6 py-10 text-center">
           <p className="text-3xl opacity-30 grayscale">🎖️</p>
           <p className="mt-3 text-sm text-gray-500">
-            这一生平平无奇，你没有获得任何成就。
+            {language === 'en' ? 'An ordinary life so far—no achievements earned.' : '这一生平平无奇，你没有获得任何成就。'}
           </p>
         </div>
       ) : (
@@ -527,7 +537,7 @@ function AchievementWall({
               <div
                 key={it.id}
                 className="group relative overflow-hidden rounded-xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-yellow-500/0 px-3 py-3 shadow-sm shadow-amber-900/10 transition-all hover:border-amber-400/60 hover:shadow-amber-700/20"
-                title={`${it.meta.name} — ${it.meta.description}\n解锁于 ${formatDayDetailed(it.day)}`}
+                title={`${it.meta.name} — ${it.meta.description}\n${language === 'en' ? 'Unlocked on ' : '解锁于 '}${formatDayDetailed(it.day, language)}`}
               >
                 {/* 微光晕 */}
                 <div className="pointer-events-none absolute -top-8 -right-8 h-20 w-20 rounded-full bg-amber-400/10 blur-2xl transition-opacity group-hover:bg-amber-300/20" />
@@ -538,7 +548,7 @@ function AchievementWall({
                     #{(i + 1).toString().padStart(2, '0')}
                   </span>
                   <span className="rounded bg-amber-500/15 px-1.5 py-0.5 font-mono text-[10px] font-medium text-amber-300">
-                    {formatDayDetailed(it.day)}
+                    {formatDayDetailed(it.day, language)}
                   </span>
                 </div>
 

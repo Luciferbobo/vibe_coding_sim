@@ -3,6 +3,7 @@ import { useGameStore, TokenBatch, getValuationPrices, calculateGpuDepreciationV
 import type { PortfolioHistoryPoint } from '../../stores/gameStore';
 import { TOKENS } from '../../data/tokens';
 import { formatMoney, formatToken } from '../../utils/format';
+import { localizeToken, translateDynamic } from '../../i18n';
 
 const OPERATION_TYPES: PortfolioHistoryPoint['eventType'][] = [
   'trade',
@@ -12,18 +13,20 @@ const OPERATION_TYPES: PortfolioHistoryPoint['eventType'][] = [
   'retire',
 ];
 
-function formatCompactMoney(amount: number): string {
-  return formatMoney(amount);
+function formatCompactMoney(amount: number, language: 'zh' | 'en'): string {
+  return formatMoney(amount, language);
 }
 
 function PortfolioCurve({
   history,
   currentTotal,
   daysToRent,
+  language,
 }: {
   history: PortfolioHistoryPoint[];
   currentTotal: number;
   daysToRent: number;
+  language: 'zh' | 'en';
 }) {
   const safeHistory: PortfolioHistoryPoint[] =
     history.length > 0
@@ -38,7 +41,7 @@ function PortfolioCurve({
             nextRentDay: 1 + daysToRent,
             rentAmount: 0,
             eventType: 'start',
-            label: '当前',
+            label: language === 'en' ? 'Current' : '当前',
           },
         ];
   const drawableHistory =
@@ -90,7 +93,7 @@ function PortfolioCurve({
   const first = safeHistory[0];
   const latest = safeHistory[safeHistory.length - 1];
   const delta = latest.totalValue - first.totalValue;
-  const deltaText = `${delta >= 0 ? '+' : '-'}${formatCompactMoney(Math.abs(delta))}`;
+  const deltaText = `${delta >= 0 ? '+' : '-'}${formatCompactMoney(Math.abs(delta), language)}`;
   const deltaClass =
     delta > 0 ? 'text-emerald-400' : delta < 0 ? 'text-red-400' : 'text-gray-500';
 
@@ -98,13 +101,13 @@ function PortfolioCurve({
     <div className="rounded-xl bg-gray-800/60 border border-gray-700/60 p-3">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs text-gray-400">总资产估值</p>
+          <p className="text-xs text-gray-400">{language === 'en' ? 'Estimated net worth' : '总资产估值'}</p>
           <p className="mt-0.5 font-mono text-lg font-bold tabular text-emerald-300">
-            {formatCompactMoney(currentTotal)}
+            {formatCompactMoney(currentTotal, language)}
           </p>
         </div>
         <div className="shrink-0 text-right">
-          <p className="text-[10px] text-gray-500">本局变化</p>
+          <p className="text-[10px] text-gray-500">{language === 'en' ? 'This run' : '本局变化'}</p>
           <p className={`font-mono text-xs font-semibold tabular ${deltaClass}`}>
             {deltaText}
           </p>
@@ -115,7 +118,7 @@ function PortfolioCurve({
         className="mt-2 h-[72px] w-full overflow-visible"
         viewBox={`0 0 ${width} ${height}`}
         role="img"
-        aria-label="Portfolio 变化曲线"
+        aria-label={language === 'en' ? 'Portfolio value curve' : 'Portfolio 变化曲线'}
       >
         <defs>
           <linearGradient id="portfolioArea" x1="0" x2="0" y1="0" y2="1">
@@ -163,7 +166,7 @@ function PortfolioCurve({
             stroke="#0f172a"
             strokeWidth="1.3"
           >
-            <title>{coord.point.label}</title>
+            <title>{translateDynamic(coord.point.label, language)}</title>
           </circle>
         ))}
       </svg>
@@ -172,15 +175,15 @@ function PortfolioCurve({
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center gap-1">
             <span className="h-1.5 w-3 rounded-full bg-emerald-400" />
-            资产
+            {language === 'en' ? 'Assets' : '资产'}
           </span>
           <span className="inline-flex items-center gap-1">
             <span className="h-3 w-0.5 rounded-full bg-red-400" />
-            房租
+            {language === 'en' ? 'Rent' : '房租'}
           </span>
           <span className="inline-flex items-center gap-1">
             <span className="h-1.5 w-1.5 rounded-full bg-sky-400" />
-            操作
+            {language === 'en' ? 'Actions' : '操作'}
           </span>
         </div>
         <span className="font-mono tabular">T-{daysToRent}d</span>
@@ -198,6 +201,7 @@ export function StatusPanel() {
   const portfolioHistory = useGameStore((s) => s.portfolioHistory);
   const gpus = useGameStore((s) => s.gpus);
   const nextRentDay = useGameStore((s) => s.nextRentDay);
+  const language = useGameStore((s) => s.language);
 
   // 资产估值取两市场最低价
   const valuationPrices = getValuationPrices(currentPrices, xianYuPrices);
@@ -232,34 +236,35 @@ export function StatusPanel() {
           history={portfolioHistory}
           currentTotal={cash + tokenValue + gpuValue}
           daysToRent={daysToRent}
+          language={language}
         />
       </div>
 
       {/* 现金 */}
       <div className="shrink-0 rounded-xl bg-gray-800/60 border border-gray-700/60 p-4">
-        <p className="text-xs text-gray-400">现金余额</p>
+        <p className="text-xs text-gray-400">{language === 'en' ? 'Cash balance' : '现金余额'}</p>
         <p className="mt-1 font-mono text-2xl font-bold tabular text-amber-400">
-          {formatMoney(cash)}
+          {formatMoney(cash, language)}
         </p>
       </div>
 
       {/* 持仓 */}
       <div className="rounded-xl bg-gray-800/60 border border-gray-700/60 p-4 flex-1 min-h-0 flex flex-col">
         <div className="flex items-center justify-between">
-          <p className="text-xs text-gray-400">持仓</p>
+          <p className="text-xs text-gray-400">{language === 'en' ? 'Holdings' : '持仓'}</p>
           <span className="text-xs text-gray-500">{tokenGroups.length} / 7</span>
         </div>
         <p className="mt-1 text-[10px] text-gray-500 leading-relaxed">
-          Token 保质期 7 天，过期自动清空
+          {language === 'en' ? 'Tokens last 7 days and are cleared on expiry' : 'Token 保质期 7 天，过期自动清空'}
         </p>
         {tokenGroups.length === 0 ? (
           <p className="mt-6 py-4 text-center text-xs text-gray-500">
-            暂无持仓
+            {language === 'en' ? 'No holdings' : '暂无持仓'}
           </p>
         ) : (
           <ul className="mt-3 flex-1 min-h-0 space-y-2 overflow-y-auto overscroll-contain pr-1 -mr-1">
             {tokenGroups.map((g) => {
-              const t = TOKENS[g.tokenId];
+              const t = localizeToken(TOKENS[g.tokenId], language);
               const cur = valuationPrices[g.tokenId] || 0;
               const pl = g.avgPrice > 0 ? ((cur - g.avgPrice) / g.avgPrice) * 100 : 0;
               const isXy = g.tokenId === 6;
@@ -274,13 +279,13 @@ export function StatusPanel() {
                       <p className="text-sm text-gray-100 truncate">{t.name}</p>
                       {g.avgPrice > 0 && (
                         <p className="text-[10px] text-gray-500">
-                          均价 ¥{g.avgPrice.toFixed(2)}
+                          {language === 'en' ? `Avg. ${formatMoney(g.avgPrice, language)}` : `均价 ¥${g.avgPrice.toFixed(2)}`}
                         </p>
                       )}
                     </div>
                     <div className="text-right shrink-0">
                       <p className="font-mono text-sm text-gray-100 tabular">
-                        {isXy ? `${g.totalCount} 个` : formatToken(g.totalCount)}
+                        {isXy ? `${g.totalCount} ${language === 'en' ? 'accounts' : '个'}` : formatToken(g.totalCount)}
                       </p>
                       {g.avgPrice > 0 && (
                         <p
@@ -318,10 +323,10 @@ export function StatusPanel() {
                         >
                           <span className="flex items-center gap-1.5 text-gray-400">
                             <span className={`inline-block h-1.5 w-1.5 rounded-full ${dotCls}`} />
-                            <span>{isXy ? `${b.count}个` : formatToken(b.count)}</span>
+                            <span>{isXy ? `${b.count}${language === 'en' ? ' accounts' : '个'}` : formatToken(b.count)}</span>
                           </span>
                           <span className={colorCls}>
-                            {daysLeft <= 0 ? '即将过期' : `剩 ${daysLeft} 天`}
+                            {daysLeft <= 0 ? (language === 'en' ? 'Expires soon' : '即将过期') : (language === 'en' ? `${daysLeft}d left` : `剩 ${daysLeft} 天`)}
                           </span>
                         </li>
                       );

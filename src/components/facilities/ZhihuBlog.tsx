@@ -6,15 +6,16 @@ export function ZhihuBlog() {
   const reputation = useGameStore((s) => s.reputation);
   const writeBlog = useGameStore((s) => s.writeBlog);
   const restDaysLeft = useGameStore((s) => s.restDaysLeft);
+  const language = useGameStore((s) => s.language);
 
   const disabled = restDaysLeft > 0;
 
   return (
     <div className="flex h-full flex-col">
       <div className="border-b border-gray-800 px-4 py-3 md:px-6 md:py-5">
-        <h2 className="text-lg md:text-xl font-semibold text-gray-100">✍️ 知乎 · 技术博客</h2>
+        <h2 className="text-lg md:text-xl font-semibold text-gray-100">{language === 'en' ? '✍️ Zhihu · Tech blog' : '✍️ 知乎 · 技术博客'}</h2>
         <p className="mt-1 text-xs md:text-sm text-gray-400">
-          写一篇技术博客，恢复你在业界的信誉
+          {language === 'en' ? 'Write a technical post to rebuild your industry reputation' : '写一篇技术博客，恢复你在业界的信誉'}
         </p>
       </div>
 
@@ -22,7 +23,7 @@ export function ZhihuBlog() {
         <div className="max-w-lg mx-auto">
           {/* 当前信誉 */}
           <div className="rounded-xl bg-gray-800/60 border border-gray-700/60 p-4 md:p-5 mb-5 md:mb-6">
-            <p className="text-sm text-gray-400">当前信誉值</p>
+            <p className="text-sm text-gray-400">{language === 'en' ? 'Current reputation' : '当前信誉值'}</p>
             <p className="mt-2 text-3xl md:text-4xl font-bold text-blue-400 font-mono tabular">
               {reputation}
             </p>
@@ -47,19 +48,19 @@ export function ZhihuBlog() {
                 : 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white shadow-lg shadow-blue-900/30 hover:shadow-blue-800/40'
             }`}
           >
-            📝 写一篇技术博客
+            {language === 'en' ? '📝 Write a technical post' : '📝 写一篇技术博客'}
           </button>
           <p className="mt-3 text-sm text-gray-400 text-center">
-            消耗1天时间，信誉 +8~12
+            {language === 'en' ? 'Uses one day · reputation +8–12' : '消耗1天时间，信誉 +8~12'}
           </p>
 
           {/* 趣味文案 */}
           <div className="mt-8 space-y-2">
             <p className="text-xs text-gray-600 italic">
-              "水一篇《如何写hello world》也是可以的..."
+              {language === 'en' ? '“A post called How to write hello world will do…”' : '"水一篇《如何写hello world》也是可以的..."'}
             </p>
             <p className="text-xs text-gray-600 italic">
-              "记住：在知乎，自信就是财富"
+              {language === 'en' ? '“Remember: on Zhihu, confidence is wealth.”' : '"记住：在知乎，自信就是财富"'}
             </p>
           </div>
         </div>

@@ -4,6 +4,8 @@ import { useGameStore, getValuationPrices, computeRetirementWeeks, calculateGpuD
 import { TOKENS } from '../../data/tokens';
 import { RENT_CYCLE, RENT_INCREASE } from '../../data/constants';
 import { formatToken, formatDay } from '../../utils/format';
+import { formatMoney } from '../../utils/format';
+import { localizeToken } from '../../i18n';
 
 const HORIZON_QUOTES = [
   '潮水退去，沙滩上只剩下你和一把躺椅。',
@@ -11,6 +13,14 @@ const HORIZON_QUOTES = [
   '关掉 IDE 的那一刻，整个世界都安静了下来。',
   '你想过无数次按下这个按钮，今天它真的存在了。',
   '夕阳很贵，但你刚好买得起一个落日。',
+];
+
+const HORIZON_QUOTES_EN = [
+  'When the tide goes out, all that remains on the beach is you and a deck chair.',
+  'The apartment in Beijing is still rented, but today you finally do not have to write code.',
+  'The moment you close your IDE, the whole world falls quiet.',
+  'You imagined pressing this button countless times. Today it finally exists.',
+  'Sunsets are expensive, but you can just afford one.',
 ];
 
 export function Retirement() {
@@ -23,6 +33,7 @@ export function Retirement() {
   const day = useGameStore((s) => s.day);
   const gpus = useGameStore((s) => s.gpus);
   const retire = useGameStore((s) => s.retire);
+  const language = useGameStore((s) => s.language);
 
   const [confirming, setConfirming] = useState(false);
 
@@ -56,10 +67,10 @@ export function Retirement() {
   const weeksAlive = computeRetirementWeeks(totalCash, rentAmount, RENT_INCREASE);
   const daysAlive = daysUntilFirstRent + weeksAlive * RENT_CYCLE;
 
-  const quote = useMemo(
-    () => HORIZON_QUOTES[Math.floor(Math.random() * HORIZON_QUOTES.length)],
-    []
-  );
+  const quote = useMemo(() => {
+    const index = Math.floor(Math.random() * HORIZON_QUOTES.length);
+    return language === 'en' ? HORIZON_QUOTES_EN[index] : HORIZON_QUOTES[index];
+  }, [language]);
 
   const handleClick = () => {
     if (!confirming) {
@@ -97,16 +108,16 @@ export function Retirement() {
           <span className="inline-flex items-center gap-2">
 
           </span>
-          <span className="font-mono text-amber-300/50">{formatDay(day)}</span>
+          <span className="font-mono text-amber-300/50">{formatDay(day, language)}</span>
         </div>
 
         {/* 主标题 */}
         <div className="mt-4 md:mt-6">
           <h2 className="font-serif text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight bg-gradient-to-br from-amber-200 via-orange-300 to-rose-400 bg-clip-text text-transparent">
-            🏖️ 一键退休
+            {language === 'en' ? '🏖️ Retire' : '🏖️ 一键退休'}
           </h2>
           <p className="mt-3 text-sm md:text-base italic text-amber-100/70 leading-relaxed">
-            累了？卖掉所有 Token，看看你的积蓄能让你躺平多久……
+            {language === 'en' ? 'Tired? Liquidate every token and see how long your savings can keep you idle…' : '累了？卖掉所有 Token，看看你的积蓄能让你躺平多久……'}
           </p>
           <p className="mt-2 text-xs text-amber-200/40 font-light">"{quote}"</p>
         </div>
@@ -115,7 +126,7 @@ export function Retirement() {
         <div className="mt-6 md:mt-8 rounded-2xl border border-amber-500/20 bg-gradient-to-br from-stone-900/80 to-amber-950/40 backdrop-blur-sm overflow-hidden">
           <div className="px-5 py-3 border-b border-amber-500/10 flex items-center justify-between">
             <p className="text-[11px] tracking-[0.25em] uppercase text-amber-300/70">
-              Current Holdings · 资产清算预览
+              {language === 'en' ? 'Current Holdings · Liquidation preview' : 'Current Holdings · 资产清算预览'}
             </p>
             <span className="text-[10px] font-mono text-amber-300/40">
               @ market price
@@ -123,16 +134,16 @@ export function Retirement() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-amber-500/10">
-            <AssetCell label="现金" value={formatYuan(cash)} accent="text-amber-300" />
+            <AssetCell label={language === 'en' ? 'Cash' : '现金'} value={formatYuan(cash, language)} accent="text-amber-300" />
             <AssetCell
-              label="Token 库存折现"
-              value={formatYuan(tokenValue)}
+              label={language === 'en' ? 'Token liquidation' : 'Token 库存折现'}
+              value={formatYuan(tokenValue, language)}
               accent="text-orange-300"
-              sub={`${grouped.length} 种持仓`}
+              sub={language === 'en' ? `${grouped.length} token types` : `${grouped.length} 种持仓`}
             />
             <AssetCell
-              label="资产合计"
-              value={formatYuan(totalCash)}
+              label={language === 'en' ? 'Total assets' : '资产合计'}
+              value={formatYuan(totalCash, language)}
               accent="text-rose-300"
               emphasized
             />
@@ -142,11 +153,11 @@ export function Retirement() {
           {grouped.length > 0 && (
             <div className="px-5 pb-4 pt-3 border-t border-amber-500/10">
               <p className="text-[10px] tracking-[0.2em] uppercase text-amber-300/40 mb-2">
-                Liquidation Detail
+                {language === 'en' ? 'Liquidation detail' : 'Liquidation Detail'}
               </p>
               <ul className="space-y-1 text-xs">
                 {grouped.map(([tid, count]) => {
-                  const t = TOKENS[tid];
+                  const t = localizeToken(TOKENS[tid], language);
                   const price = valuationPrices[tid] || 0;
                   const value = count * price;
                   const isXy = tid === 6;
@@ -158,11 +169,11 @@ export function Retirement() {
                       <span className="truncate">
                         <span className="text-amber-200/90">{t.name}</span>{' '}
                         <span className="text-amber-300/40">
-                          × {isXy ? `${count}个` : formatToken(count)}
+                          × {isXy ? `${count} ${language === 'en' ? 'accounts' : '个'}` : formatToken(count)}
                         </span>
                       </span>
                       <span className="text-orange-200/80">
-                        {formatYuan(value)}
+                        {formatYuan(value, language)}
                       </span>
                     </li>
                   );
@@ -176,12 +187,12 @@ export function Retirement() {
         <div className="mt-4 md:mt-6 grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] gap-4">
           <div className="rounded-2xl border border-amber-500/20 bg-stone-900/70 px-4 md:px-5 py-4">
             <p className="text-[10px] tracking-[0.25em] uppercase text-amber-300/60">
-              Weekly Rent
+              {language === 'en' ? 'Weekly rent' : 'Weekly Rent'}
             </p>
             <p className="mt-2 font-mono text-2xl md:text-3xl font-semibold text-amber-200">
-              {formatYuan(rentAmount)}
+              {formatYuan(rentAmount, language)}
             </p>
-            <p className="mt-1 text-xs text-amber-300/50">每周扣除一次</p>
+            <p className="mt-1 text-xs text-amber-300/50">{language === 'en' ? 'Charged once a week' : '每周扣除一次'}</p>
           </div>
 
           <div className="relative rounded-2xl border border-rose-500/30 overflow-hidden">
@@ -196,19 +207,19 @@ export function Retirement() {
             />
             <div className="relative px-5 md:px-6 py-4 md:py-5">
               <p className="text-[10px] tracking-[0.3em] uppercase text-rose-200/70">
-                Estimated Survival
+                {language === 'en' ? 'Estimated survival' : 'Estimated Survival'}
               </p>
               <div className="mt-2 flex items-baseline gap-3">
                 <span className="font-serif font-bold text-5xl md:text-7xl leading-none bg-gradient-to-br from-amber-200 to-rose-400 bg-clip-text text-transparent tabular-nums">
                   {weeksAlive}
                 </span>
-                <span className="text-amber-100/70 text-base">周</span>
+                <span className="text-amber-100/70 text-base">{language === 'en' ? 'weeks' : '周'}</span>
                 <span className="font-mono text-rose-200/60 text-sm ml-2">
-                  ≈ {daysAlive} 天
+                  ≈ {daysAlive} {language === 'en' ? 'days' : '天'}
                 </span>
               </div>
               <p className="mt-2 text-xs text-amber-100/60 leading-snug">
-                以当前周租 {formatYuan(rentAmount)} 起步，每周递增 {formatYuan(RENT_INCREASE)} 推演，钱花光那天即为终局。
+                {language === 'en' ? `Starting from ${formatYuan(rentAmount, language)} per week and adding ${formatYuan(RENT_INCREASE, language)} each week, the day your money runs out is the end.` : `以当前周租 ${formatYuan(rentAmount, language)} 起步，每周递增 ${formatYuan(RENT_INCREASE, language)} 推演，钱花光那天即为终局。`}
               </p>
             </div>
           </div>
@@ -229,33 +240,33 @@ export function Retirement() {
                 <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
                 <span className="relative inline-flex items-center justify-center gap-3">
                   <span className="text-2xl">🌅</span>
-                  确认退休（不可撤销）
+                  {language === 'en' ? 'Confirm retirement (cannot be undone)' : '确认退休（不可撤销）'}
                 </span>
               </button>
               <p className="mt-2 text-center text-[11px] text-amber-200/50 tracking-wider">
-                · 将卖出所有 Token 并进入结算 ·
+                {language === 'en' ? '· All tokens will be sold and the final settlement will begin ·' : '· 将卖出所有 Token 并进入结算 ·'}
               </p>
             </>
           ) : (
             <div className="rounded-2xl border-2 border-rose-500/50 bg-rose-950/40 backdrop-blur p-5">
               <p className="text-center text-rose-100 text-base font-medium">
-                真的要退休吗？这个操作不可撤销。
+                {language === 'en' ? 'Are you sure you want to retire? This cannot be undone.' : '真的要退休吗？这个操作不可撤销。'}
               </p>
               <p className="mt-2 text-center text-xs text-rose-200/60">
-                你将带着 {formatYuan(totalCash)} 离开，预计躺平 {weeksAlive} 周。
+                {language === 'en' ? `You will leave with ${formatYuan(totalCash, language)} and an estimated ${weeksAlive} weeks of freedom.` : `你将带着 ${formatYuan(totalCash, language)} 离开，预计躺平 ${weeksAlive} 周。`}
               </p>
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <button
                   onClick={handleCancel}
                   className="px-4 py-3 rounded-xl border border-amber-500/30 bg-stone-800/60 text-amber-100 hover:bg-stone-800 transition-colors font-medium"
                 >
-                  再想想
+                  {language === 'en' ? 'Think again' : '再想想'}
                 </button>
                 <button
                   onClick={handleClick}
                   className="px-4 py-3 rounded-xl bg-gradient-to-r from-rose-600 to-orange-600 hover:from-rose-500 hover:to-orange-500 text-white font-bold transition-all shadow-lg shadow-rose-900/40"
                 >
-                  确认，落幕
+                  {language === 'en' ? 'Confirm, and fade out' : '确认，落幕'}
                 </button>
               </div>
             </div>
@@ -263,15 +274,15 @@ export function Retirement() {
         </div>
 
         <div className="mt-10 pt-4 border-t border-amber-500/10 text-center text-[11px] text-amber-200/30 tracking-[0.2em] uppercase">
-          End of working hours · 退场也是一种选择
+          {language === 'en' ? 'End of working hours · Leaving is a choice too' : 'End of working hours · 退场也是一种选择'}
         </div>
       </div>
     </div>
   );
 }
 
-function formatYuan(n: number): string {
-  return `¥${Math.round(n).toLocaleString('zh-CN')}`;
+function formatYuan(n: number, language: 'zh' | 'en'): string {
+  return formatMoney(n, language);
 }
 
 function AssetCell({

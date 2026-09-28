@@ -35,6 +35,8 @@ import { generateDailyTasks, attemptTask } from '../engine/taskEngine';
 import { rollDailyEvents } from '../engine/eventEngine';
 import { randomChoice, randomInt, randomFloat } from '../utils/random';
 import { formatDay, formatMoney } from '../utils/format';
+import type { Language } from './languageTypes';
+import { setCurrentLanguage } from '../i18n';
 import {
   GPUS,
   GPUInstance,
@@ -394,6 +396,9 @@ export interface RetirementData {
 
 // 游戏状态接口
 interface GameState {
+  // UI language preference (game economy remains in RMB internally)
+  language: Language;
+  setLanguage: (language: Language) => void;
   // 阶段
   phase: 'start' | 'playing' | 'retiring' | 'gameover';
 
@@ -577,6 +582,12 @@ interface GameState {
 // 创建Store
 export const useGameStore = create<GameState>((set, get) => ({
   // 初始状态
+  language: (typeof window !== 'undefined' && window.localStorage?.getItem('vibe-language') === 'en') ? 'en' : 'zh',
+  setLanguage: (language: Language) => {
+    setCurrentLanguage(language);
+    set({ language });
+    try { window.localStorage?.setItem('vibe-language', language); } catch { /* localStorage unavailable */ }
+  },
   phase: 'start',
   cash: INITIAL_CASH,
   spirit: INITIAL_SPIRIT,
