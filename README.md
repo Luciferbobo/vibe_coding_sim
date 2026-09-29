@@ -14,7 +14,7 @@
 
 ## Premise
 
-You are a developer surviving on AI-generated code🖥️, starting with a meager bank balance of $5,000. Token prices climb every day, and rent is due weekly. Your main objective: just stay alive. Every decision dictates how much longer you can hold out. You can buy tokens to take freelance gigs, scalp tokens for profit, buy GPUs to become a token mogul yourself... You'll need to manage your investments and cash flow, maintain your physical and mental well-being, navigate your survival strategy through the AI boom, and hustle until you achieve financial freedom💰.
+You are a developer surviving on AI-generated code🖥️, starting with a meager bank balance of $5,00. Token prices climb every day, and rent is due weekly. Your main objective: just stay alive. Every decision dictates how much longer you can hold out. You can buy tokens to take freelance gigs, scalp tokens for profit, buy GPUs to become a token mogul yourself... You'll need to manage your investments and cash flow, maintain your physical and mental well-being, navigate your survival strategy through the AI boom, and hustle until you achieve financial freedom💰.
 
 A few realities will constantly chase you down:
 
