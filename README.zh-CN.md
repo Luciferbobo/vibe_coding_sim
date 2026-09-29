@@ -40,10 +40,6 @@ npm ci
 npm run dev
 ```
 
-打开 Vite 输出的本地地址，通常是 `http://localhost:5173/`。
-
-生成生产版本并在本地预览：
-
 ```bash
 npm run build
 npm run preview
